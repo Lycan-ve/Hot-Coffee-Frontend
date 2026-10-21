@@ -29,10 +29,10 @@ export default function HotCoffeeRanking() {
     } catch (error) {
       console.error('Error cargando rankings, aplicando datos de prueba...', error);
       setPlayers([
-        { id: 1, ranking: 1, gamerTag: 'Ñembo', sponsor: 'RZS', character: 'AKALI, YASUO', avatarUrl: '', points: 4800 },
-        { id: 2, ranking: 2, gamerTag: 'GAPPY', sponsor: 'TKF', character: 'BLITZCRANK', avatarUrl: '', points: 2118 },
-        { id: 3, ranking: 3, gamerTag: 'HIAMJOY', sponsor: 'HCN', character: 'DARIUS, BRAUM', avatarUrl: '', points: 1836 },
-        { id: 4, ranking: 4, gamerTag: 'BANEADO SENSEI', sponsor: '', character: 'EKKO, ILAOI', avatarUrl: '', points: 1302 },
+        { id: 1, ranking: 1, gamerTag: 'ÑEMBO', sponsor: 'RZS', character: 'AKALI, YASUO', avatarUrl: '', points: 800 },
+        { id: 2, ranking: 2, gamerTag: 'GAPPY', sponsor: 'TKF', character: 'BLITZCRANK', avatarUrl: '', points: 350 },
+        { id: 3, ranking: 3, gamerTag: 'HIAMJOY', sponsor: 'HCN', character: 'DARIUS, BRAUM', avatarUrl: '', points: 300 },
+        { id: 4, ranking: 4, gamerTag: 'MIKU', sponsor: 'FKC', character: 'EKKO', avatarUrl: '', points: 205 },
       ]);
     }
   };
@@ -83,14 +83,14 @@ export default function HotCoffeeRanking() {
     return '/logo-hot-2xko.png';
   };
 
-  // Función para convertir "AKALI, YASUO" en un array de rutas de imágenes de la carpeta /fighters/
+  // Función para formatear nombres de personajes y buscar su imagen
   const getCharacterImages = (charString?: string) => {
     if (!charString) return [];
     return charString
       .split(',')
       .map((c) => {
         const clean = c.trim().toLowerCase();
-        // Capitaliza la primera letra para que coincida con el nombre exacto del archivo (ej: 'Ekko', 'Akali')
+        if (!clean) return '';
         return clean.charAt(0).toUpperCase() + clean.slice(1);
       })
       .filter(Boolean);
@@ -313,7 +313,7 @@ export default function HotCoffeeRanking() {
 
         .pr-rank {
           position: relative;
-          z-index: 3;
+          z-index: 4;
           font-family: 'Bebas Neue', cursive;
           font-size: 2.6rem;
           width: 44px;
@@ -329,7 +329,7 @@ export default function HotCoffeeRanking() {
 
         .pr-name-wrap {
           position: relative;
-          z-index: 3;
+          z-index: 4;
           margin-left: 8px;
           flex: 1;
           display: flex;
@@ -338,26 +338,15 @@ export default function HotCoffeeRanking() {
           overflow: hidden;
         }
 
-        /* Contenedor horizontal en una sola línea */
         .pr-player-info {
           display: flex;
-          align-items: center;
-          gap: 6px;
-          max-width: 62%;
-          overflow: hidden;
-          white-space: nowrap;
+          flex-direction: column;
+          gap: 2px;
+          max-width: 55%;
         }
-
-        .pr-sponsor {
-          color: #b44d1d;
-          font-style: normal;
-          font-weight: 800;
-          font-size: 1.15rem;
-        }
-
         .pr-name {
           font-family: 'Barlow Condensed', sans-serif;
-          font-size: 1.25rem;
+          font-size: 1.4rem;
           font-weight: 800;
           font-style: italic;
           color: #f5f5f4;
@@ -365,18 +354,56 @@ export default function HotCoffeeRanking() {
           letter-spacing: 0.03em;
           line-height: 1;
           text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .pr-sponsor {
+          color: #b44d1d;
+          font-style: normal;
+          font-weight: 800;
+        }
+        .pr-fighter-tag {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #cca08a;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
-        /* Estilos para las miniaturas de los personajes */
+        /* Estilos para el arte grande de los personajes en el Podio (Top 3) */
+        .pr-podium-art-bg {
+          position: absolute;
+          right: 150px;
+          top: 0;
+          bottom: 0;
+          display: flex;
+          align-items: center;
+          gap: -15px;
+          opacity: 0.85;
+          pointer-events: none;
+          z-index: 2;
+          overflow: hidden;
+        }
+        .pr-podium-art-img {
+          height: 105%;
+          object-fit: cover;
+          filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
+        }
+
+        /* Miniaturas para la lista general (Puestos 4 en adelante) */
         .pr-fighter-icons {
           display: flex;
           align-items: center;
           gap: 4px;
-          margin-left: 4px;
         }
-
         .pr-fighter-icon {
           width: 24px;
           height: 24px;
@@ -384,7 +411,6 @@ export default function HotCoffeeRanking() {
           border: 1px solid #d0ca53;
           object-fit: cover;
           background: #1a1008;
-          box-shadow: 0 0 6px rgba(208, 202, 83, 0.3);
         }
 
         .pr-right-group {
@@ -392,7 +418,7 @@ export default function HotCoffeeRanking() {
           align-items: center;
           gap: 12px;
           flex-shrink: 0;
-          z-index: 3;
+          z-index: 4;
         }
 
         .pr-user-avatar-frame {
@@ -493,7 +519,7 @@ export default function HotCoffeeRanking() {
             </div>
           </div>
 
-          {/* 1. SECCIÓN PODIO (Top 1, 2, 3) */}
+          {/* 1. SECCIÓN PODIO (Top 1, 2, 3 con Renders Grandes de Fondo) */}
           {currentPage === 1 && top3Players.length > 0 && (
             <>
               <div className="pr-podium-section">
@@ -512,28 +538,30 @@ export default function HotCoffeeRanking() {
                     <div key={player.id} className={podiumClass}>
                       <span className={rankClass}>{player.ranking}</span>
 
+                      {/* Arte grande de los personajes en el fondo del podio */}
+                      <div className="pr-podium-art-bg">
+                        {getCharacterImages(player.character).map((charName, index) => (
+                          <img
+                            key={index}
+                            src={`/fighters/${charName}.png`}
+                            alt={charName}
+                            className="pr-podium-art-img"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ))}
+                      </div>
+
                       <div className="pr-name-wrap">
                         <div className="pr-player-info">
-                          {player.sponsor && (
-                            <span className="pr-sponsor">{player.sponsor} |</span>
-                          )}
-                          <span className="pr-name">{player.gamerTag}</span>
-                          
-                          {/* Miniaturas de los personajes */}
-                          <div className="pr-fighter-icons">
-                            {getCharacterImages(player.character).map((charName, index) => (
-                              <img
-                                key={index}
-                                src={`/fighters/${charName}.png`}
-                                alt={charName}
-                                className="pr-fighter-icon"
-                                onError={(e) => {
-                                  // Si la imagen no existe en la carpeta, oculta el icono para evitar roturas visuales
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            ))}
-                          </div>
+                          <span className="pr-name">
+                            {player.sponsor && (
+                              <span className="pr-sponsor">{player.sponsor} |</span>
+                            )}
+                            {player.gamerTag}
+                          </span>
+                          <span className="pr-fighter-tag">{player.character}</span>
                         </div>
 
                         <div className="pr-right-group">
@@ -557,7 +585,7 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. SECCIÓN LISTA GENERAL */}
+          {/* 2. SECCIÓN LISTA GENERAL (Puestos 4 en adelante con miniaturas) */}
           <div className="pr-list-section">
             {restPlayers.map((player) => (
               <div key={player.id} className="pr-row">
@@ -565,12 +593,14 @@ export default function HotCoffeeRanking() {
 
                 <div className="pr-name-wrap">
                   <div className="pr-player-info">
-                    {player.sponsor && (
-                      <span className="pr-sponsor">{player.sponsor} |</span>
-                    )}
-                    <span className="pr-name">{player.gamerTag}</span>
+                    <span className="pr-name">
+                      {player.sponsor && (
+                        <span className="pr-sponsor">{player.sponsor} |</span>
+                      )}
+                      {player.gamerTag}
+                    </span>
                     
-                    {/* Miniaturas de los personajes */}
+                    {/* Miniaturas de personajes para la lista general */}
                     <div className="pr-fighter-icons">
                       {getCharacterImages(player.character).map((charName, index) => (
                         <img
@@ -579,14 +609,7 @@ export default function HotCoffeeRanking() {
                           alt={charName}
                           className="pr-fighter-icon"
                           onError={(e) => {
-                            // Si no lo encuentra con Mayúscula (Ej: Ekko.png), intenta en minúsculas (ej: ekko.png)
-                            const target = e.currentTarget;
-                            if (!target.dataset.retried) {
-                              target.dataset.retried = 'true';
-                              target.src = `/fighters/${charName.toLowerCase()}.png`;
-                            } else {
-                              target.style.display = 'none'; // Si no existe en ningún formato, se oculta
-                            }
+                            e.currentTarget.style.display = 'none';
                           }}
                         />
                       ))}
