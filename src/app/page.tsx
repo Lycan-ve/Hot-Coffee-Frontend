@@ -88,7 +88,11 @@ export default function HotCoffeeRanking() {
     if (!charString) return [];
     return charString
       .split(',')
-      .map((c) => c.trim().toLowerCase())
+      .map((c) => {
+        const clean = c.trim().toLowerCase();
+        // Capitaliza la primera letra para que coincida con el nombre exacto del archivo (ej: 'Ekko', 'Akali')
+        return clean.charAt(0).toUpperCase() + clean.slice(1);
+      })
       .filter(Boolean);
   };
 
@@ -575,7 +579,14 @@ export default function HotCoffeeRanking() {
                           alt={charName}
                           className="pr-fighter-icon"
                           onError={(e) => {
-                            e.currentTarget.style.display = 'none';
+                            // Si no lo encuentra con Mayúscula (Ej: Ekko.png), intenta en minúsculas (ej: ekko.png)
+                            const target = e.currentTarget;
+                            if (!target.dataset.retried) {
+                              target.dataset.retried = 'true';
+                              target.src = `/fighters/${charName.toLowerCase()}.png`;
+                            } else {
+                              target.style.display = 'none'; // Si no existe en ningún formato, se oculta
+                            }
                           }}
                         />
                       ))}
