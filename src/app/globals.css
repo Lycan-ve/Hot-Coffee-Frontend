@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Bebas+Neue&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-display: 'Bebas Neue', cursive;
+  --font-condensed: 'Barlow Condensed', sans-serif;
+}
+
+:root {
+  --background: 0 0% 7%;
+  --foreground: 0 0% 95%;
+  --border: 0 0% 15%;
+  --card: 0 0% 11%;
+  --card-foreground: 0 0% 95%;
+  --primary: 350 89% 45%;       /* Rojo crimson */
+  --primary-foreground: 0 0% 100%;
+  --accent: 43 96% 56%;         /* Dorado */
+  --accent-foreground: 0 0% 10%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  --radius: 0.25rem;
+}
+
+/* Efectos visuales de fondo y máscaras */
+.texture-bg {
+  /* Asegúrate de reemplazar el string de abajo con tu SVG codificado real si tenías uno */
+  background-image: url("data:image/svg+xml,..."); 
+}
+
+.scratch-bg {
+  background: 
+    repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.01) 10px, rgba(255,255,255,0.01) 11px),
+    repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(255,255,255,0.01) 15px, rgba(255,255,255,0.01) 16px);
+}
+
+.clip-character {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black);
+  mask-image: linear-gradient(to right, transparent, black 15%, black);
+}
