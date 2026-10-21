@@ -18,9 +18,11 @@ export default function HotCoffeeRanking() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const tableRef = useRef<HTMLDivElement>(null);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
   const fetchRankings = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/rankings/2xko');
+      const response = await fetch(`${API_URL}/api/rankings/2xko`);
       if (!response.ok) throw new Error('Error en la red');
       const data = await response.json();
       setPlayers(Array.isArray(data) ? data : []);
