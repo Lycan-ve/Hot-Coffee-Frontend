@@ -68,7 +68,7 @@ export default function HotCoffeeRanking() {
 
   const handleSync = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/sync');
+      const res = await fetch(`${API_URL}/api/sync`);
       const json = await res.json();
       alert(json.message || 'Sincronizado con éxito');
       fetchRankings();
