@@ -481,7 +481,7 @@ export default function HotCoffeeRanking() {
                 src="/logo-Hot.jpg"
                 alt="Hot Coffee x 2XKO"
                 onError={(e) => {
-                  e.currentTarget.src = '/logo.png';
+                  e.currentTarget.src = '/logo-Hot.jpg';
                 }}
               />
             </div>
