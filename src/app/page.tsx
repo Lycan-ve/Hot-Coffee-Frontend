@@ -478,7 +478,7 @@ export default function HotCoffeeRanking() {
             </div>
             <div className="pr-logo-badge">
               <img
-                src="/logo-hot.jpg"
+                src="/logo-Hot.jpg"
                 alt="Hot Coffee x 2XKO"
                 onError={(e) => {
                   e.currentTarget.src = '/logo.png';
