@@ -38,7 +38,11 @@ const DEFAULT_ART = { objectPosition: 'center 15%', scale: '1.2' };
 const FALLBACK_AVATAR = '/logo-Hot.jpg';
 const ITEMS_PER_PAGE = 10;
 
-const PLACEHOLDER_CHARACTER = /fighter|2xko|unknown|^n\/?a$\vert{}^-+$/i;
+// Columnas de la lista general (puesto 4 en adelante): 1 = fila ancha como el podio, 2 = como antes
+const LIST_COLUMNS: 1 | 2 = 1;
+
+// Valores que el backend puede devolver cuando aún no hay personaje (ej. "2XKO_FIGHTER")
+const PLACEHOLDER_CHARACTER = /fighter|2xko|unknown|^n\/?a$|^-+$/i;
 
 const BLANK_PIXEL =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
@@ -69,6 +73,36 @@ function Avatar({ url, alt }: { url?: string; alt: string }) {
   return (
     <div className="pr-user-avatar-frame">
       <img src={src} alt={alt} onError={() => setFailed(true)} />
+    </div>
+  );
+}
+
+// Arte de los personajes (se usa igual en el podio y en la lista general)
+function FighterArt({ characters }: { characters: string[] }) {
+  if (characters.length === 0) return null;
+  return (
+    <div className="pr-art" aria-hidden="true">
+      {characters.map((charName, i) => {
+        const conf = PODIUM_ART_CONFIG[charName.toLowerCase()] || DEFAULT_ART;
+        return (
+          <div key={`${charName}-${i}`} className="pr-art-frame">
+            <img
+              src={`/fighters/${charName}.png`}
+              alt=""
+              className="pr-art-img"
+              style={{
+                objectPosition: conf.objectPosition,
+                transform: `scale(${conf.scale || DEFAULT_ART.scale})`,
+              }}
+              onError={(e) => {
+                // Si falta la imagen, el otro personaje ocupa todo el espacio
+                const frame = e.currentTarget.parentElement;
+                if (frame) frame.style.display = 'none';
+              }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -185,6 +219,7 @@ export default function HotCoffeeRanking() {
           font-family: 'Barlow Condensed', sans-serif;
         }
 
+        /* ---------- Controles (fuera de la imagen exportada) ---------- */
         .pr-controls {
           display: flex;
           justify-content: space-between;
@@ -253,6 +288,7 @@ export default function HotCoffeeRanking() {
           .pr-notice { width: 920px; }
         }
 
+        /* ---------- Tarjeta ---------- */
         .pr-card {
           width: 540px;
           max-width: 100%;
@@ -308,11 +344,12 @@ export default function HotCoffeeRanking() {
         }
         .pr-logo-badge img { width: 100%; height: 100%; object-fit: contain; }
 
+        /* ---------- Filas ---------- */
         .pr-podium-section {
           display: flex;
           flex-direction: column;
-          gap: 8px;
-          padding: 1rem 1.2rem 0.8rem;
+          gap: 10px;
+          padding: 1.1rem 1.2rem 0.8rem;
         }
 
         .pr-podium-row, .pr-row {
@@ -322,7 +359,7 @@ export default function HotCoffeeRanking() {
           border-radius: 8px;
           overflow: hidden;
           background: #1d120a;
-          padding: 0 1rem 0 0.5rem;
+          padding: 0 1.1rem 0 0.5rem;
         }
 
         .pr-podium-row.top-1 { height: 96px; }
@@ -353,45 +390,31 @@ export default function HotCoffeeRanking() {
         .pr-podium-row.top-3::before { width: 5px; background: #738c3e; box-shadow: 0 0 8px #738c3e; }
 
         .pr-row {
-          background: #191008;
-          border: 1px solid rgba(204, 160, 138, 0.15);
+          background: linear-gradient(90deg, rgba(204, 160, 138, 0.07) 0%, #191008 70%);
+          border: 1px solid rgba(204, 160, 138, 0.18);
         }
 
         .pr-podium-divider {
           height: 1px;
           background: linear-gradient(90deg, transparent, rgba(208, 202, 83, 0.3), transparent);
-          margin: 0.2rem 1.2rem 0.8rem;
+          margin: 0.2rem 1.2rem 0.9rem;
         }
 
-        /* Arte de personajes para el Top 1, 2, 3 (columna única ancha) */
-        .pr-podium-row .pr-art {
+        /* ---------- Arte de personajes (podio y lista) ----------
+           Los bordes se difuminan con una máscara, así no queda una costura
+           aunque el fondo de la fila cambie de color. */
+        .pr-art {
           position: absolute;
           top: 0; bottom: 0;
-          left: 32%; right: 22%;
+          left: 34%; right: 22%;
           display: flex;
           z-index: 2;
           pointer-events: none;
+          -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 76%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 76%, transparent 100%);
         }
-
-        /* Arte de personajes para las filas secundarias en vista grid 2 columnas */
-        .pr-row .pr-art {
-          position: absolute;
-          top: 0; bottom: 0;
-          left: 42%; right: 28%;
-          display: flex;
-          z-index: 2;
-          pointer-events: none;
-        }
-
-        .pr-art::before, .pr-art::after {
-          content: '';
-          position: absolute;
-          top: 0; bottom: 0;
-          width: 30%;
-          z-index: 3;
-        }
-        .pr-art::before { left: 0;   background: linear-gradient(90deg,  rgba(29, 18, 10, 0.97), transparent); }
-        .pr-art::after  { right: 0; background: linear-gradient(270deg, rgba(29, 18, 10, 0.97), transparent); }
+        .pr-card:not(.is-wide) .pr-art { left: 42%; right: 30%; }
+        .pr-list-section.cols-2 .pr-art { left: 42%; right: 28%; }
 
         .pr-art-frame {
           position: relative;
@@ -410,6 +433,7 @@ export default function HotCoffeeRanking() {
           filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
         }
 
+        /* ---------- Textos ---------- */
         .pr-rank {
           position: relative;
           z-index: 4;
@@ -429,7 +453,7 @@ export default function HotCoffeeRanking() {
         .pr-name-wrap {
           position: relative;
           z-index: 4;
-          margin-left: 8px;
+          margin-left: 10px;
           flex: 1;
           min-width: 0;
           display: flex;
@@ -442,8 +466,11 @@ export default function HotCoffeeRanking() {
           flex-direction: column;
           gap: 3px;
           min-width: 0;
-          max-width: 42%;
+          max-width: 34%;
         }
+        .pr-card:not(.is-wide) .pr-player-info { max-width: 42%; }
+        .pr-list-section.cols-2 .pr-player-info { max-width: 45%; }
+
         .pr-name {
           font-size: 1.4rem;
           font-weight: 800;
@@ -477,7 +504,7 @@ export default function HotCoffeeRanking() {
         .pr-right-group {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
           flex-shrink: 0;
         }
 
@@ -507,18 +534,18 @@ export default function HotCoffeeRanking() {
           font-weight: 800;
         }
 
+        /* ---------- Lista general (puesto 4 en adelante) ---------- */
         .pr-list-section {
           display: flex;
           flex-direction: column;
-          gap: 8px;
-          padding: 0 1.2rem 1.5rem;
+          gap: 10px;
+          padding: 0 1.2rem 1.6rem;
         }
-        .pr-card.is-wide .pr-list-section {
+        .pr-card.is-wide .pr-list-section.cols-2 {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 10px 14px;
         }
-        .pr-card.is-wide .pr-row .pr-player-info { max-width: 45%; }
 
         .pr-empty {
           grid-column: 1 / -1;
@@ -610,30 +637,7 @@ export default function HotCoffeeRanking() {
                     <div key={player.id} className={`pr-podium-row top-${index + 1}`}>
                       <span className={`pr-rank ${rankClass}`}>{player.ranking}</span>
 
-                      {characters.length > 0 && (
-                        <div className="pr-art" aria-hidden="true">
-                          {characters.map((charName, i) => {
-                            const conf = PODIUM_ART_CONFIG[charName.toLowerCase()] || DEFAULT_ART;
-                            return (
-                              <div key={`${charName}-${i}`} className="pr-art-frame">
-                                <img
-                                  src={`/fighters/${charName}.png`}
-                                  alt=""
-                                  className="pr-art-img"
-                                  style={{
-                                    objectPosition: conf.objectPosition,
-                                    transform: `scale(${conf.scale || DEFAULT_ART.scale})`,
-                                  }}
-                                  onError={(e) => {
-                                    const frame = e.currentTarget.parentElement;
-                                    if (frame) frame.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                      <FighterArt characters={characters} />
 
                       <div className="pr-name-wrap">
                         <div className="pr-player-info">
@@ -659,8 +663,8 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. LISTA GENERAL (puestos 4 en adelante con el mismo formato que el podio) */}
-          <div className="pr-list-section">
+          {/* 2. LISTA GENERAL (puesto 4 en adelante, mismo formato que el podio) */}
+          <div className={`pr-list-section cols-${LIST_COLUMNS}`}>
             {restPlayers.length === 0 && top3Players.length === 0 && (
               <div className="pr-empty">
                 {status === 'loading' ? 'Cargando ranking…' : 'Todavía no hay jugadores en el ranking.'}
@@ -673,30 +677,7 @@ export default function HotCoffeeRanking() {
                 <div key={player.id} className="pr-row">
                   <span className="pr-rank white">{player.ranking}</span>
 
-                  {characters.length > 0 && (
-                    <div className="pr-art" aria-hidden="true">
-                      {characters.map((charName, i) => {
-                        const conf = PODIUM_ART_CONFIG[charName.toLowerCase()] || DEFAULT_ART;
-                        return (
-                          <div key={`${charName}-${i}`} className="pr-art-frame">
-                            <img
-                              src={`/fighters/${charName}.png`}
-                              alt=""
-                              className="pr-art-img"
-                              style={{
-                                objectPosition: conf.objectPosition,
-                                transform: `scale(${conf.scale || DEFAULT_ART.scale})`,
-                              }}
-                              onError={(e) => {
-                                const frame = e.currentTarget.parentElement;
-                                if (frame) frame.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <FighterArt characters={characters} />
 
                   <div className="pr-name-wrap">
                     <div className="pr-player-info">
@@ -704,7 +685,6 @@ export default function HotCoffeeRanking() {
                         {player.sponsor && <span className="pr-sponsor">{player.sponsor} |</span>}
                         {player.gamerTag}
                       </span>
-
                       {characters.length > 0 && (
                         <span className="pr-fighter-tag">{characters.join(' + ')}</span>
                       )}
