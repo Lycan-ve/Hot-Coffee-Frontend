@@ -327,8 +327,8 @@ export default function HotCoffeeRanking() {
 
         .pr-podium-row.top-1 { height: 96px; }
         .pr-podium-row.top-2 { height: 88px; }
-        .pr-podium-row.top-3 { height: 80px; }
-        .pr-row { height: 80px; }
+        .pr-podium-row.top-3 { height: 88px; }
+        .pr-row { height: 88px; }
 
         .pr-podium-row.top-1 {
           background: linear-gradient(90deg, rgba(208, 202, 83, 0.25) 0%, rgba(29, 18, 10, 0.98) 75%);
@@ -363,16 +363,25 @@ export default function HotCoffeeRanking() {
           margin: 0.2rem 1.2rem 0.8rem;
         }
 
-        /* Arte de personajes aplicado a todas las filas */
-        .pr-art {
+        /* Arte de personajes para el Top 1, 2, 3 (columna única ancha) */
+        .pr-podium-row .pr-art {
           position: absolute;
           top: 0; bottom: 0;
-          left: 36%; right: 26%;
+          left: 32%; right: 22%;
           display: flex;
           z-index: 2;
           pointer-events: none;
         }
-        .pr-card.is-wide .pr-art { left: 32%; right: 22%; }
+
+        /* Arte de personajes para las filas secundarias en vista grid 2 columnas */
+        .pr-row .pr-art {
+          position: absolute;
+          top: 0; bottom: 0;
+          left: 42%; right: 28%;
+          display: flex;
+          z-index: 2;
+          pointer-events: none;
+        }
 
         .pr-art::before, .pr-art::after {
           content: '';
@@ -433,7 +442,7 @@ export default function HotCoffeeRanking() {
           flex-direction: column;
           gap: 3px;
           min-width: 0;
-          max-width: 46%;
+          max-width: 42%;
         }
         .pr-name {
           font-size: 1.4rem;
@@ -509,7 +518,7 @@ export default function HotCoffeeRanking() {
           grid-template-columns: repeat(2, 1fr);
           gap: 10px 14px;
         }
-        .pr-card.is-wide .pr-row .pr-player-info { max-width: 60%; }
+        .pr-card.is-wide .pr-row .pr-player-info { max-width: 45%; }
 
         .pr-empty {
           grid-column: 1 / -1;
@@ -650,7 +659,7 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. LISTA GENERAL (del puesto 4 en adelante con el mismo diseño de artes) */}
+          {/* 2. LISTA GENERAL (puestos 4 en adelante con el mismo formato que el podio) */}
           <div className="pr-list-section">
             {restPlayers.length === 0 && top3Players.length === 0 && (
               <div className="pr-empty">
