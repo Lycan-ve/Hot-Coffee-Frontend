@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toPng } from 'html-to-image';
 
 interface Player {
@@ -13,7 +13,9 @@ interface Player {
   points: number;
 }
 
-// Configuración de enfoque y recorte para cada personaje en el Podio
+type Status = 'loading' | 'ok' | 'offline';
+
+// Enfoque y recorte de cada personaje en el podio
 const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string }> = {
   akali: { objectPosition: 'center 18%', scale: '1.2' },
   yasuo: { objectPosition: 'center 12%', scale: '1.25' },
@@ -32,86 +34,142 @@ const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string
   warwick: { objectPosition: 'center 20%', scale: '1.2' },
 };
 
+const DEFAULT_ART = { objectPosition: 'center 15%', scale: '1.2' };
+const FALLBACK_AVATAR = '/logo-hot-2xko.png';
+const ITEMS_PER_PAGE = 10;
+
+// Valores que el backend puede devolver cuando aún no se asignó personaje (ej. "2XKO_FIGHTER")
+const PLACEHOLDER_CHARACTER = /fighter|2xko|unknown|^n\/?a$|^-+$/i;
+
+// Pixel transparente: si una imagen externa falla al exportar, no rompe todo el PNG
+const BLANK_PIXEL =
+  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+const FALLBACK_PLAYERS: Player[] = [
+  { id: 1, ranking: 1, gamerTag: 'ÑEMBO', sponsor: 'RZS', character: 'AKALI, YASUO', avatarUrl: '', points: 800 },
+  { id: 2, ranking: 2, gamerTag: 'GAPPY', sponsor: 'TKF', character: 'BLITZCRANK', avatarUrl: '', points: 350 },
+  { id: 3, ranking: 3, gamerTag: 'HIAMJOY', sponsor: 'HCN', character: 'DARIUS, BRAUM', avatarUrl: '', points: 300 },
+  { id: 4, ranking: 4, gamerTag: 'MIKU', sponsor: 'FKC', character: 'AHRI', avatarUrl: '', points: 205 },
+];
+
+const parseCharacters = (raw?: string): string[] =>
+  (raw ?? '')
+    .split(',')
+    .map((c) => c.trim())
+    .filter((c) => c && !PLACEHOLDER_CHARACTER.test(c))
+    .map((c) => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase());
+
+function Avatar({ url, alt }: { url?: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
+
+  const src = !failed && url && url.startsWith('http') ? url : FALLBACK_AVATAR;
+
+  return (
+    <div className="pr-user-avatar-frame">
+      <img src={src} alt={alt} onError={() => setFailed(true)} />
+    </div>
+  );
+}
+
 export default function HotCoffeeRanking() {
   const [players, setPlayers] = useState<Player[]>([]);
+  const [status, setStatus] = useState<Status>('loading');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isWide, setIsWide] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [notice, setNotice] = useState('');
   const tableRef = useRef<HTMLDivElement>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-  const fetchRankings = async () => {
+  const fetchRankings = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/api/rankings/2xko`);
-      if (!response.ok) throw new Error('Error en la red');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      setPlayers(Array.isArray(data) ? data : []);
+      const list: Player[] = Array.isArray(data) ? data : [];
+      setPlayers([...list].sort((a, b) => a.ranking - b.ranking));
+      setStatus('ok');
     } catch (error) {
       console.error('Error cargando rankings, aplicando datos de prueba...', error);
-      setPlayers([
-        { id: 1, ranking: 1, gamerTag: 'ÑEMBO', sponsor: 'RZS', character: 'AKALI, YASUO', avatarUrl: '', points: 800 },
-        { id: 2, ranking: 2, gamerTag: 'GAPPY', sponsor: 'TKF', character: 'BLITZCRANK', avatarUrl: '', points: 350 },
-        { id: 3, ranking: 3, gamerTag: 'HIAMJOY', sponsor: 'HCN', character: 'DARIUS, BRAUM', avatarUrl: '', points: 300 },
-        { id: 4, ranking: 4, gamerTag: 'MIKU', sponsor: 'FKC', character: 'AHRI', avatarUrl: '', points: 205 },
-      ]);
+      setPlayers(FALLBACK_PLAYERS);
+      setStatus('offline');
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     fetchRankings();
-    setCurrentPage(1);
+  }, [fetchRankings]);
+
+  // Layout ancho (2 columnas) en pantallas grandes
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const update = () => setIsWide(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
   }, []);
 
-  const ITEMS_PER_PAGE = 10;
-  const totalPages = Math.ceil(players.length / ITEMS_PER_PAGE) || 1;
-  const paginatedPlayers = players.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(''), 4000);
+    return () => clearTimeout(t);
+  }, [notice]);
 
-  const top3Players = currentPage === 1 ? paginatedPlayers.slice(0, 3) : [];
-  const restPlayers = currentPage === 1 ? paginatedPlayers.slice(3) : paginatedPlayers;
+  const totalPages = Math.max(1, Math.ceil(players.length / ITEMS_PER_PAGE));
+  const page = Math.min(currentPage, totalPages);
+
+  const paginatedPlayers = players.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const top3Players = page === 1 ? paginatedPlayers.slice(0, 3) : [];
+  const restPlayers = page === 1 ? paginatedPlayers.slice(3) : paginatedPlayers;
+
+  // Al exportar siempre se usa el layout ancho, así el PNG sale igual desde el celular o la PC
+  const wide = isWide || exporting;
 
   const handleExportPNG = async () => {
-    if (!tableRef.current) return;
+    if (!tableRef.current || exporting) return;
+    setExporting(true);
     try {
-      const dataUrl = await toPng(tableRef.current, { cacheBust: true, pixelRatio: 2.5 });
+      await document.fonts.ready;
+      // Espera a que React aplique el layout ancho antes de capturar
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      );
+      const dataUrl = await toPng(tableRef.current, {
+        cacheBust: true,
+        pixelRatio: 2.5,
+        imagePlaceholder: BLANK_PIXEL,
+      });
       const link = document.createElement('a');
-      link.download = `Power-Ranking-HotCoffee-2XKO-Pag${currentPage}.png`;
+      link.download = `Power-Ranking-HotCoffee-2XKO-Pag${page}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
       console.error('Error al exportar la imagen:', err);
+      setNotice('No se pudo exportar la imagen');
+    } finally {
+      setExporting(false);
     }
   };
 
   const handleSync = async () => {
+    if (syncing) return;
+    setSyncing(true);
     try {
       const res = await fetch(`${API_URL}/api/sync`);
       const json = await res.json();
-      alert(json.message || 'Sincronizado con éxito');
-      fetchRankings();
+      setNotice(json.message || 'Sincronizado con éxito');
+      await fetchRankings();
     } catch (err) {
-      alert('Error al sincronizar con Start.gg');
+      setNotice('Error al sincronizar con Start.gg');
+    } finally {
+      setSyncing(false);
     }
-  };
-
-  const getAvatarSrc = (url?: string) => {
-    if (url && url.startsWith('http')) {
-      return url;
-    }
-    return '/logo-hot-2xko.png';
-  };
-
-  const getCharacterImages = (charString?: string) => {
-    if (!charString) return [];
-    return charString
-      .split(',')
-      .map((c) => {
-        const clean = c.trim().toLowerCase();
-        if (!clean) return '';
-        return clean.charAt(0).toUpperCase() + clean.slice(1);
-      })
-      .filter(Boolean);
   };
 
   return (
@@ -132,45 +190,38 @@ export default function HotCoffeeRanking() {
           font-family: 'Barlow Condensed', sans-serif;
         }
 
+        /* ---------- Controles (fuera de la imagen exportada) ---------- */
         .pr-controls {
           display: flex;
           justify-content: space-between;
           align-items: center;
           width: 540px;
           max-width: 100%;
-          margin-bottom: 1.25rem;
+          margin-bottom: 0.9rem;
           gap: 1rem;
+          flex-wrap: wrap;
         }
-
         @media (min-width: 768px) {
-          .pr-controls {
-            width: 920px;
-          }
+          .pr-controls { width: 920px; }
         }
 
-        .pr-pagination {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
+        .pr-pagination { display: flex; align-items: center; gap: 0.5rem; }
         .pr-page-btn {
           padding: 0.4rem 0.9rem;
           background: #392415;
           color: #f5f5f4;
           border: 1px solid rgba(204, 160, 138, 0.3);
           border-radius: 4px;
+          font-family: inherit;
           font-weight: 700;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background 0.2s, border-color 0.2s;
         }
-        .pr-page-btn:hover:not(:disabled) { background: #b44d1d; color: #f5f5f4; border-color: #b44d1d; }
+        .pr-page-btn:hover:not(:disabled) { background: #b44d1d; border-color: #b44d1d; }
         .pr-page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .pr-page-info { color: #cca08a; font-weight: 700; font-size: 0.95rem; }
 
-        .pr-action-btns {
-          display: flex;
-          gap: 0.5rem;
-        }
+        .pr-action-btns { display: flex; gap: 0.5rem; }
         .pr-sync-btn, .pr-export-btn {
           padding: 0.55rem 1rem;
           background: linear-gradient(90deg, #392415, #22150b);
@@ -183,11 +234,35 @@ export default function HotCoffeeRanking() {
           letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background 0.2s, border-color 0.2s;
           box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
-        .pr-sync-btn:hover, .pr-export-btn:hover { background: #b44d1d; color: #f5f5f4; border-color: #d0ca53; }
+        .pr-sync-btn:hover:not(:disabled), .pr-export-btn:hover:not(:disabled) {
+          background: #b44d1d; border-color: #d0ca53;
+        }
+        .pr-sync-btn:disabled, .pr-export-btn:disabled { opacity: 0.55; cursor: progress; }
+        .pr-sync-btn:focus-visible, .pr-export-btn:focus-visible, .pr-page-btn:focus-visible {
+          outline: 2px solid #d0ca53; outline-offset: 2px;
+        }
 
+        .pr-notice {
+          width: 540px;
+          max-width: 100%;
+          margin-bottom: 0.9rem;
+          padding: 0.45rem 0.8rem;
+          border-radius: 6px;
+          border: 1px solid rgba(208, 202, 83, 0.35);
+          background: rgba(29, 18, 10, 0.8);
+          color: #d0ca53;
+          font-weight: 700;
+          font-size: 0.9rem;
+          letter-spacing: 0.03em;
+        }
+        @media (min-width: 768px) {
+          .pr-notice { width: 920px; }
+        }
+
+        /* ---------- Tarjeta ---------- */
         .pr-card {
           width: 540px;
           max-width: 100%;
@@ -198,12 +273,8 @@ export default function HotCoffeeRanking() {
           overflow: hidden;
           position: relative;
         }
-
-        @media (min-width: 768px) {
-          .pr-card {
-            width: 920px;
-          }
-        }
+        .pr-card.is-wide { width: 920px; }
+        .pr-card.is-exporting { max-width: none; width: 920px; }
 
         .pr-header {
           padding: 1.75rem 1.75rem 1.2rem;
@@ -213,12 +284,9 @@ export default function HotCoffeeRanking() {
           background: linear-gradient(180deg, rgba(180, 77, 29, 0.15) 0%, transparent 100%);
           border-bottom: 1px solid rgba(204, 160, 138, 0.2);
         }
-        .pr-title-area {
-          display: flex;
-          flex-direction: column;
-        }
+        .pr-title-area { display: flex; flex-direction: column; }
         .pr-title {
-          font-family: 'Bebas Neue', cursive;
+          font-family: 'Bebas Neue', Impact, sans-serif;
           font-size: 2.8rem;
           color: #f5f5f4;
           line-height: 0.92;
@@ -226,7 +294,7 @@ export default function HotCoffeeRanking() {
           text-shadow: 0 4px 15px rgba(0,0,0,0.8);
         }
         .pr-subtitle {
-          font-family: 'Bebas Neue', cursive;
+          font-family: 'Bebas Neue', Impact, sans-serif;
           font-size: 1.25rem;
           color: #d0ca53;
           letter-spacing: 0.12em;
@@ -248,12 +316,9 @@ export default function HotCoffeeRanking() {
           flex-shrink: 0;
           transform: rotate(3deg);
         }
-        .pr-logo-badge img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
+        .pr-logo-badge img { width: 100%; height: 100%; object-fit: contain; }
 
+        /* ---------- Podio ---------- */
         .pr-podium-section {
           display: flex;
           flex-direction: column;
@@ -261,62 +326,43 @@ export default function HotCoffeeRanking() {
           padding: 1rem 1.2rem 0.8rem;
         }
 
-        @media (min-width: 768px) {
-          .pr-list-section {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px 14px;
-            padding: 0 1.2rem 1.5rem;
-          }
-        }
-
-        @media (max-width: 767px) {
-          .pr-list-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding: 0 1.2rem 1.5rem;
-          }
-        }
-
         .pr-podium-row, .pr-row {
           position: relative;
           display: flex;
           align-items: center;
-          height: 72px;
           border-radius: 8px;
           overflow: hidden;
           background: #1d120a;
           padding: 0 1rem 0 0.5rem;
         }
 
+        /* El 1° es más alto que el 2° y el 3°: la jerarquía se ve sin leer el número */
+        .pr-podium-row.top-1 { height: 96px; }
+        .pr-podium-row.top-2 { height: 88px; }
+        .pr-podium-row.top-3 { height: 80px; }
+        .pr-row { height: 72px; }
+
         .pr-podium-row.top-1 {
           background: linear-gradient(90deg, rgba(208, 202, 83, 0.25) 0%, rgba(29, 18, 10, 0.98) 75%);
           border: 1px solid #d0ca53;
           box-shadow: 0 4px 18px rgba(208, 202, 83, 0.2);
         }
-        .pr-podium-row.top-1::before {
-          content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
-          background: #d0ca53; box-shadow: 0 0 12px #d0ca53; z-index: 4;
-        }
-
         .pr-podium-row.top-2 {
           background: linear-gradient(90deg, rgba(215, 223, 142, 0.2) 0%, rgba(29, 18, 10, 0.98) 75%);
           border: 1px solid #d7df8e;
         }
-        .pr-podium-row.top-2::before {
-          content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
-          background: #d7df8e; box-shadow: 0 0 10px #d7df8e; z-index: 4;
-        }
-
         .pr-podium-row.top-3 {
           background: linear-gradient(90deg, rgba(115, 140, 62, 0.25) 0%, rgba(29, 18, 10, 0.98) 75%);
           border: 1px solid #738c3e;
         }
-        .pr-podium-row.top-3::before {
-          content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
-          background: #738c3e; box-shadow: 0 0 8px #738c3e; z-index: 4;
+        .pr-podium-row::before {
+          content: '';
+          position: absolute; left: 0; top: 0; bottom: 0;
+          z-index: 4;
         }
+        .pr-podium-row.top-1::before { width: 6px; background: #d0ca53; box-shadow: 0 0 12px #d0ca53; }
+        .pr-podium-row.top-2::before { width: 5px; background: #d7df8e; box-shadow: 0 0 10px #d7df8e; }
+        .pr-podium-row.top-3::before { width: 5px; background: #738c3e; box-shadow: 0 0 8px #738c3e; }
 
         .pr-row {
           background: #191008;
@@ -329,10 +375,50 @@ export default function HotCoffeeRanking() {
           margin: 0.2rem 1.2rem 0.8rem;
         }
 
+        /* Arte de los personajes: franjas con corte diagonal y bordes difuminados.
+           Si hay dúo, cada personaje ocupa la mitad; si hay uno solo, ocupa todo el ancho. */
+        .pr-art {
+          position: absolute;
+          top: 0; bottom: 0;
+          left: 36%; right: 26%;
+          display: flex;
+          z-index: 2;
+          pointer-events: none;
+        }
+        .pr-card.is-wide .pr-art { left: 32%; right: 22%; }
+
+        .pr-art::before, .pr-art::after {
+          content: '';
+          position: absolute;
+          top: 0; bottom: 0;
+          width: 30%;
+          z-index: 3;
+        }
+        .pr-art::before { left: 0;  background: linear-gradient(90deg,  rgba(29, 18, 10, 0.97), transparent); }
+        .pr-art::after  { right: 0; background: linear-gradient(270deg, rgba(29, 18, 10, 0.97), transparent); }
+
+        .pr-art-frame {
+          position: relative;
+          flex: 1 1 0;
+          min-width: 0;
+          overflow: hidden;
+          opacity: 0.92;
+          clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        }
+        .pr-art-frame + .pr-art-frame { margin-left: -6%; }
+        .pr-art-img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
+        }
+
+        /* ---------- Textos ---------- */
         .pr-rank {
           position: relative;
           z-index: 4;
-          font-family: 'Bebas Neue', cursive;
+          font-family: 'Bebas Neue', Impact, sans-serif;
           font-size: 2.6rem;
           width: 44px;
           text-align: center;
@@ -350,20 +436,20 @@ export default function HotCoffeeRanking() {
           z-index: 4;
           margin-left: 8px;
           flex: 1;
+          min-width: 0;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          overflow: hidden;
         }
 
         .pr-player-info {
           display: flex;
           flex-direction: column;
-          gap: 2px;
-          max-width: 50%;
+          gap: 3px;
+          min-width: 0;
+          max-width: 46%;
         }
         .pr-name {
-          font-family: 'Barlow Condensed', sans-serif;
           font-size: 1.4rem;
           font-weight: 800;
           font-style: italic;
@@ -379,13 +465,10 @@ export default function HotCoffeeRanking() {
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .pr-sponsor {
-          color: #b44d1d;
-          font-style: normal;
-          font-weight: 800;
-        }
+        .pr-podium-row.top-1 .pr-name { font-size: 1.6rem; }
+        .pr-sponsor { color: #b44d1d; font-style: normal; font-weight: 800; flex-shrink: 0; }
+
         .pr-fighter-tag {
-          font-family: 'Barlow Condensed', sans-serif;
           font-size: 0.78rem;
           font-weight: 700;
           color: #cca08a;
@@ -396,45 +479,8 @@ export default function HotCoffeeRanking() {
           text-overflow: ellipsis;
         }
 
-        /* Banner horizontal para los artes recortados del Podio */
-        .pr-podium-banner-bg {
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 0;
-          bottom: 0;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          opacity: 0.88;
-          pointer-events: none;
-          z-index: 2;
-          overflow: hidden;
-        }
-
-        .pr-podium-banner-frame {
-          width: 175px;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          margin: 0 -12px;
-        }
-
-        .pr-podium-banner-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
-        }
-
         /* Miniaturas circulares en la lista general */
-        .pr-fighter-icons {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
+        .pr-fighter-icons { display: flex; align-items: center; gap: 4px; min-height: 24px; }
         .pr-fighter-icon {
           width: 24px;
           height: 24px;
@@ -449,7 +495,6 @@ export default function HotCoffeeRanking() {
           align-items: center;
           gap: 12px;
           flex-shrink: 0;
-          z-index: 4;
         }
 
         .pr-user-avatar-frame {
@@ -462,15 +507,10 @@ export default function HotCoffeeRanking() {
           box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
           flex-shrink: 0;
         }
-
-        .pr-user-avatar-frame img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
+        .pr-user-avatar-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .pr-points {
-          font-family: 'Bebas Neue', cursive;
+          font-family: 'Bebas Neue', Impact, sans-serif;
           font-size: 1.4rem;
           color: #392415;
           background: #d0ca53;
@@ -478,10 +518,32 @@ export default function HotCoffeeRanking() {
           padding: 3px 12px;
           border-radius: 6px;
           letter-spacing: 0.05em;
-          text-shadow: none;
           box-shadow: 0 0 12px rgba(208, 202, 83, 0.3);
           white-space: nowrap;
           font-weight: 800;
+        }
+
+        /* ---------- Lista general ---------- */
+        .pr-list-section {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 0 1.2rem 1.5rem;
+        }
+        .pr-card.is-wide .pr-list-section {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px 14px;
+        }
+        .pr-card.is-wide .pr-row .pr-player-info { max-width: 60%; }
+
+        .pr-empty {
+          grid-column: 1 / -1;
+          text-align: center;
+          padding: 1.5rem 0;
+          color: #cca08a;
+          font-weight: 700;
+          letter-spacing: 0.05em;
         }
 
         .pr-footer {
@@ -491,7 +553,6 @@ export default function HotCoffeeRanking() {
           padding: 0.7rem 1.2rem 0.9rem;
           border-top: 1px solid rgba(204, 160, 138, 0.2);
           background: rgba(37, 23, 13, 0.7);
-          font-family: 'Barlow Condensed', sans-serif;
           font-size: 0.8rem;
           font-weight: 700;
           color: #cca08a;
@@ -504,34 +565,44 @@ export default function HotCoffeeRanking() {
           <div className="pr-pagination">
             <button
               className="pr-page-btn"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
+              disabled={page === 1}
+              onClick={() => setCurrentPage(page - 1)}
+              aria-label="Página anterior"
             >
               ◀ Ant
             </button>
             <span className="pr-page-info">
-              Pág {currentPage} / {totalPages}
+              Pág {page} / {totalPages}
             </span>
             <button
               className="pr-page-btn"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
+              disabled={page === totalPages}
+              onClick={() => setCurrentPage(page + 1)}
+              aria-label="Página siguiente"
             >
               Sig ▶
             </button>
           </div>
 
           <div className="pr-action-btns">
-            <button className="pr-sync-btn" onClick={handleSync}>
-              ⟳ Sincronizar
+            <button className="pr-sync-btn" onClick={handleSync} disabled={syncing}>
+              {syncing ? 'Sincronizando…' : '⟳ Sincronizar'}
             </button>
-            <button className="pr-export-btn" onClick={handleExportPNG}>
-              ↓ PNG
+            <button className="pr-export-btn" onClick={handleExportPNG} disabled={exporting}>
+              {exporting ? 'Generando…' : '↓ PNG'}
             </button>
           </div>
         </div>
 
-        <div ref={tableRef} className="pr-card">
+        {status === 'offline' && !notice && (
+          <div className="pr-notice">Sin conexión con la API: mostrando datos de prueba.</div>
+        )}
+        {notice && <div className="pr-notice">{notice}</div>}
+
+        <div
+          ref={tableRef}
+          className={`pr-card${wide ? ' is-wide' : ''}${exporting ? ' is-exporting' : ''}`}
+        >
           <div className="pr-header">
             <div className="pr-title-area">
               <div className="pr-title">
@@ -540,78 +611,61 @@ export default function HotCoffeeRanking() {
               <div className="pr-subtitle">ORGANIZADO POR BANEADO SENSEI</div>
             </div>
             <div className="pr-logo-badge">
-              <img
-                src="/logo-Hot.jpg"
-                alt="Hot Coffee x 2XKO"
-                onError={(e) => {
-                  e.currentTarget.src = '/logo-Hot.jpg';
-                }}
-              />
+              <img src="/logo-Hot.jpg" alt="Hot Coffee x 2XKO" />
             </div>
           </div>
 
-          {/* 1. PODIO (Top 1, 2, 3) con artes enmarcardos estilo banner */}
-          {currentPage === 1 && top3Players.length > 0 && (
+          {/* 1. PODIO (Top 3) */}
+          {top3Players.length > 0 && (
             <>
               <div className="pr-podium-section">
-                {top3Players.map((player) => {
-                  const isTop1 = player.ranking === 1;
-                  const isTop2 = player.ranking === 2;
-
-                  const podiumClass = [
-                    'pr-podium-row',
-                    isTop1 ? 'top-1' : isTop2 ? 'top-2' : 'top-3',
-                  ].join(' ');
-
-                  const rankClass = isTop1 ? 'pr-rank gold' : isTop2 ? 'pr-rank silver' : 'pr-rank bronze';
+                {top3Players.map((player, index) => {
+                  const characters = parseCharacters(player.character);
+                  const rankClass = ['gold', 'silver', 'bronze'][index];
 
                   return (
-                    <div key={player.id} className={podiumClass}>
-                      <span className={rankClass}>{player.ranking}</span>
+                    <div key={player.id} className={`pr-podium-row top-${index + 1}`}>
+                      <span className={`pr-rank ${rankClass}`}>{player.ranking}</span>
 
-                      <div className="pr-podium-banner-bg">
-                        {getCharacterImages(player.character).map((charName, index) => {
-                          const conf = PODIUM_ART_CONFIG[charName.toLowerCase()] || {};
-                          return (
-                            <div key={index} className="pr-podium-banner-frame">
-                              <img
-                                src={`/fighters/${charName}.png`}
-                                alt={charName}
-                                className="pr-podium-banner-img"
-                                style={{
-                                  objectPosition: conf.objectPosition || 'center 15%',
-                                  transform: `scale(${conf.scale || '1.2'})`,
-                                }}
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
+                      {characters.length > 0 && (
+                        <div className="pr-art" aria-hidden="true">
+                          {characters.map((charName, i) => {
+                            const conf = PODIUM_ART_CONFIG[charName.toLowerCase()] || DEFAULT_ART;
+                            return (
+                              <div key={`${charName}-${i}`} className="pr-art-frame">
+                                <img
+                                  src={`/fighters/${charName}.png`}
+                                  alt=""
+                                  className="pr-art-img"
+                                  style={{
+                                    objectPosition: conf.objectPosition,
+                                    transform: `scale(${conf.scale || DEFAULT_ART.scale})`,
+                                  }}
+                                  onError={(e) => {
+                                    // Si falta la imagen, el otro personaje ocupa todo el espacio
+                                    const frame = e.currentTarget.parentElement;
+                                    if (frame) frame.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
 
                       <div className="pr-name-wrap">
                         <div className="pr-player-info">
                           <span className="pr-name">
-                            {player.sponsor && (
-                              <span className="pr-sponsor">{player.sponsor} |</span>
-                            )}
+                            {player.sponsor && <span className="pr-sponsor">{player.sponsor} |</span>}
                             {player.gamerTag}
                           </span>
-                          <span className="pr-fighter-tag">{player.character}</span>
+                          {characters.length > 0 && (
+                            <span className="pr-fighter-tag">{characters.join(' + ')}</span>
+                          )}
                         </div>
 
                         <div className="pr-right-group">
-                          <div className="pr-user-avatar-frame">
-                            <img
-                              src={getAvatarSrc(player.avatarUrl)}
-                              alt={player.gamerTag}
-                              onError={(e) => {
-                                e.currentTarget.src = '/logo.png';
-                              }}
-                            />
-                          </div>
+                          <Avatar url={player.avatarUrl} alt={player.gamerTag} />
                           <span className="pr-points">{player.points} PTS</span>
                         </div>
                       </div>
@@ -623,55 +677,59 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. LISTA GENERAL (Puestos 4 en adelante) */}
+          {/* 2. LISTA GENERAL (del puesto 4 en adelante) */}
           <div className="pr-list-section">
-            {restPlayers.map((player) => (
-              <div key={player.id} className="pr-row">
-                <span className="pr-rank white">{player.ranking}</span>
+            {restPlayers.length === 0 && top3Players.length === 0 && (
+              <div className="pr-empty">
+                {status === 'loading' ? 'Cargando ranking…' : 'Todavía no hay jugadores en el ranking.'}
+              </div>
+            )}
 
-                <div className="pr-name-wrap">
-                  <div className="pr-player-info">
-                    <span className="pr-name">
-                      {player.sponsor && (
-                        <span className="pr-sponsor">{player.sponsor} |</span>
+            {restPlayers.map((player) => {
+              const characters = parseCharacters(player.character);
+              return (
+                <div key={player.id} className="pr-row">
+                  <span className="pr-rank white">{player.ranking}</span>
+
+                  <div className="pr-name-wrap">
+                    <div className="pr-player-info">
+                      <span className="pr-name">
+                        {player.sponsor && <span className="pr-sponsor">{player.sponsor} |</span>}
+                        {player.gamerTag}
+                      </span>
+
+                      {characters.length > 0 && (
+                        <div className="pr-fighter-icons">
+                          {characters.map((charName, i) => (
+                            <img
+                              key={`${charName}-${i}`}
+                              src={`/fighters/${charName}.png`}
+                              alt={charName}
+                              title={charName}
+                              className="pr-fighter-icon"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ))}
+                        </div>
                       )}
-                      {player.gamerTag}
-                    </span>
-                    
-                    <div className="pr-fighter-icons">
-                      {getCharacterImages(player.character).map((charName, index) => (
-                        <img
-                          key={index}
-                          src={`/fighters/${charName}.png`}
-                          alt={charName}
-                          className="pr-fighter-icon"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      ))}
                     </div>
-                  </div>
 
-                  <div className="pr-right-group">
-                    <div className="pr-user-avatar-frame">
-                      <img
-                        src={getAvatarSrc(player.avatarUrl)}
-                        alt={player.gamerTag}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
+                    <div className="pr-right-group">
+                      <Avatar url={player.avatarUrl} alt={player.gamerTag} />
+                      <span className="pr-points">{player.points} PTS</span>
                     </div>
-                    <span className="pr-points">{player.points} PTS</span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="pr-footer">
-            <span>Página {currentPage} de {totalPages}</span>
+            <span>
+              Página {page} de {totalPages}
+            </span>
             <span>Hot Coffee 2XKO Circuit</span>
           </div>
         </div>
