@@ -83,7 +83,6 @@ export default function HotCoffeeRanking() {
     return '/logo-hot-2xko.png';
   };
 
-  // Función para formatear nombres de personajes y buscar su imagen
   const getCharacterImages = (charString?: string) => {
     if (!charString) return [];
     return charString
@@ -279,7 +278,7 @@ export default function HotCoffeeRanking() {
         }
         .pr-podium-row.top-1::before {
           content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
-          background: #d0ca53; box-shadow: 0 0 12px #d0ca53; z-index: 3;
+          background: #d0ca53; box-shadow: 0 0 12px #d0ca53; z-index: 4;
         }
 
         .pr-podium-row.top-2 {
@@ -288,7 +287,7 @@ export default function HotCoffeeRanking() {
         }
         .pr-podium-row.top-2::before {
           content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
-          background: #d7df8e; box-shadow: 0 0 10px #d7df8e; z-index: 3;
+          background: #d7df8e; box-shadow: 0 0 10px #d7df8e; z-index: 4;
         }
 
         .pr-podium-row.top-3 {
@@ -297,7 +296,7 @@ export default function HotCoffeeRanking() {
         }
         .pr-podium-row.top-3::before {
           content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
-          background: #738c3e; box-shadow: 0 0 8px #738c3e; z-index: 3;
+          background: #738c3e; box-shadow: 0 0 8px #738c3e; z-index: 4;
         }
 
         .pr-row {
@@ -378,23 +377,25 @@ export default function HotCoffeeRanking() {
           text-overflow: ellipsis;
         }
 
-        /* Estilos para el arte grande de los personajes en el Podio (Top 3) */
+        /* Personajes centrados y con height de 430% */
         .pr-podium-art-bg {
           position: absolute;
-          right: 150px;
+          left: 0;
+          right: 0;
           top: 0;
           bottom: 0;
           display: flex;
+          justify-content: center;
           align-items: center;
-          gap: -15px;
-          opacity: 0.85;
+          gap: -10px;
+          opacity: 0.9;
           pointer-events: none;
           z-index: 2;
           overflow: hidden;
         }
         .pr-podium-art-img {
-          height: 105%;
-          object-fit: cover;
+          height: 430%;
+          object-fit: contain;
           filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
         }
 
@@ -519,7 +520,7 @@ export default function HotCoffeeRanking() {
             </div>
           </div>
 
-          {/* 1. SECCIÓN PODIO (Top 1, 2, 3 con Renders Grandes de Fondo) */}
+          {/* 1. SECCIÓN PODIO (Top 1, 2, 3 con Renders Gigantes Centrados) */}
           {currentPage === 1 && top3Players.length > 0 && (
             <>
               <div className="pr-podium-section">
@@ -538,7 +539,7 @@ export default function HotCoffeeRanking() {
                     <div key={player.id} className={podiumClass}>
                       <span className={rankClass}>{player.ranking}</span>
 
-                      {/* Arte grande de los personajes en el fondo del podio */}
+                      {/* Arte centrado con height: 430% */}
                       <div className="pr-podium-art-bg">
                         {getCharacterImages(player.character).map((charName, index) => (
                           <img
@@ -585,7 +586,7 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. SECCIÓN LISTA GENERAL (Puestos 4 en adelante con miniaturas) */}
+          {/* 2. SECCIÓN LISTA GENERAL (Puestos 4 en adelante) */}
           <div className="pr-list-section">
             {restPlayers.map((player) => (
               <div key={player.id} className="pr-row">
@@ -600,7 +601,6 @@ export default function HotCoffeeRanking() {
                       {player.gamerTag}
                     </span>
                     
-                    {/* Miniaturas de personajes para la lista general */}
                     <div className="pr-fighter-icons">
                       {getCharacterImages(player.character).map((charName, index) => (
                         <img
