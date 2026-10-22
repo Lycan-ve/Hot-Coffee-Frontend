@@ -13,23 +13,23 @@ interface Player {
   points: number;
 }
 
-// Configuración individual por personaje para encuadrar rostros y ajustar escalas
-const CHARACTER_CONFIG: Record<string, { scale?: string; objectPosition?: string; margin?: string }> = {
-  akali: { scale: '1.25', objectPosition: 'center 15%', margin: '0 -15px' },
-  yasuo: { scale: '1.2', objectPosition: 'center 10%', margin: '0 -15px' },
-  blitzcrank: { scale: '1.1', objectPosition: 'center 18%', margin: '0 -10px' },
-  braum: { scale: '1.15', objectPosition: 'center 8%', margin: '0 -15px' },
-  darius: { scale: '1.2', objectPosition: 'center 10%', margin: '0 -15px' },
-  ahri: { scale: '1.3', objectPosition: 'center 12%', margin: '0 -20px' },
-  ekko: { scale: '1.25', objectPosition: 'center 12%', margin: '0 -15px' },
-  illaoi: { scale: '1.2', objectPosition: 'center 10%', margin: '0 -15px' },
-  jinx: { scale: '1.3', objectPosition: 'center 10%', margin: '0 -20px' },
-  lux: { scale: '1.25', objectPosition: 'center 8%', margin: '0 -15px' },
-  senna: { scale: '1.2', objectPosition: 'center 12%', margin: '0 -15px' },
-  teemo: { scale: '1.35', objectPosition: 'center 35%', margin: '0 -20px' },
-  thresh: { scale: '1.15', objectPosition: 'center 12%', margin: '0 -10px' },
-  vi: { scale: '1.25', objectPosition: 'center 8%', margin: '0 -15px' },
-  warwick: { scale: '1.2', objectPosition: 'center 18%', margin: '0 -10px' },
+// Configuración de enfoque y recorte para cada personaje en el Podio
+const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string }> = {
+  akali: { objectPosition: 'center 18%', scale: '1.2' },
+  yasuo: { objectPosition: 'center 12%', scale: '1.25' },
+  blitzcrank: { objectPosition: 'center 22%', scale: '1.15' },
+  braum: { objectPosition: 'center 12%', scale: '1.2' },
+  darius: { objectPosition: 'center 14%', scale: '1.2' },
+  ahri: { objectPosition: 'center 15%', scale: '1.3' },
+  ekko: { objectPosition: 'center 15%', scale: '1.25' },
+  illaoi: { objectPosition: 'center 12%', scale: '1.2' },
+  jinx: { objectPosition: 'center 12%', scale: '1.3' },
+  lux: { objectPosition: 'center 10%', scale: '1.25' },
+  senna: { objectPosition: 'center 14%', scale: '1.2' },
+  teemo: { objectPosition: 'center 38%', scale: '1.35' },
+  thresh: { objectPosition: 'center 15%', scale: '1.15' },
+  vi: { objectPosition: 'center 10%', scale: '1.25' },
+  warwick: { objectPosition: 'center 20%', scale: '1.2' },
 };
 
 export default function HotCoffeeRanking() {
@@ -360,7 +360,7 @@ export default function HotCoffeeRanking() {
           display: flex;
           flex-direction: column;
           gap: 2px;
-          max-width: 55%;
+          max-width: 50%;
         }
         .pr-name {
           font-family: 'Barlow Condensed', sans-serif;
@@ -396,8 +396,8 @@ export default function HotCoffeeRanking() {
           text-overflow: ellipsis;
         }
 
-        /* Contenedor de los artes del podio */
-        .pr-podium-art-bg {
+        /* Banner horizontal para los artes recortados del Podio */
+        .pr-podium-banner-bg {
           position: absolute;
           left: 0;
           right: 0;
@@ -406,30 +406,30 @@ export default function HotCoffeeRanking() {
           display: flex;
           justify-content: center;
           align-items: center;
-          opacity: 0.9;
+          opacity: 0.88;
           pointer-events: none;
           z-index: 2;
           overflow: hidden;
         }
 
-        /* Marco recortador dinámico para cada personaje */
-        .pr-podium-art-frame {
-          width: 160px;
+        .pr-podium-banner-frame {
+          width: 175px;
           height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
+          margin: 0 -12px;
         }
 
-        .pr-podium-art-img {
+        .pr-podium-banner-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
           filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
         }
 
-        /* Miniaturas para la lista general (Puestos 4 en adelante) */
+        /* Miniaturas circulares en la lista general */
         .pr-fighter-icons {
           display: flex;
           align-items: center;
@@ -550,7 +550,7 @@ export default function HotCoffeeRanking() {
             </div>
           </div>
 
-          {/* 1. SECCIÓN PODIO (Top 1, 2, 3) */}
+          {/* 1. PODIO (Top 1, 2, 3) con artes enmarcardos estilo banner */}
           {currentPage === 1 && top3Players.length > 0 && (
             <>
               <div className="pr-podium-section">
@@ -569,22 +569,17 @@ export default function HotCoffeeRanking() {
                     <div key={player.id} className={podiumClass}>
                       <span className={rankClass}>{player.ranking}</span>
 
-                      {/* Renderizado de artes con object-fit/object-position e escala individual */}
-                      <div className="pr-podium-art-bg">
+                      <div className="pr-podium-banner-bg">
                         {getCharacterImages(player.character).map((charName, index) => {
-                          const conf = CHARACTER_CONFIG[charName.toLowerCase()] || {};
+                          const conf = PODIUM_ART_CONFIG[charName.toLowerCase()] || {};
                           return (
-                            <div
-                              key={index}
-                              className="pr-podium-art-frame"
-                              style={{ margin: conf.margin || '0 -15px' }}
-                            >
+                            <div key={index} className="pr-podium-banner-frame">
                               <img
                                 src={`/fighters/${charName}.png`}
                                 alt={charName}
-                                className="pr-podium-art-img"
+                                className="pr-podium-banner-img"
                                 style={{
-                                  objectPosition: conf.objectPosition || 'center 12%',
+                                  objectPosition: conf.objectPosition || 'center 15%',
                                   transform: `scale(${conf.scale || '1.2'})`,
                                 }}
                                 onError={(e) => {
@@ -628,7 +623,7 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. SECCIÓN LISTA GENERAL */}
+          {/* 2. LISTA GENERAL (Puestos 4 en adelante) */}
           <div className="pr-list-section">
             {restPlayers.map((player) => (
               <div key={player.id} className="pr-row">
@@ -664,7 +659,7 @@ export default function HotCoffeeRanking() {
                         src={getAvatarSrc(player.avatarUrl)}
                         alt={player.gamerTag}
                         onError={(e) => {
-                          e.currentTarget.src = '/logo.png';
+                          e.currentTarget.style.display = 'none';
                         }}
                       />
                     </div>
