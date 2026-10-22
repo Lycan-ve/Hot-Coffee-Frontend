@@ -13,6 +13,25 @@ interface Player {
   points: number;
 }
 
+// Configuración individual por personaje para encuadrar rostros y ajustar escalas
+const CHARACTER_CONFIG: Record<string, { scale?: string; objectPosition?: string; margin?: string }> = {
+  akali: { scale: '1.25', objectPosition: 'center 15%', margin: '0 -15px' },
+  yasuo: { scale: '1.2', objectPosition: 'center 10%', margin: '0 -15px' },
+  blitzcrank: { scale: '1.1', objectPosition: 'center 18%', margin: '0 -10px' },
+  braum: { scale: '1.15', objectPosition: 'center 8%', margin: '0 -15px' },
+  darius: { scale: '1.2', objectPosition: 'center 10%', margin: '0 -15px' },
+  ahri: { scale: '1.3', objectPosition: 'center 12%', margin: '0 -20px' },
+  ekko: { scale: '1.25', objectPosition: 'center 12%', margin: '0 -15px' },
+  illaoi: { scale: '1.2', objectPosition: 'center 10%', margin: '0 -15px' },
+  jinx: { scale: '1.3', objectPosition: 'center 10%', margin: '0 -20px' },
+  lux: { scale: '1.25', objectPosition: 'center 8%', margin: '0 -15px' },
+  senna: { scale: '1.2', objectPosition: 'center 12%', margin: '0 -15px' },
+  teemo: { scale: '1.35', objectPosition: 'center 35%', margin: '0 -20px' },
+  thresh: { scale: '1.15', objectPosition: 'center 12%', margin: '0 -10px' },
+  vi: { scale: '1.25', objectPosition: 'center 8%', margin: '0 -15px' },
+  warwick: { scale: '1.2', objectPosition: 'center 18%', margin: '0 -10px' },
+};
+
 export default function HotCoffeeRanking() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -32,7 +51,7 @@ export default function HotCoffeeRanking() {
         { id: 1, ranking: 1, gamerTag: 'ÑEMBO', sponsor: 'RZS', character: 'AKALI, YASUO', avatarUrl: '', points: 800 },
         { id: 2, ranking: 2, gamerTag: 'GAPPY', sponsor: 'TKF', character: 'BLITZCRANK', avatarUrl: '', points: 350 },
         { id: 3, ranking: 3, gamerTag: 'HIAMJOY', sponsor: 'HCN', character: 'DARIUS, BRAUM', avatarUrl: '', points: 300 },
-        { id: 4, ranking: 4, gamerTag: 'MIKU', sponsor: 'FKC', character: 'EKKO', avatarUrl: '', points: 205 },
+        { id: 4, ranking: 4, gamerTag: 'MIKU', sponsor: 'FKC', character: 'AHRI', avatarUrl: '', points: 205 },
       ]);
     }
   };
@@ -377,7 +396,7 @@ export default function HotCoffeeRanking() {
           text-overflow: ellipsis;
         }
 
-        /* AJUSTES: Personajes más grandes (500%), más juntos (gap negativo) y bajados para ver las caras */
+        /* Contenedor de los artes del podio */
         .pr-podium-art-bg {
           position: absolute;
           left: 0;
@@ -386,17 +405,27 @@ export default function HotCoffeeRanking() {
           bottom: 0;
           display: flex;
           justify-content: center;
-          align-items: flex-end; /* Baja los personajes para verles la cara */
-          gap: -35px; /* Acorta la distancia/superpone los personajes */
+          align-items: center;
           opacity: 0.9;
           pointer-events: none;
           z-index: 2;
           overflow: hidden;
         }
+
+        /* Marco recortador dinámico para cada personaje */
+        .pr-podium-art-frame {
+          width: 160px;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
         .pr-podium-art-img {
-          height: 500%; /* Aumenta el tamaño individual */
-          object-fit: contain;
-          transform: translateY(22px); /* Desplazamiento vertical fino hacia abajo */
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
           filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
         }
 
@@ -521,7 +550,7 @@ export default function HotCoffeeRanking() {
             </div>
           </div>
 
-          {/* 1. SECCIÓN PODIO (Top 1, 2, 3 con Renders Gigantes, Bajados y Cercanos) */}
+          {/* 1. SECCIÓN PODIO (Top 1, 2, 3) */}
           {currentPage === 1 && top3Players.length > 0 && (
             <>
               <div className="pr-podium-section">
@@ -540,19 +569,31 @@ export default function HotCoffeeRanking() {
                     <div key={player.id} className={podiumClass}>
                       <span className={rankClass}>{player.ranking}</span>
 
-                      {/* Arte centrado, bajado y con mayor tamaño */}
+                      {/* Renderizado de artes con object-fit/object-position e escala individual */}
                       <div className="pr-podium-art-bg">
-                        {getCharacterImages(player.character).map((charName, index) => (
-                          <img
-                            key={index}
-                            src={`/fighters/${charName}.png`}
-                            alt={charName}
-                            className="pr-podium-art-img"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ))}
+                        {getCharacterImages(player.character).map((charName, index) => {
+                          const conf = CHARACTER_CONFIG[charName.toLowerCase()] || {};
+                          return (
+                            <div
+                              key={index}
+                              className="pr-podium-art-frame"
+                              style={{ margin: conf.margin || '0 -15px' }}
+                            >
+                              <img
+                                src={`/fighters/${charName}.png`}
+                                alt={charName}
+                                className="pr-podium-art-img"
+                                style={{
+                                  objectPosition: conf.objectPosition || 'center 12%',
+                                  transform: `scale(${conf.scale || '1.2'})`,
+                                }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
 
                       <div className="pr-name-wrap">
@@ -587,7 +628,7 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. SECCIÓN LISTA GENERAL (Puestos 4 en adelante) */}
+          {/* 2. SECCIÓN LISTA GENERAL */}
           <div className="pr-list-section">
             {restPlayers.map((player) => (
               <div key={player.id} className="pr-row">
