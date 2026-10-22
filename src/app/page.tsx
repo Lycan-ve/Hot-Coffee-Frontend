@@ -17,21 +17,22 @@ type Status = 'loading' | 'ok' | 'offline';
 
 // Enfoque y recorte de cada personaje en las filas
 const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string }> = {
+  caitlyn: { objectPosition: 'center -25%', scale: '2.5' },
   akali: { objectPosition: 'center 12%', scale: '2.00' },
   yasuo: { objectPosition: 'center 12%', scale: '2.00' },
-  blitzcrank: { objectPosition: 'center 22%', scale: '1.15' },
-  braum: { objectPosition: 'center 12%', scale: '1.2' },
+  blitzcrank: { objectPosition: 'center -20%', scale: '2.5' },
+  braum: { objectPosition: 'center -10%', scale: '2.5' },
   darius: { objectPosition: 'center 14%', scale: '1.2' },
-  ahri: { objectPosition: 'center 15%', scale: '1.3' },
-  ekko: { objectPosition: 'center 0%', scale: '2.00' },
-  illaoi: { objectPosition: 'center 12%', scale: '1.2' },
-  jinx: { objectPosition: 'center 12%', scale: '1.3' },
+  ahri: { objectPosition: 'center -6%', scale: '2.0' },
+  ekko: { objectPosition: 'center -10%', scale: '2.00' },
+  illaoi: { objectPosition: 'center -10%', scale: '2.5' },
+  jinx: { objectPosition: 'center 0%', scale: '2.5' },
   lux: { objectPosition: 'center 10%', scale: '1.25' },
   senna: { objectPosition: 'center 14%', scale: '1.2' },
-  teemo: { objectPosition: 'center 38%', scale: '1.35' },
-  thresh: { objectPosition: 'center 15%', scale: '1.15' },
-  vi: { objectPosition: 'center 10%', scale: '1.25' },
-  warwick: { objectPosition: 'center 20%', scale: '1.2' },
+  teemo: { objectPosition: 'center 70%', scale: '1.35' },
+  thresh: { objectPosition: 'center -15%', scale: '2.5' },
+  vi: { objectPosition: 'center -5%', scale: '2.0' },
+  warwick: { objectPosition: 'center 35%', scale: '2.5' },
 };
 
 const DEFAULT_ART = { objectPosition: 'center 15%', scale: '1.2' };
@@ -362,10 +363,10 @@ export default function HotCoffeeRanking() {
           padding: 0 1.1rem 0 0.5rem;
         }
 
-        .pr-podium-row.top-1 { height: 96px; }
-        .pr-podium-row.top-2 { height: 88px; }
-        .pr-podium-row.top-3 { height: 88px; }
-        .pr-row { height: 88px; }
+        .pr-podium-row.top-1 { height: 100px; }
+        .pr-podium-row.top-2 { height: 90px; }
+        .pr-podium-row.top-3 { height: 90px; }
+        .pr-row { height: 90px; }
 
         .pr-podium-row.top-1 {
           background: linear-gradient(90deg, rgba(208, 202, 83, 0.25) 0%, rgba(29, 18, 10, 0.98) 75%);
