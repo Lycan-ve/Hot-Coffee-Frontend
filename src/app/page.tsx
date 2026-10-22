@@ -15,15 +15,15 @@ interface Player {
 
 type Status = 'loading' | 'ok' | 'offline';
 
-// Enfoque y recorte de cada personaje en el podio
+// Enfoque y recorte de cada personaje en las filas
 const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string }> = {
-  akali: { objectPosition: 'center 18%', scale: '1.2' },
-  yasuo: { objectPosition: 'center 12%', scale: '1.25' },
+  akali: { objectPosition: 'center 12%', scale: '2.00' },
+  yasuo: { objectPosition: 'center 12%', scale: '2.00' },
   blitzcrank: { objectPosition: 'center 22%', scale: '1.15' },
   braum: { objectPosition: 'center 12%', scale: '1.2' },
   darius: { objectPosition: 'center 14%', scale: '1.2' },
   ahri: { objectPosition: 'center 15%', scale: '1.3' },
-  ekko: { objectPosition: 'center 15%', scale: '1.25' },
+  ekko: { objectPosition: 'center 0%', scale: '2.00' },
   illaoi: { objectPosition: 'center 12%', scale: '1.2' },
   jinx: { objectPosition: 'center 12%', scale: '1.3' },
   lux: { objectPosition: 'center 10%', scale: '1.25' },
@@ -35,13 +35,11 @@ const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string
 };
 
 const DEFAULT_ART = { objectPosition: 'center 15%', scale: '1.2' };
-const FALLBACK_AVATAR = '/logo-hot-2xko.png';
+const FALLBACK_AVATAR = '/logo-Hot.jpg';
 const ITEMS_PER_PAGE = 10;
 
-// Valores que el backend puede devolver cuando aún no se asignó personaje (ej. "2XKO_FIGHTER")
-const PLACEHOLDER_CHARACTER = /fighter|2xko|unknown|^n\/?a$|^-+$/i;
+const PLACEHOLDER_CHARACTER = /fighter|2xko|unknown|^n\/?a$\vert{}^-+$/i;
 
-// Pixel transparente: si una imagen externa falla al exportar, no rompe todo el PNG
 const BLANK_PIXEL =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
@@ -106,7 +104,6 @@ export default function HotCoffeeRanking() {
     fetchRankings();
   }, [fetchRankings]);
 
-  // Layout ancho (2 columnas) en pantallas grandes
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
     const update = () => setIsWide(mq.matches);
@@ -128,7 +125,6 @@ export default function HotCoffeeRanking() {
   const top3Players = page === 1 ? paginatedPlayers.slice(0, 3) : [];
   const restPlayers = page === 1 ? paginatedPlayers.slice(3) : paginatedPlayers;
 
-  // Al exportar siempre se usa el layout ancho, así el PNG sale igual desde el celular o la PC
   const wide = isWide || exporting;
 
   const handleExportPNG = async () => {
@@ -136,7 +132,6 @@ export default function HotCoffeeRanking() {
     setExporting(true);
     try {
       await document.fonts.ready;
-      // Espera a que React aplique el layout ancho antes de capturar
       await new Promise<void>((resolve) =>
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
       );
@@ -190,7 +185,6 @@ export default function HotCoffeeRanking() {
           font-family: 'Barlow Condensed', sans-serif;
         }
 
-        /* ---------- Controles (fuera de la imagen exportada) ---------- */
         .pr-controls {
           display: flex;
           justify-content: space-between;
@@ -241,9 +235,6 @@ export default function HotCoffeeRanking() {
           background: #b44d1d; border-color: #d0ca53;
         }
         .pr-sync-btn:disabled, .pr-export-btn:disabled { opacity: 0.55; cursor: progress; }
-        .pr-sync-btn:focus-visible, .pr-export-btn:focus-visible, .pr-page-btn:focus-visible {
-          outline: 2px solid #d0ca53; outline-offset: 2px;
-        }
 
         .pr-notice {
           width: 540px;
@@ -262,7 +253,6 @@ export default function HotCoffeeRanking() {
           .pr-notice { width: 920px; }
         }
 
-        /* ---------- Tarjeta ---------- */
         .pr-card {
           width: 540px;
           max-width: 100%;
@@ -318,7 +308,6 @@ export default function HotCoffeeRanking() {
         }
         .pr-logo-badge img { width: 100%; height: 100%; object-fit: contain; }
 
-        /* ---------- Podio ---------- */
         .pr-podium-section {
           display: flex;
           flex-direction: column;
@@ -336,11 +325,10 @@ export default function HotCoffeeRanking() {
           padding: 0 1rem 0 0.5rem;
         }
 
-        /* El 1° es más alto que el 2° y el 3°: la jerarquía se ve sin leer el número */
         .pr-podium-row.top-1 { height: 96px; }
         .pr-podium-row.top-2 { height: 88px; }
         .pr-podium-row.top-3 { height: 80px; }
-        .pr-row { height: 72px; }
+        .pr-row { height: 80px; }
 
         .pr-podium-row.top-1 {
           background: linear-gradient(90deg, rgba(208, 202, 83, 0.25) 0%, rgba(29, 18, 10, 0.98) 75%);
@@ -375,8 +363,7 @@ export default function HotCoffeeRanking() {
           margin: 0.2rem 1.2rem 0.8rem;
         }
 
-        /* Arte de los personajes: franjas con corte diagonal y bordes difuminados.
-           Si hay dúo, cada personaje ocupa la mitad; si hay uno solo, ocupa todo el ancho. */
+        /* Arte de personajes aplicado a todas las filas */
         .pr-art {
           position: absolute;
           top: 0; bottom: 0;
@@ -394,7 +381,7 @@ export default function HotCoffeeRanking() {
           width: 30%;
           z-index: 3;
         }
-        .pr-art::before { left: 0;  background: linear-gradient(90deg,  rgba(29, 18, 10, 0.97), transparent); }
+        .pr-art::before { left: 0;   background: linear-gradient(90deg,  rgba(29, 18, 10, 0.97), transparent); }
         .pr-art::after  { right: 0; background: linear-gradient(270deg, rgba(29, 18, 10, 0.97), transparent); }
 
         .pr-art-frame {
@@ -414,7 +401,6 @@ export default function HotCoffeeRanking() {
           filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
         }
 
-        /* ---------- Textos ---------- */
         .pr-rank {
           position: relative;
           z-index: 4;
@@ -479,17 +465,6 @@ export default function HotCoffeeRanking() {
           text-overflow: ellipsis;
         }
 
-        /* Miniaturas circulares en la lista general */
-        .pr-fighter-icons { display: flex; align-items: center; gap: 4px; min-height: 24px; }
-        .pr-fighter-icon {
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          border: 1px solid #d0ca53;
-          object-fit: cover;
-          background: #1a1008;
-        }
-
         .pr-right-group {
           display: flex;
           align-items: center;
@@ -523,7 +498,6 @@ export default function HotCoffeeRanking() {
           font-weight: 800;
         }
 
-        /* ---------- Lista general ---------- */
         .pr-list-section {
           display: flex;
           flex-direction: column;
@@ -642,7 +616,6 @@ export default function HotCoffeeRanking() {
                                     transform: `scale(${conf.scale || DEFAULT_ART.scale})`,
                                   }}
                                   onError={(e) => {
-                                    // Si falta la imagen, el otro personaje ocupa todo el espacio
                                     const frame = e.currentTarget.parentElement;
                                     if (frame) frame.style.display = 'none';
                                   }}
@@ -677,7 +650,7 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. LISTA GENERAL (del puesto 4 en adelante) */}
+          {/* 2. LISTA GENERAL (del puesto 4 en adelante con el mismo diseño de artes) */}
           <div className="pr-list-section">
             {restPlayers.length === 0 && top3Players.length === 0 && (
               <div className="pr-empty">
@@ -691,6 +664,31 @@ export default function HotCoffeeRanking() {
                 <div key={player.id} className="pr-row">
                   <span className="pr-rank white">{player.ranking}</span>
 
+                  {characters.length > 0 && (
+                    <div className="pr-art" aria-hidden="true">
+                      {characters.map((charName, i) => {
+                        const conf = PODIUM_ART_CONFIG[charName.toLowerCase()] || DEFAULT_ART;
+                        return (
+                          <div key={`${charName}-${i}`} className="pr-art-frame">
+                            <img
+                              src={`/fighters/${charName}.png`}
+                              alt=""
+                              className="pr-art-img"
+                              style={{
+                                objectPosition: conf.objectPosition,
+                                transform: `scale(${conf.scale || DEFAULT_ART.scale})`,
+                              }}
+                              onError={(e) => {
+                                const frame = e.currentTarget.parentElement;
+                                if (frame) frame.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <div className="pr-name-wrap">
                     <div className="pr-player-info">
                       <span className="pr-name">
@@ -699,20 +697,7 @@ export default function HotCoffeeRanking() {
                       </span>
 
                       {characters.length > 0 && (
-                        <div className="pr-fighter-icons">
-                          {characters.map((charName, i) => (
-                            <img
-                              key={`${charName}-${i}`}
-                              src={`/fighters/${charName}.png`}
-                              alt={charName}
-                              title={charName}
-                              className="pr-fighter-icon"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          ))}
-                        </div>
+                        <span className="pr-fighter-tag">{characters.join(' + ')}</span>
                       )}
                     </div>
 
