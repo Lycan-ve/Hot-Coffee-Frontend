@@ -377,7 +377,7 @@ export default function HotCoffeeRanking() {
           text-overflow: ellipsis;
         }
 
-        /* Personajes centrados, con height 430% y bajados para ver las caras */
+        /* AJUSTES: Personajes más grandes (500%), más juntos (gap negativo) y bajados para ver las caras */
         .pr-podium-art-bg {
           position: absolute;
           left: 0;
@@ -386,17 +386,17 @@ export default function HotCoffeeRanking() {
           bottom: 0;
           display: flex;
           justify-content: center;
-          align-items: center;
-          gap: -10px;
+          align-items: flex-end; /* Baja los personajes para verles la cara */
+          gap: -35px; /* Acorta la distancia/superpone los personajes */
           opacity: 0.9;
           pointer-events: none;
           z-index: 2;
           overflow: hidden;
         }
         .pr-podium-art-img {
-          height: 430%;
+          height: 500%; /* Aumenta el tamaño individual */
           object-fit: contain;
-          transform: translateY(28%); /* Ajusta este valor si necesitas bajarlos o subirlos un poco más */
+          transform: translateY(22px); /* Desplazamiento vertical fino hacia abajo */
           filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
         }
 
@@ -521,7 +521,7 @@ export default function HotCoffeeRanking() {
             </div>
           </div>
 
-          {/* 1. SECCIÓN PODIO (Top 1, 2, 3 con Renders Gigantes Centrados y Bajados) */}
+          {/* 1. SECCIÓN PODIO (Top 1, 2, 3 con Renders Gigantes, Bajados y Cercanos) */}
           {currentPage === 1 && top3Players.length > 0 && (
             <>
               <div className="pr-podium-section">
@@ -540,7 +540,7 @@ export default function HotCoffeeRanking() {
                     <div key={player.id} className={podiumClass}>
                       <span className={rankClass}>{player.ranking}</span>
 
-                      {/* Arte centrado, con height 430% y desplazado hacia abajo */}
+                      {/* Arte centrado, bajado y con mayor tamaño */}
                       <div className="pr-podium-art-bg">
                         {getCharacterImages(player.character).map((charName, index) => (
                           <img
