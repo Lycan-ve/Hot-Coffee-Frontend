@@ -17,12 +17,12 @@ type Status = 'loading' | 'ok' | 'offline';
 
 // Enfoque y recorte de cada personaje en las filas
 const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string }> = {
-  caitlyn: { objectPosition: 'center -25%', scale: '2.5' },
+  caitlyn: { objectPosition: 'center -10%', scale: '2.5' },
   akali: { objectPosition: 'center 12%', scale: '2.0' },
   yasuo: { objectPosition: 'center 12%', scale: '2.0' },
-  blitzcrank: { objectPosition: 'center -20%', scale: '2.5' },
+  blitzcrank: { objectPosition: 'center 22%', scale: '2.0' },
   braum: { objectPosition: 'center -8%', scale: '2.5' },
-  darius: { objectPosition: 'center 14%', scale: '1.2' },
+  darius: { objectPosition: 'center 22%', scale: '2.0' },
   ahri: { objectPosition: 'center -2%', scale: '2.0' },
   ekko: { objectPosition: 'center -5%', scale: '2.0' },
   illaoi: { objectPosition: 'center -5%', scale: '2.5' },
