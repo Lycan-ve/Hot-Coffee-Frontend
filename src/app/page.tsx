@@ -377,7 +377,7 @@ export default function HotCoffeeRanking() {
           text-overflow: ellipsis;
         }
 
-        /* Personajes centrados y con height de 430% */
+        /* Personajes centrados, con height 430% y bajados para ver las caras */
         .pr-podium-art-bg {
           position: absolute;
           left: 0;
@@ -396,6 +396,7 @@ export default function HotCoffeeRanking() {
         .pr-podium-art-img {
           height: 430%;
           object-fit: contain;
+          transform: translateY(28%); /* Ajusta este valor si necesitas bajarlos o subirlos un poco más */
           filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
         }
 
@@ -520,7 +521,7 @@ export default function HotCoffeeRanking() {
             </div>
           </div>
 
-          {/* 1. SECCIÓN PODIO (Top 1, 2, 3 con Renders Gigantes Centrados) */}
+          {/* 1. SECCIÓN PODIO (Top 1, 2, 3 con Renders Gigantes Centrados y Bajados) */}
           {currentPage === 1 && top3Players.length > 0 && (
             <>
               <div className="pr-podium-section">
@@ -539,7 +540,7 @@ export default function HotCoffeeRanking() {
                     <div key={player.id} className={podiumClass}>
                       <span className={rankClass}>{player.ranking}</span>
 
-                      {/* Arte centrado con height: 430% */}
+                      {/* Arte centrado, con height 430% y desplazado hacia abajo */}
                       <div className="pr-podium-art-bg">
                         {getCharacterImages(player.character).map((charName, index) => (
                           <img
