@@ -154,6 +154,18 @@ export default function HotCoffeeRanking() {
     setTourneyTo(max);
   }, []);
 
+  // 🚀 Precarga silenciosa de los personajes
+  useEffect(() => {
+    const commonFighters = [
+      'Akali', 'Yasuo', 'Ahri', 'Ekko', 'Braum', 'Illaoi', 
+      'Caitlyn', 'Blitzcrank', 'Darius', 'Jinx', 'Thresh', 'Vi'
+    ];
+    commonFighters.forEach((name) => {
+      const img = new Image();
+      img.src = `/fighters/${name}.png`;
+    });
+  }, []);
+
   useEffect(() => {
     const init = (max: number) => {
       setTourneyMax(max);
@@ -447,7 +459,7 @@ export default function HotCoffeeRanking() {
           box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 35px rgba(180, 77, 29, 0.2);
           overflow: hidden;
           position: relative;
-          transform: translateZ(0); /* 🚀 Aceleración por hardware para reducir CPU */
+          transform: translateZ(0);
         }
         .pr-card.is-wide { max-width: 920px; }
         .pr-card.is-exporting { max-width: 920px; width: 920px; }
@@ -465,7 +477,7 @@ export default function HotCoffeeRanking() {
           font-weight: bold;
           text-shadow: 0 1px 2px rgba(255,255,255,0.4);
           border-bottom: 2px solid #d0ca53;
-          animation: shine 4s linear infinite; /* Animación más lenta para menor consumo de CPU */
+          animation: shine 4s linear infinite;
         }
         @media (min-width: 768px) {
           .pr-birthday-banner {
@@ -490,7 +502,6 @@ export default function HotCoffeeRanking() {
           .pr-header { padding: 1.75rem 1.75rem 1.2rem; }
         }
 
-        /* Enlace del avatar optimizado */
         .pr-avatar-link {
           display: inline-block;
           will-change: transform;
@@ -660,7 +671,13 @@ export default function HotCoffeeRanking() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          /* Se eliminó el drop-shadow pesado para liberar la CPU de Chrome */
+          opacity: 0;
+          animation: imageFadeIn 0.35s ease-in-out forwards;
+        }
+
+        @keyframes imageFadeIn {
+          from { opacity: 0; transform: scale(1.05); }
+          to { opacity: 1; transform: scale(1); }
         }
 
         .pr-rank {
@@ -787,6 +804,7 @@ export default function HotCoffeeRanking() {
           letter-spacing: 0.05em;
         }
 
+        /* 🚀 Pie de página rediseñado con On Render + Crédito Lycan */
         .pr-footer {
           display: flex;
           justify-content: space-between;
@@ -798,14 +816,8 @@ export default function HotCoffeeRanking() {
           font-weight: 700;
           color: #cca08a;
           text-transform: uppercase;
-          gap: 0.5rem;
-        }
-        @media (max-width: 767px) {
-          .pr-footer {
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.6rem;
-          }
+          gap: 0.6rem;
+          flex-wrap: wrap;
         }
         @media (min-width: 768px) {
           .pr-footer { padding: 0.7rem 1.2rem 0.9rem; font-size: 0.8rem; }
@@ -815,6 +827,57 @@ export default function HotCoffeeRanking() {
           display: flex;
           align-items: center;
           gap: 0.4rem;
+        }
+
+        .pr-footer-dev {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          width: 100%;
+          justify-content: space-between;
+          padding-top: 0.4rem;
+          border-top: 1px dashed rgba(204, 160, 138, 0.15);
+        }
+        @media (min-width: 768px) {
+          .pr-footer-dev {
+            width: auto;
+            padding-top: 0;
+            border-top: none;
+          }
+        }
+
+        .pr-render-badge {
+          background: rgba(180, 77, 29, 0.25);
+          border: 1px solid #b44d1d;
+          color: #f5f5f4;
+          padding: 0.2rem 0.6rem;
+          border-radius: 4px;
+          font-size: 0.72rem;
+          text-decoration: none;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .pr-render-badge:hover {
+          background: #b44d1d;
+          border-color: #d0ca53;
+          color: #fff;
+          transform: translateY(-1px);
+        }
+
+        .pr-dev-credit {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          color: #d0ca53;
+        }
+        .pr-dev-avatar {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          border: 1px solid #d0ca53;
+          object-fit: cover;
         }
       `}</style>
 
@@ -1027,6 +1090,7 @@ export default function HotCoffeeRanking() {
             })}
           </div>
 
+          {/* 🚀 FOOTER ACTUALIZADO CON "FROM ON RENDERS", PAGINACIÓN Y CRÉDITO DE LYCAN */}
           <div className="pr-footer">
             <span>
               Pág {page} de {totalPages} ·{' '}
@@ -1059,7 +1123,21 @@ export default function HotCoffeeRanking() {
               </button>
             </div>
 
-            <span>Hot Coffee 2XKO</span>
+            <div className="pr-footer-dev">
+              <a
+                href="https://discord.gg/8NbFuJcSCH"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pr-render-badge"
+                title="Unirse al Discord oficial"
+              >
+                🚀 <span>From On Render</span>
+              </a>
+              <div className="pr-dev-credit">
+                <img src="/lycan-logo.png" alt="Lycan" className="pr-dev-avatar" />
+                <span>Dev: <strong>Lycan</strong></span>
+              </div>
+            </div>
           </div>
         </div>
       </main>
