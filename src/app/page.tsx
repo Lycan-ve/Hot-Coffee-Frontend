@@ -119,8 +119,6 @@ export default function HotCoffeeRanking() {
 
   // ---------- Range Picker ----------
   const SHORTCUTS = [3, 6, 9];
-
-  // 🆕 Estado para mostrar/ocultar el Range Picker
   const [showRangePicker, setShowRangePicker] = useState(false);
 
   const [tourneyFrom, setTourneyFrom] = useState<number>(1);
@@ -128,19 +126,16 @@ export default function HotCoffeeRanking() {
   const [tourneyMax, setTourneyMax] = useState<number>(0);
   const [rangeReady, setRangeReady] = useState(false);
 
-  // Seleccionar últimos N torneos
   const selectLast = useCallback((n: number, max: number) => {
     setTourneyTo(max);
     setTourneyFrom(Math.max(1, max - n + 1));
   }, []);
 
-  // 🆕 Mostrar todos los torneos (del 1 al Máximo)
   const selectAllTournaments = useCallback((max: number) => {
     setTourneyFrom(1);
     setTourneyTo(max);
   }, []);
 
-  // Pedir el total de torneos e inicializar mostrando TODOS por defecto (1 al Max)
   useEffect(() => {
     const init = (max: number) => {
       setTourneyMax(max);
@@ -153,7 +148,6 @@ export default function HotCoffeeRanking() {
       .catch(() => init(17));
   }, [API_URL, selectAllTournaments]);
 
-  // Al cambiar el rango, volver a la página 1
   useEffect(() => {
     setCurrentPage(1);
   }, [tourneyFrom, tourneyTo]);
@@ -438,6 +432,31 @@ export default function HotCoffeeRanking() {
         }
         .pr-card.is-wide { max-width: 920px; }
         .pr-card.is-exporting { max-width: 920px; width: 920px; }
+
+        /* 🎂 Banderín de Cumpleaños */
+        .pr-birthday-banner {
+          background: linear-gradient(90deg, #b44d1d, #d0ca53, #b44d1d);
+          background-size: 200% auto;
+          color: #25170d;
+          text-align: center;
+          padding: 0.5rem 1rem;
+          font-family: 'Bebas Neue', Impact, sans-serif;
+          font-size: 1.25rem;
+          letter-spacing: 0.08em;
+          font-weight: bold;
+          text-shadow: 0 1px 2px rgba(255,255,255,0.4);
+          border-bottom: 2px solid #d0ca53;
+          animation: shine 3s linear infinite;
+        }
+        @media (min-width: 768px) {
+          .pr-birthday-banner {
+            font-size: 1.6rem;
+            padding: 0.7rem 1rem;
+          }
+        }
+        @keyframes shine {
+          to { background-position: 200% center; }
+        }
 
         .pr-header {
           padding: 1.2rem 1rem 0.9rem;
@@ -782,7 +801,6 @@ export default function HotCoffeeRanking() {
           </div>
 
           <div className="pr-action-btns">
-            {/* 🆕 Botón para Activar/Desplegar el Range Picker */}
             <button
               type="button"
               className={`pr-filter-toggle-btn${showRangePicker ? ' is-active' : ''}`}
@@ -800,12 +818,10 @@ export default function HotCoffeeRanking() {
           </div>
         </div>
 
-        {/* 🆕 Se muestra el Range Picker SOLO cuando se presiona el botón "Filtrar Torneos" */}
         {showRangePicker && (
           <div className="pr-range-picker-wrap">
             <div className="pr-range-inputs">
               <div className="pr-range-shortcuts">
-                {/* Botón para resetear y mostrar Todos (1 al Máximo) */}
                 <button
                   type="button"
                   className={`pr-shortcut-btn${isAllSelected ? ' is-active' : ''}`}
@@ -870,6 +886,11 @@ export default function HotCoffeeRanking() {
           ref={tableRef}
           className={`pr-card${wide ? ' is-wide' : ''}${exporting ? ' is-exporting' : ''}`}
         >
+          {/* 🎉 Banderín de Cumpleaños para Chill Fever (Aparece dentro de la tarjeta para salir en el PNG) */}
+          <div className="pr-birthday-banner">
+            🎉 ¡FELIZ CUMPLEAÑOS CHILL FEVER! 🎂🎈
+          </div>
+
           <div className="pr-header">
             <div className="pr-title-area">
               <div className="pr-title">
