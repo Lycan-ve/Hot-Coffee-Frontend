@@ -119,36 +119,39 @@ export default function HotCoffeeRanking() {
 
   // ---------- Range Picker ----------
   const SHORTCUTS = [3, 6, 9];
-  const DEFAULT_LAST = 3;
+
+  // 🆕 Estado para mostrar/ocultar el Range Picker
+  const [showRangePicker, setShowRangePicker] = useState(false);
 
   const [tourneyFrom, setTourneyFrom] = useState<number>(1);
   const [tourneyTo, setTourneyTo] = useState<number>(1);
   const [tourneyMax, setTourneyMax] = useState<number>(0);
   const [rangeReady, setRangeReady] = useState(false);
 
+  // Seleccionar últimos N torneos
   const selectLast = useCallback((n: number, max: number) => {
     setTourneyTo(max);
     setTourneyFrom(Math.max(1, max - n + 1));
   }, []);
 
-  // 🆕 Función para activar el filtro de 1 a 17 (o tourneyMax)
-  const handleSelect1To17 = useCallback(() => {
+  // 🆕 Mostrar todos los torneos (del 1 al Máximo)
+  const selectAllTournaments = useCallback((max: number) => {
     setTourneyFrom(1);
-    setTourneyTo(tourneyMax > 0 ? tourneyMax : 17);
-  }, [tourneyMax]);
+    setTourneyTo(max);
+  }, []);
 
-  // Pedir el total de torneos y aplicar el atajo por defecto (últimos 3)
+  // Pedir el total de torneos e inicializar mostrando TODOS por defecto (1 al Max)
   useEffect(() => {
     const init = (max: number) => {
       setTourneyMax(max);
-      selectLast(DEFAULT_LAST, max);
+      selectAllTournaments(max);
       setRangeReady(true);
     };
     fetch(`${API_URL}/api/tournaments/count`)
       .then((r) => r.json())
       .then((d) => init(d.count > 0 ? d.count : 17))
       .catch(() => init(17));
-  }, [API_URL, selectLast]);
+  }, [API_URL, selectAllTournaments]);
 
   // Al cambiar el rango, volver a la página 1
   useEffect(() => {
@@ -159,8 +162,7 @@ export default function HotCoffeeRanking() {
     (n) => tourneyTo === tourneyMax && tourneyFrom === Math.max(1, tourneyMax - n + 1)
   );
 
-  // 🆕 Comprobar si el rango actual es exactamente 1 hasta 17 (o tourneyMax)
-  const is1To17Active = tourneyFrom === 1 && tourneyTo === (tourneyMax > 0 ? tourneyMax : 17);
+  const isAllSelected = tourneyFrom === 1 && tourneyTo === tourneyMax;
 
   const fetchRankings = useCallback(async () => {
     try {
@@ -285,9 +287,15 @@ export default function HotCoffeeRanking() {
           width: 100%;
           max-width: 540px;
           margin-bottom: 0.8rem;
+          animation: fadeIn 0.25s ease-in-out;
         }
         @media (min-width: 768px) {
           .pr-range-picker-wrap { max-width: 920px; }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-5px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .pr-range-inputs {
@@ -330,7 +338,7 @@ export default function HotCoffeeRanking() {
         }
         .pr-range-fields { gap: 0.5rem; }
 
-        .pr-shortcut-btn {
+        .pr-shortcut-btn, .pr-filter-toggle-btn {
           padding: 0.25rem 0.6rem;
           background: #191008;
           color: #cca08a;
@@ -344,14 +352,20 @@ export default function HotCoffeeRanking() {
           cursor: pointer;
           transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
-        .pr-shortcut-btn:hover:not(:disabled) { border-color: #d0ca53; color: #f5f5f4; }
-        .pr-shortcut-btn.is-active {
+        .pr-shortcut-btn:hover:not(:disabled), .pr-filter-toggle-btn:hover { border-color: #d0ca53; color: #f5f5f4; }
+        .pr-shortcut-btn.is-active, .pr-filter-toggle-btn.is-active {
           background: #d0ca53;
           color: #392415;
           border-color: #b8b245;
           box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
         }
         .pr-shortcut-btn:disabled { opacity: 0.4; cursor: progress; }
+
+        .pr-filter-toggle-btn {
+          padding: 0.45rem 0.8rem;
+          border-radius: 6px;
+          font-size: 0.85rem;
+        }
 
         @media (min-width: 768px) {
           .pr-range-inputs { justify-content: space-between; padding: 0.6rem 1rem; }
@@ -375,7 +389,7 @@ export default function HotCoffeeRanking() {
         .pr-page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .pr-page-info { color: #cca08a; font-weight: 700; font-size: 0.85rem; }
 
-        .pr-action-btns { display: flex; gap: 0.4rem; }
+        .pr-action-btns { display: flex; gap: 0.4rem; align-items: center; }
         .pr-sync-btn, .pr-export-btn {
           padding: 0.45rem 0.8rem;
           background: linear-gradient(90deg, #392415, #22150b);
@@ -768,6 +782,15 @@ export default function HotCoffeeRanking() {
           </div>
 
           <div className="pr-action-btns">
+            {/* 🆕 Botón para Activar/Desplegar el Range Picker */}
+            <button
+              type="button"
+              className={`pr-filter-toggle-btn${showRangePicker ? ' is-active' : ''}`}
+              onClick={() => setShowRangePicker((prev) => !prev)}
+            >
+              ⚙️ {showRangePicker ? 'Ocultar Filtro' : 'Filtrar Torneos'}
+            </button>
+
             <button className="pr-sync-btn" onClick={handleSync} disabled={syncing}>
               {syncing ? 'Sincronizando…' : '⟳ Sincronizar'}
             </button>
@@ -777,10 +800,21 @@ export default function HotCoffeeRanking() {
           </div>
         </div>
 
-          {/* Rango de Torneos */}
+        {/* 🆕 Se muestra el Range Picker SOLO cuando se presiona el botón "Filtrar Torneos" */}
+        {showRangePicker && (
           <div className="pr-range-picker-wrap">
             <div className="pr-range-inputs">
               <div className="pr-range-shortcuts">
+                {/* Botón para resetear y mostrar Todos (1 al Máximo) */}
+                <button
+                  type="button"
+                  className={`pr-shortcut-btn${isAllSelected ? ' is-active' : ''}`}
+                  onClick={() => selectAllTournaments(tourneyMax)}
+                  disabled={!rangeReady}
+                >
+                  Todos ({tourneyMax})
+                </button>
+
                 {SHORTCUTS.map((n) => (
                   <button
                     key={n}
@@ -792,16 +826,6 @@ export default function HotCoffeeRanking() {
                     Últimos {n}
                   </button>
                 ))}
-
-                {/* 🆕 Botón para activar el filtro de 1 a 17 (o máximo disponible) */}
-                <button
-                  type="button"
-                  className={`pr-shortcut-btn${is1To17Active ? ' is-active' : ''}`}
-                  onClick={handleSelect1To17}
-                  disabled={!rangeReady}
-                >
-                  1 al 17
-                </button>
               </div>
 
               <div className="pr-range-fields">
@@ -835,6 +859,7 @@ export default function HotCoffeeRanking() {
               </div>
             </div>
           </div>
+        )}
 
         {status === 'offline' && !notice && (
           <div className="pr-notice">Sin conexión con la API: mostrando datos de prueba.</div>
@@ -935,11 +960,11 @@ export default function HotCoffeeRanking() {
           <div className="pr-footer">
             <span>
               Pág {page} de {totalPages} ·{' '}
-              {activeShortcut
+              {isAllSelected
+                ? `Todos los torneos (1-${tourneyMax})`
+                : activeShortcut
                 ? `Últimos ${activeShortcut} torneos`
-                : is1To17Active
-                ? `Del torneo 1 al 17`
-                : `Rango personalizado (${tourneyFrom}-${tourneyTo})`}
+                : `Rango: Torneos ${tourneyFrom} al ${tourneyTo}`}
             </span>
             <span>Hot Coffee 2XKO</span>
           </div>
