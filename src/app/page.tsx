@@ -113,17 +113,35 @@ export default function HotCoffeeRanking() {
   const [exporting, setExporting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState('');
-  
-  // Estados para el Range Picker (rango de torneos)
-  const [tourneyFrom, setTourneyFrom] = useState<number>(1);
-  const [tourneyTo, setTourneyTo] = useState<number>(17); // Puedes cambiar el máximo por defecto
 
   const tableRef = useRef<HTMLDivElement>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+  // Estados para el Range Picker (rango de torneos)
+  const [tourneyFrom, setTourneyFrom] = useState<number>(1);
+  const [tourneyTo, setTourneyTo] = useState<number>(17);
+  const [tourneyMax, setTourneyMax] = useState<number>(17);
+
+  // Pedir el total de torneos al backend
+  useEffect(() => {
+    fetch(`${API_URL}/api/tournaments/count`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.count > 0) {
+          setTourneyMax(d.count);
+          setTourneyTo(d.count);
+        }
+      })
+      .catch(() => {});
+  }, [API_URL]);
+
+  // Al cambiar el rango, volver a la página 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [tourneyFrom, tourneyTo]);
+
   const fetchRankings = useCallback(async () => {
     try {
-      // Enviamos el rango de torneos como parámetros en la URL (?from=X&to=Y)
       const response = await fetch(`${API_URL}/api/rankings/2xko?from=${tourneyFrom}&to=${tourneyTo}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
@@ -456,7 +474,6 @@ export default function HotCoffeeRanking() {
           mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
         }
 
-.pr-art-frame + .pr-art-frame { margin-left: -6%; } /* separación entre personajes */
         .pr-card:not(.is-wide) .pr-art { left: 42%; right: 30%; }
         .pr-list-section.cols-2 .pr-art { left: 42%; right: 28%; }
 
@@ -648,28 +665,34 @@ export default function HotCoffeeRanking() {
         </div>
 
         {/* 🎛️ Rango de Torneos (Range Picker solicitado por Baneado Sensei) */}
-        <div className="pr-range-picker">
-          <span className="pr-range-title">Rango de Torneos:</span>
-          <div className="pr-range-inputs">
-            <label>Desde</label>
-            <input
-              type="number"
-              min={1}
-              max={tourneyTo}
-              value={tourneyFrom}
-              onChange={(e) => setTourneyFrom(Math.max(1, Number(e.target.value)))}
-              style={{ width: '60px' }}
-            />
-            <label>Hasta</label>
-            <input
-              type="number"
-              min={tourneyFrom}
-              max={17}
-              value={tourneyTo}
-              onChange={(e) => setTourneyTo(Math.max(tourneyFrom, Number(e.target.value)))}
-              style={{ width: '60px' }}
-            />
-          </div>
+        <div className="pr-range-inputs">
+          <label>Desde</label>
+          <select
+            value={tourneyFrom}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setTourneyFrom(v);
+              if (v > tourneyTo) setTourneyTo(v);
+            }}
+          >
+            {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+
+          <label>Hasta</label>
+          <select
+            value={tourneyTo}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setTourneyTo(v);
+              if (v < tourneyFrom) setTourneyFrom(v);
+            }}
+          >
+            {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
         </div>
 
         {status === 'offline' && !notice && (
@@ -770,7 +793,7 @@ export default function HotCoffeeRanking() {
 
           <div className="pr-footer">
             <span>
-              Página {page} de {totalPages}
+              Página {page} de {totalPages} · Torneos {tourneyFrom}–{tourneyTo}
             </span>
             <span>Hot Coffee 2XKO Circuit</span>
           </div>
