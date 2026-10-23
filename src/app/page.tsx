@@ -20,11 +20,11 @@ const PODIUM_ART_CONFIG: Record<
   { objectPosition: string; scale?: string; x?: string; y?: string }
 > = {
   caitlyn: { objectPosition: 'center -10%', scale: '2.5' },
-  akali: { objectPosition: 'center 5%', scale: '2.5', x: '55%' }, // 👈 negativo = mueve a la izquierda
+  akali: { objectPosition: 'center 5%', scale: '2.5', x: '55%' },
   yasuo: { objectPosition: 'center 12%', scale: '2.8', x: '20%' },
   blitzcrank: { objectPosition: 'center 22%', scale: '2.0' },
-  braum: { objectPosition: 'center -8%', scale: '2.8', x:'35%' },
-  darius: { objectPosition: 'center 22%', scale: '2.0', x: '-25%'},
+  braum: { objectPosition: 'center -8%', scale: '2.8', x: '35%' },
+  darius: { objectPosition: 'center 22%', scale: '2.0', x: '-25%' },
   ahri: { objectPosition: 'center -2%', scale: '2.0' },
   ekko: { objectPosition: 'center -5%', scale: '2.5', x: '-20%' },
   illaoi: { objectPosition: 'center -5%', scale: '2.5', x: '30%' },
@@ -117,12 +117,10 @@ export default function HotCoffeeRanking() {
   const tableRef = useRef<HTMLDivElement>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-  // Estados para el Range Picker (rango de torneos)
   const [tourneyFrom, setTourneyFrom] = useState<number>(1);
   const [tourneyTo, setTourneyTo] = useState<number>(17);
   const [tourneyMax, setTourneyMax] = useState<number>(17);
 
-  // Pedir el total de torneos al backend
   useEffect(() => {
     fetch(`${API_URL}/api/tournaments/count`)
       .then((r) => r.json())
@@ -135,7 +133,6 @@ export default function HotCoffeeRanking() {
       .catch(() => {});
   }, [API_URL]);
 
-  // Al cambiar el rango, volver a la página 1
   useEffect(() => {
     setCurrentPage(1);
   }, [tourneyFrom, tourneyTo]);
@@ -227,6 +224,8 @@ export default function HotCoffeeRanking() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,600;1,700;1,800&display=swap');
 
+        * { box-sizing: border-box; }
+
         .pr-root {
           min-height: 100vh;
           background-color: #392415;
@@ -236,96 +235,95 @@ export default function HotCoffeeRanking() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 2.5rem 1rem;
+          padding: 1.5rem 0.5rem;
           font-family: 'Barlow Condensed', sans-serif;
+          width: 100%;
+          overflow-x: hidden;
         }
 
         .pr-controls {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          width: 540px;
-          max-width: 100%;
-          margin-bottom: 0.9rem;
-          gap: 1rem;
+          width: 100%;
+          max-width: 540px;
+          margin-bottom: 0.8rem;
+          gap: 0.8rem;
           flex-wrap: wrap;
         }
         @media (min-width: 768px) {
-          .pr-controls { width: 920px; }
+          .pr-controls { max-width: 920px; }
         }
 
-        /* ---------- Rango de Torneos (Range Picker) estilo Discord/Gaming ---------- */
-        .pr-range-picker {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          width: 540px;
-          max-width: 100%;
-          background: #25170d;
-          border: 1px solid rgba(204, 160, 138, 0.3);
-          border-radius: 8px;
-          padding: 0.6rem 1rem;
-          margin-bottom: 1rem;
-          color: #f5f5f4;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        /* ---------- Rango de Torneos ---------- */
+        .pr-range-picker-wrap {
+          width: 100%;
+          max-width: 540px;
+          margin-bottom: 0.8rem;
         }
         @media (min-width: 768px) {
-          .pr-range-picker { width: 920px; }
+          .pr-range-picker-wrap { max-width: 920px; }
         }
-        .pr-range-title {
-          font-family: 'Bebas Neue', Impact, sans-serif;
-          font-size: 1.15rem;
-          color: #d0ca53;
-          letter-spacing: 0.08em;
-        }
+
         .pr-range-inputs {
           display: flex;
           align-items: center;
-          gap: 0.6rem;
+          justify-content: center;
+          width: 100%;
+          background: #25170d;
+          border: 1px solid rgba(204, 160, 138, 0.3);
+          border-radius: 8px;
+          padding: 0.5rem 0.8rem;
+          color: #f5f5f4;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+          gap: 0.5rem;
+          flex-wrap: wrap;
         }
         .pr-range-inputs label {
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           font-weight: 700;
           color: #cca08a;
           text-transform: uppercase;
         }
-        .pr-range-inputs select, .pr-range-inputs input {
+        .pr-range-inputs select {
           background: #191008;
           color: #f5f5f4;
           border: 1px solid rgba(204, 160, 138, 0.4);
           border-radius: 4px;
-          padding: 0.3rem 0.5rem;
+          padding: 0.25rem 0.4rem;
           font-family: inherit;
           font-weight: 700;
+          font-size: 0.9rem;
         }
 
-        .pr-pagination { display: flex; align-items: center; gap: 0.5rem; }
+        .pr-pagination { display: flex; align-items: center; gap: 0.4rem; }
         .pr-page-btn {
-          padding: 0.4rem 0.9rem;
+          padding: 0.35rem 0.7rem;
           background: #392415;
           color: #f5f5f4;
           border: 1px solid rgba(204, 160, 138, 0.3);
           border-radius: 4px;
           font-family: inherit;
           font-weight: 700;
+          font-size: 0.85rem;
           cursor: pointer;
           transition: background 0.2s, border-color 0.2s;
         }
         .pr-page-btn:hover:not(:disabled) { background: #b44d1d; border-color: #b44d1d; }
         .pr-page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .pr-page-info { color: #cca08a; font-weight: 700; font-size: 0.95rem; }
+        .pr-page-info { color: #cca08a; font-weight: 700; font-size: 0.85rem; }
 
-        .pr-action-btns { display: flex; gap: 0.5rem; }
+        .pr-action-btns { display: flex; gap: 0.4rem; }
         .pr-sync-btn, .pr-export-btn {
-          padding: 0.55rem 1rem;
+          padding: 0.45rem 0.8rem;
           background: linear-gradient(90deg, #392415, #22150b);
           color: #f5f5f4;
           border: 1px solid #cca08a;
           border-radius: 6px;
           font-family: 'Barlow Condensed', sans-serif;
           font-weight: 800;
-          font-size: 0.95rem;
-          letter-spacing: 0.08em;
+          font-size: 0.85rem;
+          letter-spacing: 0.05em;
           text-transform: uppercase;
           cursor: pointer;
           transition: background 0.2s, border-color 0.2s;
@@ -337,25 +335,24 @@ export default function HotCoffeeRanking() {
         .pr-sync-btn:disabled, .pr-export-btn:disabled { opacity: 0.55; cursor: progress; }
 
         .pr-notice {
-          width: 540px;
-          max-width: 100%;
-          margin-bottom: 0.9rem;
+          width: 100%;
+          max-width: 540px;
+          margin-bottom: 0.8rem;
           padding: 0.45rem 0.8rem;
           border-radius: 6px;
           border: 1px solid rgba(208, 202, 83, 0.35);
-          background: rgba(29, 18, 10, 0.8);
+          background: rgba(29, 18, 10, 0.9);
           color: #d0ca53;
           font-weight: 700;
-          font-size: 0.9rem;
-          letter-spacing: 0.03em;
+          font-size: 0.85rem;
         }
         @media (min-width: 768px) {
-          .pr-notice { width: 920px; }
+          .pr-notice { max-width: 920px; }
         }
 
         .pr-card {
-          width: 540px;
-          max-width: 100%;
+          width: 100%;
+          max-width: 540px;
           background: #25170d;
           border: 2px solid #b44d1d;
           border-radius: 12px;
@@ -363,56 +360,75 @@ export default function HotCoffeeRanking() {
           overflow: hidden;
           position: relative;
         }
-        .pr-card.is-wide { width: 920px; }
-        .pr-card.is-exporting { max-width: none; width: 920px; }
+        .pr-card.is-wide { max-width: 920px; }
+        .pr-card.is-exporting { max-width: 920px; width: 920px; }
 
         .pr-header {
-          padding: 1.75rem 1.75rem 1.2rem;
+          padding: 1.2rem 1rem 0.9rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
           background: linear-gradient(180deg, rgba(180, 77, 29, 0.15) 0%, transparent 100%);
           border-bottom: 1px solid rgba(204, 160, 138, 0.2);
+          gap: 0.5rem;
         }
-        .pr-title-area { display: flex; flex-direction: column; }
+        @media (min-width: 768px) {
+          .pr-header { padding: 1.75rem 1.75rem 1.2rem; }
+        }
+
+        .pr-title-area { display: flex; flex-direction: column; min-width: 0; flex: 1; }
         .pr-title {
           font-family: 'Bebas Neue', Impact, sans-serif;
-          font-size: 2.8rem;
+          font-size: 1.9rem;
           color: #f5f5f4;
-          line-height: 0.92;
+          line-height: 0.95;
           letter-spacing: 0.03em;
           text-shadow: 0 4px 15px rgba(0,0,0,0.8);
+          word-break: break-word;
         }
+        @media (min-width: 768px) {
+          .pr-title { font-size: 2.8rem; }
+        }
+
         .pr-subtitle {
           font-family: 'Bebas Neue', Impact, sans-serif;
-          font-size: 1.25rem;
+          font-size: 0.95rem;
           color: #d0ca53;
-          letter-spacing: 0.12em;
-          margin-top: 6px;
+          letter-spacing: 0.1em;
+          margin-top: 4px;
           text-shadow: 0 0 10px rgba(208, 202, 83, 0.4);
+        }
+        @media (min-width: 768px) {
+          .pr-subtitle { font-size: 1.25rem; }
         }
 
         .pr-logo-badge {
-          width: 110px;
-          height: 110px;
+          width: 75px;
+          height: 75px;
           background: #1a1008;
           border: 2px solid #d0ca53;
-          border-radius: 12px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 8px;
+          padding: 6px;
           box-shadow: 0 8px 25px rgba(0,0,0,0.8), 0 0 15px rgba(208, 202, 83, 0.2);
           flex-shrink: 0;
           transform: rotate(3deg);
+        }
+        @media (min-width: 768px) {
+          .pr-logo-badge { width: 110px; height: 110px; border-radius: 12px; padding: 8px; }
         }
         .pr-logo-badge img { width: 100%; height: 100%; object-fit: contain; }
 
         .pr-podium-section {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          padding: 1.1rem 1.2rem 0.8rem;
+          gap: 8px;
+          padding: 0.8rem 0.8rem 0.5rem;
+        }
+        @media (min-width: 768px) {
+          .pr-podium-section { padding: 1.1rem 1.2rem 0.8rem; gap: 10px; }
         }
 
         .pr-podium-row, .pr-row {
@@ -422,13 +438,15 @@ export default function HotCoffeeRanking() {
           border-radius: 8px;
           overflow: hidden;
           background: #1d120a;
-          padding: 0 1.1rem 0 0.5rem;
+          padding: 0 0.7rem 0 0.3rem;
+          height: 80px;
         }
-
-        .pr-podium-row.top-1 { height: 100px; }
-        .pr-podium-row.top-2 { height: 90px; }
-        .pr-podium-row.top-3 { height: 90px; }
-        .pr-row { height: 90px; }
+        @media (min-width: 768px) {
+          .pr-podium-row.top-1 { height: 100px; }
+          .pr-podium-row.top-2 { height: 90px; }
+          .pr-podium-row.top-3 { height: 90px; }
+          .pr-row { height: 90px; padding: 0 1.1rem 0 0.5rem; }
+        }
 
         .pr-podium-row.top-1 {
           background: linear-gradient(90deg, rgba(208, 202, 83, 0.25) 0%, rgba(29, 18, 10, 0.98) 75%);
@@ -448,9 +466,9 @@ export default function HotCoffeeRanking() {
           position: absolute; left: 0; top: 0; bottom: 0;
           z-index: 4;
         }
-        .pr-podium-row.top-1::before { width: 6px; background: #d0ca53; box-shadow: 0 0 12px #d0ca53; }
-        .pr-podium-row.top-2::before { width: 5px; background: #d7df8e; box-shadow: 0 0 10px #d7df8e; }
-        .pr-podium-row.top-3::before { width: 5px; background: #738c3e; box-shadow: 0 0 8px #738c3e; }
+        .pr-podium-row.top-1::before { width: 5px; background: #d0ca53; box-shadow: 0 0 12px #d0ca53; }
+        .pr-podium-row.top-2::before { width: 4px; background: #d7df8e; box-shadow: 0 0 10px #d7df8e; }
+        .pr-podium-row.top-3::before { width: 4px; background: #738c3e; box-shadow: 0 0 8px #738c3e; }
 
         .pr-row {
           background: linear-gradient(90deg, rgba(204, 160, 138, 0.07) 0%, #191008 70%);
@@ -460,29 +478,33 @@ export default function HotCoffeeRanking() {
         .pr-podium-divider {
           height: 1px;
           background: linear-gradient(90deg, transparent, rgba(208, 202, 83, 0.3), transparent);
-          margin: 0.2rem 1.2rem 0.9rem;
+          margin: 0.1rem 0.8rem 0.6rem;
+        }
+        @media (min-width: 768px) {
+          .pr-podium-divider { margin: 0.2rem 1.2rem 0.9rem; }
         }
 
         .pr-art {
           position: absolute;
           top: 0; bottom: 0;
-          left: 34%; right: 22%;
+          left: 30%; right: 25%;
           display: flex;
           z-index: 2;
           pointer-events: none;
-          -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
-          mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+          opacity: 0.45; /* Más tenue en móvil para no opacar el texto */
+          -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
         }
-
-        .pr-card:not(.is-wide) .pr-art { left: 42%; right: 30%; }
-        .pr-list-section.cols-2 .pr-art { left: 42%; right: 28%; }
+        @media (min-width: 768px) {
+          .pr-art { opacity: 0.92; left: 34%; right: 22%; }
+          .pr-card:not(.is-wide) .pr-art { left: 42%; right: 30%; }
+        }
 
         .pr-art-frame {
           position: relative;
           flex: 1 1 0;
           min-width: 0;
           overflow: hidden;
-          opacity: 0.92;
           clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
         }
         .pr-art-frame + .pr-art-frame { margin-left: -6%; }
@@ -498,13 +520,17 @@ export default function HotCoffeeRanking() {
           position: relative;
           z-index: 4;
           font-family: 'Bebas Neue', Impact, sans-serif;
-          font-size: 2.6rem;
-          width: 44px;
+          font-size: 2rem;
+          width: 34px;
           text-align: center;
           flex-shrink: 0;
-          margin-left: 6px;
+          margin-left: 2px;
           line-height: 1;
         }
+        @media (min-width: 768px) {
+          .pr-rank { font-size: 2.6rem; width: 44px; margin-left: 6px; }
+        }
+
         .pr-rank.gold   { color: #d0ca53; text-shadow: 0 0 10px rgba(208, 202, 83, 0.6); }
         .pr-rank.silver { color: #d7df8e; text-shadow: 0 0 8px rgba(215, 223, 142, 0.5); }
         .pr-rank.bronze { color: #738c3e; text-shadow: 0 0 8px rgba(115, 140, 62, 0.6); }
@@ -513,64 +539,76 @@ export default function HotCoffeeRanking() {
         .pr-name-wrap {
           position: relative;
           z-index: 4;
-          margin-left: 10px;
+          margin-left: 6px;
           flex: 1;
           min-width: 0;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 6px;
+        }
+        @media (min-width: 768px) {
+          .pr-name-wrap { margin-left: 10px; gap: 14px; }
         }
 
         .pr-player-info {
           display: flex;
           flex-direction: column;
-          gap: 3px;
+          gap: 2px;
           min-width: 0;
-          max-width: 34%;
+          flex: 1;
         }
-        .pr-card:not(.is-wide) .pr-player-info { max-width: 42%; }
-        .pr-list-section.cols-2 .pr-player-info { max-width: 45%; }
 
         .pr-name {
-          font-size: 1.4rem;
+          font-size: 1.1rem;
           font-weight: 800;
           font-style: italic;
           color: #f5f5f4;
           text-transform: uppercase;
           letter-spacing: 0.03em;
-          line-height: 1;
-          text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+          line-height: 1.1;
+          text-shadow: 2px 2px 5px rgba(0,0,0,0.9);
           display: flex;
           align-items: center;
-          gap: 5px;
+          gap: 4px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .pr-podium-row.top-1 .pr-name { font-size: 1.6rem; }
+        @media (min-width: 768px) {
+          .pr-name { font-size: 1.4rem; }
+          .pr-podium-row.top-1 .pr-name { font-size: 1.6rem; }
+        }
+
         .pr-sponsor { color: #b44d1d; font-style: normal; font-weight: 800; flex-shrink: 0; }
 
         .pr-fighter-tag {
-          font-size: 0.78rem;
+          font-size: 0.68rem;
           font-weight: 700;
           color: #cca08a;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.04em;
           text-transform: uppercase;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
+        @media (min-width: 768px) {
+          .pr-fighter-tag { font-size: 0.78rem; }
+        }
 
         .pr-right-group {
           display: flex;
           align-items: center;
-          gap: 14px;
+          gap: 8px;
           flex-shrink: 0;
+        }
+        @media (min-width: 768px) {
+          .pr-right-group { gap: 14px; }
         }
 
         .pr-user-avatar-frame {
-          width: 46px;
-          height: 46px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           border: 2px solid #d0ca53;
           background: #1a1008;
@@ -578,32 +616,41 @@ export default function HotCoffeeRanking() {
           box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
           flex-shrink: 0;
         }
+        @media (min-width: 768px) {
+          .pr-user-avatar-frame { width: 46px; height: 46px; }
+        }
         .pr-user-avatar-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .pr-points {
           font-family: 'Bebas Neue', Impact, sans-serif;
-          font-size: 1.4rem;
+          font-size: 1.1rem;
           color: #392415;
           background: #d0ca53;
           border: 1px solid #b8b245;
-          padding: 3px 12px;
-          border-radius: 6px;
-          letter-spacing: 0.05em;
-          box-shadow: 0 0 12px rgba(208, 202, 83, 0.3);
+          padding: 2px 8px;
+          border-radius: 5px;
+          letter-spacing: 0.03em;
+          box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
           white-space: nowrap;
           font-weight: 800;
+        }
+        @media (min-width: 768px) {
+          .pr-points { font-size: 1.4rem; padding: 3px 12px; border-radius: 6px; }
         }
 
         .pr-list-section {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          padding: 0 1.2rem 1.6rem;
+          gap: 8px;
+          padding: 0 0.8rem 1.2rem;
         }
-        .pr-card.is-wide .pr-list-section.cols-2 {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 10px 14px;
+        @media (min-width: 768px) {
+          .pr-list-section { padding: 0 1.2rem 1.6rem; gap: 10px; }
+          .pr-card.is-wide .pr-list-section.cols-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 14px;
+          }
         }
 
         .pr-empty {
@@ -619,18 +666,22 @@ export default function HotCoffeeRanking() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 0.7rem 1.2rem 0.9rem;
+          padding: 0.6rem 0.9rem 0.8rem;
           border-top: 1px solid rgba(204, 160, 138, 0.2);
           background: rgba(37, 23, 13, 0.7);
-          font-size: 0.8rem;
+          font-size: 0.72rem;
           font-weight: 700;
           color: #cca08a;
           text-transform: uppercase;
+          gap: 0.5rem;
+        }
+        @media (min-width: 768px) {
+          .pr-footer { padding: 0.7rem 1.2rem 0.9rem; font-size: 0.8rem; }
         }
       `}</style>
 
       <main className="pr-root">
-        {/* Controles superiores (Paginación y Botones de Sincronizar/PNG) */}
+        {/* Controles superiores */}
         <div className="pr-controls">
           <div className="pr-pagination">
             <button
@@ -664,35 +715,37 @@ export default function HotCoffeeRanking() {
           </div>
         </div>
 
-        {/* 🎛️ Rango de Torneos (Range Picker solicitado por Baneado Sensei) */}
-        <div className="pr-range-inputs">
-          <label>Desde</label>
-          <select
-            value={tourneyFrom}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setTourneyFrom(v);
-              if (v > tourneyTo) setTourneyTo(v);
-            }}
-          >
-            {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
+        {/* Rango de Torneos */}
+        <div className="pr-range-picker-wrap">
+          <div className="pr-range-inputs">
+            <label>Desde</label>
+            <select
+              value={tourneyFrom}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setTourneyFrom(v);
+                if (v > tourneyTo) setTourneyTo(v);
+              }}
+            >
+              {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
 
-          <label>Hasta</label>
-          <select
-            value={tourneyTo}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setTourneyTo(v);
-              if (v < tourneyFrom) setTourneyFrom(v);
-            }}
-          >
-            {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
+            <label>Hasta</label>
+            <select
+              value={tourneyTo}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setTourneyTo(v);
+                if (v < tourneyFrom) setTourneyFrom(v);
+              }}
+            >
+              {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {status === 'offline' && !notice && (
@@ -754,7 +807,7 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. LISTA GENERAL (puesto 4 en adelante) */}
+          {/* 2. LISTA GENERAL */}
           <div className={`pr-list-section cols-${LIST_COLUMNS}`}>
             {restPlayers.length === 0 && top3Players.length === 0 && (
               <div className="pr-empty">
@@ -793,7 +846,7 @@ export default function HotCoffeeRanking() {
 
           <div className="pr-footer">
             <span>
-              Página {page} de {totalPages} · Torneos {tourneyFrom}–{tourneyTo}
+              Pág {page} de {totalPages} · Torneos {tourneyFrom}–{tourneyTo}
             </span>
             <span>Hot Coffee 2XKO Circuit</span>
           </div>
