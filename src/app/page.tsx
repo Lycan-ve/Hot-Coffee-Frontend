@@ -21,19 +21,19 @@ const PODIUM_ART_CONFIG: Record<
 > = {
   caitlyn: { objectPosition: 'center -10%', scale: '2.5' },
   akali: { objectPosition: 'center 12%', scale: '2.0', x: '40%' }, // 👈 negativo = mueve a la izquierda
-  yasuo: { objectPosition: 'center 12%', scale: '2.0' },
+  yasuo: { objectPosition: 'center 12%', scale: '2.8', x: '20%' },
   blitzcrank: { objectPosition: 'center 22%', scale: '2.0' },
-  braum: { objectPosition: 'center -8%', scale: '2.5' },
-  darius: { objectPosition: 'center 22%', scale: '2.0' },
+  braum: { objectPosition: 'center -8%', scale: '2.8', x:'25%' },
+  darius: { objectPosition: 'center 22%', scale: '2.0', x: '-25%'},
   ahri: { objectPosition: 'center -2%', scale: '2.0' },
-  ekko: { objectPosition: 'center -5%', scale: '2.0' },
+  ekko: { objectPosition: 'center -5%', scale: '2.5', x: '-20%' },
   illaoi: { objectPosition: 'center -5%', scale: '2.5' },
-  jinx: { objectPosition: 'center 0%', scale: '2.5' },
+  jinx: { objectPosition: 'center 5%', scale: '2.5', x: '10%' },
   lux: { objectPosition: 'center 10%', scale: '1.25' },
   senna: { objectPosition: 'center 14%', scale: '1.2' },
-  teemo: { objectPosition: 'center 70%', scale: '1.35' },
-  thresh: { objectPosition: 'center -15%', scale: '2.5' },
-  vi: { objectPosition: 'center -5%', scale: '2.0' },
+  teemo: { objectPosition: 'center 75%', scale: '1.3', x: '-15%' },
+  thresh: { objectPosition: 'center -5%', scale: '2.8' },
+  vi: { objectPosition: 'center 0%', scale: '2.0' },
   warwick: { objectPosition: 'center 35%', scale: '2.5' },
 };
 
