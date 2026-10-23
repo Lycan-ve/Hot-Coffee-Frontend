@@ -91,7 +91,7 @@ function FighterArt({ characters }: { characters: string[] }) {
               className="pr-art-img"
               style={{
                 objectPosition: conf.objectPosition,
-                transform: `scale(${conf.scale || DEFAULT_ART.scale})`,
+                transform: `translateX(${'x' in conf && conf.x ? conf.x : '0%'}) scale(${conf.scale || DEFAULT_ART.scale})`,
               }}
               onError={(e) => {
                 const frame = e.currentTarget.parentElement;
