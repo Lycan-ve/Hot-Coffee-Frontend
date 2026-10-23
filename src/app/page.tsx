@@ -595,6 +595,15 @@ export default function HotCoffeeRanking() {
           .pr-card:not(.is-wide) .pr-art { left: 42%; right: 30%; }
         }
 
+        /* 🆕 Corrección limpia para móvil: ensancha ligeramente los laterales para evitar cortar caras sin tocar PODIUM_ART_CONFIG */
+        @media (max-width: 767px) {
+          .pr-art {
+            left: 16% !important;
+            right: 16% !important;
+            opacity: 0.60 !important;
+          }
+        }
+
         .pr-art-frame {
           position: relative;
           flex: 1 1 0;
@@ -770,8 +779,21 @@ export default function HotCoffeeRanking() {
           text-transform: uppercase;
           gap: 0.5rem;
         }
+        @media (max-width: 767px) {
+          .pr-footer {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.6rem;
+          }
+        }
         @media (min-width: 768px) {
           .pr-footer { padding: 0.7rem 1.2rem 0.9rem; font-size: 0.8rem; }
+        }
+
+        .pr-footer-pagination {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
         }
       `}</style>
 
@@ -844,6 +866,7 @@ export default function HotCoffeeRanking() {
                 ))}
               </div>
 
+              {/* 🆕 Selectores "Smart" para evitar combinaciones ilógicas */}
               <div className="pr-range-fields">
                 <label>Desde</label>
                 <select
@@ -854,8 +877,10 @@ export default function HotCoffeeRanking() {
                     if (v > tourneyTo) setTourneyTo(v);
                   }}
                 >
-                  {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={n}>{n}</option>
+                  {Array.from({ length: tourneyTo || tourneyMax }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
                   ))}
                 </select>
 
@@ -868,8 +893,13 @@ export default function HotCoffeeRanking() {
                     if (v < tourneyFrom) setTourneyFrom(v);
                   }}
                 >
-                  {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={n}>{n}</option>
+                  {Array.from(
+                    { length: tourneyMax - tourneyFrom + 1 },
+                    (_, i) => tourneyFrom + i
+                  ).map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -886,7 +916,7 @@ export default function HotCoffeeRanking() {
           ref={tableRef}
           className={`pr-card${wide ? ' is-wide' : ''}${exporting ? ' is-exporting' : ''}`}
         >
-          {/* 🎉 Banderín de Cumpleaños para Chill Fever (Aparece dentro de la tarjeta para salir en el PNG) */}
+          {/* 🎉 Banderín de Cumpleaños para Chill Fever */}
           <div className="pr-birthday-banner">
             🎉 ¡FELIZ CUMPLEAÑOS CHILL FEVER! 🎂🎈
           </div>
@@ -987,6 +1017,30 @@ export default function HotCoffeeRanking() {
                 ? `Últimos ${activeShortcut} torneos`
                 : `Rango: Torneos ${tourneyFrom} al ${tourneyTo}`}
             </span>
+
+            {/* 🆕 Controles de paginación integrados abajo en el footer */}
+            <div className="pr-footer-pagination">
+              <button
+                className="pr-page-btn"
+                disabled={page === 1}
+                onClick={() => setCurrentPage(page - 1)}
+                aria-label="Página anterior"
+              >
+                ◀ Ant
+              </button>
+              <span className="pr-page-info">
+                {page}/{totalPages}
+              </span>
+              <button
+                className="pr-page-btn"
+                disabled={page === totalPages}
+                onClick={() => setCurrentPage(page + 1)}
+                aria-label="Página siguiente"
+              >
+                Sig ▶
+              </button>
+            </div>
+
             <span>Hot Coffee 2XKO</span>
           </div>
         </div>
