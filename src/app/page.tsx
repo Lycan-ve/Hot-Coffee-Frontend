@@ -106,10 +106,11 @@ const FighterArt = memo(function FighterArt({ characters }: { characters: string
               src={`/fighters/${charName}.png`}
               alt=""
               loading="lazy"
+              decoding="async" /* 🚀 Evita que el navegador se congele al decodificar */
               className="pr-art-img"
               style={{
                 objectPosition: conf.objectPosition,
-                transform: `translateX(${'x' in conf && conf.x ? conf.x : '0%'}) scale(${conf.scale || DEFAULT_ART.scale})`,
+                transform: `translateX(${'x' in conf && conf.x ? conf.x : '0%'}) scale(${conf.scale || DEFAULT_ART.scale}) translateZ(0)`,
               }}
               onError={(e) => {
                 const frame = e.currentTarget.parentElement;
@@ -661,20 +662,25 @@ export default function HotCoffeeRanking() {
           min-width: 0;
           overflow: hidden;
           clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+          transform: translateZ(0); /* Fuerza aceleración por hardware */
         }
         .pr-art-frame + .pr-art-frame { margin-left: -6%; }
+
         .pr-art-img {
           display: block;
           width: 100%;
           height: 100%;
           object-fit: cover;
+          transform: translateZ(0);
+          will-change: transform; /* Le avisa al navegador que esto se va a escalar para que lo optimice */
+          backface-visibility: hidden;
           opacity: 0;
-          animation: imageFadeIn 0.35s ease-in-out forwards;
+          animation: imageFadeIn 0.25s ease-in-out forwards;
         }
 
         @keyframes imageFadeIn {
-          from { opacity: 0; transform: scale(1.05); }
-          to { opacity: 1; transform: scale(1); }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .pr-rank {
