@@ -20,7 +20,7 @@ const PODIUM_ART_CONFIG: Record<
   { objectPosition: string; scale?: string; x?: string; y?: string }
 > = {
   caitlyn: { objectPosition: 'center -10%', scale: '2.5' },
-  akali: { objectPosition: 'center 12%', scale: '2.0', x: '-10%' }, // 👈 negativo = mueve a la izquierda
+  akali: { objectPosition: 'center 12%', scale: '2.0', x: '40%' }, // 👈 negativo = mueve a la izquierda
   yasuo: { objectPosition: 'center 12%', scale: '2.0' },
   blitzcrank: { objectPosition: 'center 22%', scale: '2.0' },
   braum: { objectPosition: 'center -8%', scale: '2.5' },
