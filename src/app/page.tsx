@@ -117,25 +117,43 @@ export default function HotCoffeeRanking() {
   const tableRef = useRef<HTMLDivElement>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-  const [tourneyFrom, setTourneyFrom] = useState<number>(1);
-  const [tourneyTo, setTourneyTo] = useState<number>(17);
-  const [tourneyMax, setTourneyMax] = useState<number>(17);
+  // ---------- Range Picker ----------
+  const SHORTCUTS = [3, 6, 9];
+  const DEFAULT_LAST = 3;
 
+  const [tourneyFrom, setTourneyFrom] = useState<number>(1);
+  const [tourneyTo, setTourneyTo] = useState<number>(1);
+  const [tourneyMax, setTourneyMax] = useState<number>(0);
+  const [rangeReady, setRangeReady] = useState(false); // 🆕 evita pedir el ranking antes de saber el rango
+
+  // 🆕 selecciona los últimos N torneos
+  const selectLast = useCallback((n: number, max: number) => {
+    setTourneyTo(max);
+    setTourneyFrom(Math.max(1, max - n + 1));
+  }, []);
+
+  // Pedir el total de torneos y aplicar el atajo por defecto (últimos 3)
   useEffect(() => {
+    const init = (max: number) => {
+      setTourneyMax(max);
+      selectLast(DEFAULT_LAST, max);
+      setRangeReady(true);
+    };
     fetch(`${API_URL}/api/tournaments/count`)
       .then((r) => r.json())
-      .then((d) => {
-        if (d.count > 0) {
-          setTourneyMax(d.count);
-          setTourneyTo(d.count);
-        }
-      })
-      .catch(() => {});
-  }, [API_URL]);
+      .then((d) => init(d.count > 0 ? d.count : 17))
+      .catch(() => init(17));
+  }, [API_URL, selectLast]);
 
+  // Al cambiar el rango, volver a la página 1
   useEffect(() => {
     setCurrentPage(1);
   }, [tourneyFrom, tourneyTo]);
+
+  // 🆕 qué atajo está activo (si el rango coincide con alguno)
+  const activeShortcut = SHORTCUTS.find(
+    (n) => tourneyTo === tourneyMax && tourneyFrom === Math.max(1, tourneyMax - n + 1)
+  );
 
   const fetchRankings = useCallback(async () => {
     try {
@@ -153,8 +171,8 @@ export default function HotCoffeeRanking() {
   }, [API_URL, tourneyFrom, tourneyTo]);
 
   useEffect(() => {
-    fetchRankings();
-  }, [fetchRankings]);
+    if (rangeReady) fetchRankings(); // 🆕 solo cuando el rango ya está definido
+  }, [fetchRankings, rangeReady]);
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
@@ -294,6 +312,42 @@ export default function HotCoffeeRanking() {
           font-family: inherit;
           font-weight: 700;
           font-size: 0.9rem;
+        }
+        
+        .pr-range-shortcuts,
+        .pr-range-fields {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        .pr-range-fields { gap: 0.5rem; }
+
+        .pr-shortcut-btn {
+          padding: 0.25rem 0.6rem;
+          background: #191008;
+          color: #cca08a;
+          border: 1px solid rgba(204, 160, 138, 0.4);
+          border-radius: 4px;
+          font-family: inherit;
+          font-weight: 800;
+          font-size: 0.8rem;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .pr-shortcut-btn:hover:not(:disabled) { border-color: #d0ca53; color: #f5f5f4; }
+        .pr-shortcut-btn.is-active {
+          background: #d0ca53;
+          color: #392415;
+          border-color: #b8b245;
+          box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
+        }
+        .pr-shortcut-btn:disabled { opacity: 0.4; cursor: progress; }
+
+        @media (min-width: 768px) {
+          .pr-range-inputs { justify-content: space-between; padding: 0.6rem 1rem; }
+          .pr-shortcut-btn { font-size: 0.9rem; padding: 0.3rem 0.75rem; }
         }
 
         .pr-pagination { display: flex; align-items: center; gap: 0.4rem; }
@@ -715,38 +769,54 @@ export default function HotCoffeeRanking() {
           </div>
         </div>
 
-        {/* Rango de Torneos */}
-        <div className="pr-range-picker-wrap">
-          <div className="pr-range-inputs">
-            <label>Desde</label>
-            <select
-              value={tourneyFrom}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setTourneyFrom(v);
-                if (v > tourneyTo) setTourneyTo(v);
-              }}
-            >
-              {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
+          {/* Rango de Torneos */}
+          <div className="pr-range-picker-wrap">
+            <div className="pr-range-inputs">
+              <div className="pr-range-shortcuts">
+                {SHORTCUTS.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`pr-shortcut-btn${activeShortcut === n ? ' is-active' : ''}`}
+                    onClick={() => selectLast(n, tourneyMax)}
+                    disabled={!rangeReady}
+                  >
+                    Últimos {n}
+                  </button>
+                ))}
+              </div>
 
-            <label>Hasta</label>
-            <select
-              value={tourneyTo}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setTourneyTo(v);
-                if (v < tourneyFrom) setTourneyFrom(v);
-              }}
-            >
-              {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
+              <div className="pr-range-fields">
+                <label>Desde</label>
+                <select
+                  value={tourneyFrom}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setTourneyFrom(v);
+                    if (v > tourneyTo) setTourneyTo(v);
+                  }}
+                >
+                  {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+
+                <label>Hasta</label>
+                <select
+                  value={tourneyTo}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setTourneyTo(v);
+                    if (v < tourneyFrom) setTourneyFrom(v);
+                  }}
+                >
+                  {Array.from({ length: tourneyMax }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
-        </div>
 
         {status === 'offline' && !notice && (
           <div className="pr-notice">Sin conexión con la API: mostrando datos de prueba.</div>
@@ -846,7 +916,10 @@ export default function HotCoffeeRanking() {
 
           <div className="pr-footer">
             <span>
-              Pág {page} de {totalPages} · Torneos {tourneyFrom}–{tourneyTo}
+              Pág {page} de {totalPages} ·{' '}
+              {activeShortcut
+                ? `Últimos ${activeShortcut} torneos (${tourneyFrom}–${tourneyTo})`
+                : `Torneos ${tourneyFrom}–${tourneyTo}`}
             </span>
             <span>Hot Coffee 2XKO Circuit</span>
           </div>
