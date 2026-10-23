@@ -154,18 +154,6 @@ export default function HotCoffeeRanking() {
     setTourneyTo(max);
   }, []);
 
-  // 🚀 Precarga silenciosa de los personajes
-  useEffect(() => {
-    const commonFighters = [
-      'Akali', 'Yasuo', 'Ahri', 'Ekko', 'Braum', 'Illaoi', 
-      'Caitlyn', 'Blitzcrank', 'Darius', 'Jinx', 'Thresh', 'Vi'
-    ];
-    commonFighters.forEach((name) => {
-      const img = new Image();
-      img.src = `/fighters/${name}.png`;
-    });
-  }, []);
-
   useEffect(() => {
     const init = (max: number) => {
       setTourneyMax(max);
@@ -459,7 +447,7 @@ export default function HotCoffeeRanking() {
           box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 35px rgba(180, 77, 29, 0.2);
           overflow: hidden;
           position: relative;
-          transform: translateZ(0);
+          transform: translateZ(0); /* 🚀 Aceleración por hardware para reducir CPU */
         }
         .pr-card.is-wide { max-width: 920px; }
         .pr-card.is-exporting { max-width: 920px; width: 920px; }
@@ -477,7 +465,7 @@ export default function HotCoffeeRanking() {
           font-weight: bold;
           text-shadow: 0 1px 2px rgba(255,255,255,0.4);
           border-bottom: 2px solid #d0ca53;
-          animation: shine 4s linear infinite;
+          animation: shine 4s linear infinite; /* Animación más lenta para menor consumo de CPU */
         }
         @media (min-width: 768px) {
           .pr-birthday-banner {
@@ -502,6 +490,7 @@ export default function HotCoffeeRanking() {
           .pr-header { padding: 1.75rem 1.75rem 1.2rem; }
         }
 
+        /* Enlace del avatar optimizado */
         .pr-avatar-link {
           display: inline-block;
           will-change: transform;
@@ -671,13 +660,7 @@ export default function HotCoffeeRanking() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          opacity: 0;
-          animation: imageFadeIn 0.35s ease-in-out forwards;
-        }
-
-        @keyframes imageFadeIn {
-          from { opacity: 0; transform: scale(1.05); }
-          to { opacity: 1; transform: scale(1); }
+          /* Se eliminó el drop-shadow pesado para liberar la CPU de Chrome */
         }
 
         .pr-rank {
@@ -804,7 +787,6 @@ export default function HotCoffeeRanking() {
           letter-spacing: 0.05em;
         }
 
-        /* 🚀 Pie de página rediseñado con On Render + Crédito Lycan */
         .pr-footer {
           display: flex;
           justify-content: space-between;
@@ -816,8 +798,14 @@ export default function HotCoffeeRanking() {
           font-weight: 700;
           color: #cca08a;
           text-transform: uppercase;
-          gap: 0.6rem;
-          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        @media (max-width: 767px) {
+          .pr-footer {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.6rem;
+          }
         }
         @media (min-width: 768px) {
           .pr-footer { padding: 0.7rem 1.2rem 0.9rem; font-size: 0.8rem; }
@@ -829,55 +817,68 @@ export default function HotCoffeeRanking() {
           gap: 0.4rem;
         }
 
-        .pr-footer-dev {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          width: 100%;
-          justify-content: space-between;
-          padding-top: 0.4rem;
-          border-top: 1px dashed rgba(204, 160, 138, 0.15);
-        }
-        @media (min-width: 768px) {
-          .pr-footer-dev {
-            width: auto;
-            padding-top: 0;
-            border-top: none;
-          }
-        }
-
+        /* 🚀 Botón de Discord Promocional con Estilo Gamer */
         .pr-render-badge {
-          background: rgba(180, 77, 29, 0.25);
-          border: 1px solid #b44d1d;
-          color: #f5f5f4;
-          padding: 0.2rem 0.6rem;
-          border-radius: 4px;
-          font-size: 0.72rem;
+          background: linear-gradient(135deg, #5865f2 0%, #404feed5 100%);
+          border: 1px solid #7983f5;
+          color: #ffffff !important;
+          padding: 0.35rem 0.8rem;
+          border-radius: 6px;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-weight: 800;
+          font-size: 0.82rem;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
           text-decoration: none;
-          transition: all 0.2s ease;
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-        }
-        .pr-render-badge:hover {
-          background: #b44d1d;
-          border-color: #d0ca53;
-          color: #fff;
-          transform: translateY(-1px);
+          gap: 0.45rem;
+          box-shadow: 0 0 12px rgba(88, 101, 242, 0.4);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
         }
 
-        .pr-dev-credit {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          color: #d0ca53;
+        .pr-render-badge::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent
+          );
+          transition: left 0.5s ease;
         }
-        .pr-dev-avatar {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          border: 1px solid #d0ca53;
-          object-fit: cover;
+
+        .pr-render-badge:hover::before {
+          left: 100%;
+        }
+
+        .pr-render-badge:hover {
+          background: linear-gradient(135deg, #4752c4 0%, #3543b5 100%);
+          border-color: #d0ca53;
+          box-shadow: 0 0 18px rgba(88, 101, 242, 0.7), 0 0 8px rgba(208, 202, 83, 0.5);
+          transform: translateY(-2px) scale(1.03);
+        }
+
+        .pr-discord-icon {
+          width: 16px;
+          height: 16px;
+          fill: currentColor;
+          flex-shrink: 0;
+        }
+
+        .pr-tag-highlight {
+          background: rgba(0, 0, 0, 0.25);
+          padding: 1px 5px;
+          border-radius: 3px;
+          color: #d0ca53;
+          font-size: 0.72rem;
         }
       `}</style>
 
@@ -1090,7 +1091,6 @@ export default function HotCoffeeRanking() {
             })}
           </div>
 
-          {/* 🚀 FOOTER ACTUALIZADO CON "FROM ON RENDERS", PAGINACIÓN Y CRÉDITO DE LYCAN */}
           <div className="pr-footer">
             <span>
               Pág {page} de {totalPages} ·{' '}
@@ -1122,22 +1122,28 @@ export default function HotCoffeeRanking() {
                 Sig ▶
               </button>
             </div>
-
             <div className="pr-footer-dev">
               <a
                 href="https://discord.gg/8NbFuJcSCH"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="pr-render-badge"
-                title="Unirse al Discord oficial"
+                title="Unirse al servidor oficial de Discord Hot Coffee"
               >
-                🚀 <span>From On Render</span>
+                <svg className="pr-discord-icon" viewBox="0 0 127.14 96.36">
+                  <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a73.51,73.51,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22c2.72-27.16-5.83-50.91-18.9-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,45.92,53.88,53,48.8,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,45.92,96.12,53,91,65.69,84.69,65.69Z" />
+                </svg>
+                <span>¡Únete al Discord!</span>
+                <span className="pr-tag-highlight">From On Render</span>
               </a>
+
               <div className="pr-dev-credit">
                 <img src="/lycan-logo.png" alt="Lycan" className="pr-dev-avatar" />
                 <span>Dev: <strong>Lycan</strong></span>
               </div>
             </div>
+
+            <span>Hot Coffee 2XKO</span>
           </div>
         </div>
       </main>
