@@ -10,6 +10,7 @@ interface Player {
   sponsor: string;
   character: string;
   avatarUrl?: string;
+  profileUrl?: string; // 🆕
   points: number;
 }
 
@@ -61,7 +62,7 @@ const parseCharacters = (raw?: string): string[] =>
     .filter((c) => c && !PLACEHOLDER_CHARACTER.test(c))
     .map((c) => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase());
 
-function Avatar({ url, alt }: { url?: string; alt: string }) {
+function Avatar({ url, alt, profileUrl }: { url?: string; alt: string; profileUrl?: string }) {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -70,11 +71,27 @@ function Avatar({ url, alt }: { url?: string; alt: string }) {
 
   const src = !failed && url && url.startsWith('http') ? url : FALLBACK_AVATAR;
 
-  return (
+  const avatarElement = (
     <div className="pr-user-avatar-frame">
       <img src={src} alt={alt} onError={() => setFailed(true)} />
     </div>
   );
+
+  if (profileUrl) {
+    return (
+      <a
+        href={profileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Ver perfil de Start.gg de ${alt}`}
+        className="pr-avatar-link"
+      >
+        {avatarElement}
+      </a>
+    );
+  }
+
+  return avatarElement;
 }
 
 function FighterArt({ characters }: { characters: string[] }) {
@@ -470,6 +487,34 @@ export default function HotCoffeeRanking() {
         @media (min-width: 768px) {
           .pr-header { padding: 1.75rem 1.75rem 1.2rem; }
         }
+
+        /* 🆕 Animación y estilos para el enlace del avatar */
+          .pr-avatar-link {
+            display: inline-block;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          }
+          .pr-avatar-link:hover {
+            transform: scale(1.15);
+          }
+          .pr-user-avatar-frame {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #d0ca53;
+            background: #1a1008;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
+            flex-shrink: 0;
+            transition: border-color 0.25s, box-shadow 0.25s;
+          }
+          .pr-avatar-link:hover .pr-user-avatar-frame {
+            border-color: #f5f5f4;
+            box-shadow: 0 0 16px rgba(208, 202, 83, 0.8);
+          }
+          @media (min-width: 768px) {
+            .pr-user-avatar-frame { width: 46px; height: 46px; }
+          }
+          .pr-user-avatar-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .pr-title-area { display: flex; flex-direction: column; min-width: 0; flex: 1; }
         .pr-title {
@@ -959,7 +1004,7 @@ export default function HotCoffeeRanking() {
                         </div>
 
                         <div className="pr-right-group">
-                          <Avatar url={player.avatarUrl} alt={player.gamerTag} />
+                          <Avatar url={player.avatarUrl} alt={player.gamerTag} profileUrl={player.profileUrl} />
                           <span className="pr-points">{player.points} PTS</span>
                         </div>
                       </div>
@@ -999,7 +1044,7 @@ export default function HotCoffeeRanking() {
                     </div>
 
                     <div className="pr-right-group">
-                      <Avatar url={player.avatarUrl} alt={player.gamerTag} />
+                      <Avatar url={player.avatarUrl} alt={player.gamerTag} profileUrl={player.profileUrl} />
                       <span className="pr-points">{player.points} PTS</span>
                     </div>
                   </div>
