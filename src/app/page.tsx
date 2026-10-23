@@ -452,9 +452,11 @@ export default function HotCoffeeRanking() {
           display: flex;
           z-index: 2;
           pointer-events: none;
-          -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 76%, transparent 100%);
-          mask-image: linear-gradient(90deg, transparent 0%, #000 24%, #000 76%, transparent 100%);
+          -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
         }
+
+.pr-art-frame + .pr-art-frame { margin-left: -6%; } /* separación entre personajes */
         .pr-card:not(.is-wide) .pr-art { left: 42%; right: 30%; }
         .pr-list-section.cols-2 .pr-art { left: 42%; right: 28%; }
 
