@@ -124,13 +124,18 @@ export default function HotCoffeeRanking() {
   const [tourneyFrom, setTourneyFrom] = useState<number>(1);
   const [tourneyTo, setTourneyTo] = useState<number>(1);
   const [tourneyMax, setTourneyMax] = useState<number>(0);
-  const [rangeReady, setRangeReady] = useState(false); // 🆕 evita pedir el ranking antes de saber el rango
+  const [rangeReady, setRangeReady] = useState(false);
 
-  // 🆕 selecciona los últimos N torneos
   const selectLast = useCallback((n: number, max: number) => {
     setTourneyTo(max);
     setTourneyFrom(Math.max(1, max - n + 1));
   }, []);
+
+  // 🆕 Función para activar el filtro de 1 a 17 (o tourneyMax)
+  const handleSelect1To17 = useCallback(() => {
+    setTourneyFrom(1);
+    setTourneyTo(tourneyMax > 0 ? tourneyMax : 17);
+  }, [tourneyMax]);
 
   // Pedir el total de torneos y aplicar el atajo por defecto (últimos 3)
   useEffect(() => {
@@ -150,10 +155,12 @@ export default function HotCoffeeRanking() {
     setCurrentPage(1);
   }, [tourneyFrom, tourneyTo]);
 
-  // 🆕 qué atajo está activo (si el rango coincide con alguno)
   const activeShortcut = SHORTCUTS.find(
     (n) => tourneyTo === tourneyMax && tourneyFrom === Math.max(1, tourneyMax - n + 1)
   );
+
+  // 🆕 Comprobar si el rango actual es exactamente 1 hasta 17 (o tourneyMax)
+  const is1To17Active = tourneyFrom === 1 && tourneyTo === (tourneyMax > 0 ? tourneyMax : 17);
 
   const fetchRankings = useCallback(async () => {
     try {
@@ -171,7 +178,7 @@ export default function HotCoffeeRanking() {
   }, [API_URL, tourneyFrom, tourneyTo]);
 
   useEffect(() => {
-    if (rangeReady) fetchRankings(); // 🆕 solo cuando el rango ya está definido
+    if (rangeReady) fetchRankings();
   }, [fetchRankings, rangeReady]);
 
   useEffect(() => {
@@ -319,6 +326,7 @@ export default function HotCoffeeRanking() {
           display: flex;
           align-items: center;
           gap: 0.4rem;
+          flex-wrap: wrap;
         }
         .pr-range-fields { gap: 0.5rem; }
 
@@ -545,7 +553,7 @@ export default function HotCoffeeRanking() {
           display: flex;
           z-index: 2;
           pointer-events: none;
-          opacity: 0.45; /* Más tenue en móvil para no opacar el texto */
+          opacity: 0.45;
           -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
           mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
         }
@@ -784,6 +792,16 @@ export default function HotCoffeeRanking() {
                     Últimos {n}
                   </button>
                 ))}
+
+                {/* 🆕 Botón para activar el filtro de 1 a 17 (o máximo disponible) */}
+                <button
+                  type="button"
+                  className={`pr-shortcut-btn${is1To17Active ? ' is-active' : ''}`}
+                  onClick={handleSelect1To17}
+                  disabled={!rangeReady}
+                >
+                  1 al 17
+                </button>
               </div>
 
               <div className="pr-range-fields">
@@ -918,10 +936,12 @@ export default function HotCoffeeRanking() {
             <span>
               Pág {page} de {totalPages} ·{' '}
               {activeShortcut
-                ? `Últimos ${activeShortcut} torneos (${tourneyFrom}–${tourneyTo})`
-                : `Torneos ${tourneyFrom}–${tourneyTo}`}
+                ? `Últimos ${activeShortcut} torneos`
+                : is1To17Active
+                ? `Del torneo 1 al 17`
+                : `Rango personalizado (${tourneyFrom}-${tourneyTo})`}
             </span>
-            <span>Hot Coffee 2XKO Circuit</span>
+            <span>Hot Coffee 2XKO</span>
           </div>
         </div>
       </main>
