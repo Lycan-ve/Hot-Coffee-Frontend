@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { toPng } from 'html-to-image';
 
 interface Player {
@@ -10,7 +10,7 @@ interface Player {
   sponsor: string;
   character: string;
   avatarUrl?: string;
-  profileUrl?: string; // 🆕
+  profileUrl?: string;
   points: number;
 }
 
@@ -62,7 +62,7 @@ const parseCharacters = (raw?: string): string[] =>
     .filter((c) => c && !PLACEHOLDER_CHARACTER.test(c))
     .map((c) => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase());
 
-function Avatar({ url, alt, profileUrl }: { url?: string; alt: string; profileUrl?: string }) {
+const Avatar = memo(function Avatar({ url, alt, profileUrl }: { url?: string; alt: string; profileUrl?: string }) {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ function Avatar({ url, alt, profileUrl }: { url?: string; alt: string; profileUr
 
   const avatarElement = (
     <div className="pr-user-avatar-frame">
-      <img src={src} alt={alt} onError={() => setFailed(true)} />
+      <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} />
     </div>
   );
 
@@ -92,9 +92,9 @@ function Avatar({ url, alt, profileUrl }: { url?: string; alt: string; profileUr
   }
 
   return avatarElement;
-}
+});
 
-function FighterArt({ characters }: { characters: string[] }) {
+const FighterArt = memo(function FighterArt({ characters }: { characters: string[] }) {
   if (characters.length === 0) return null;
   return (
     <div className="pr-art" aria-hidden="true">
@@ -105,6 +105,7 @@ function FighterArt({ characters }: { characters: string[] }) {
             <img
               src={`/fighters/${charName}.png`}
               alt=""
+              loading="lazy"
               className="pr-art-img"
               style={{
                 objectPosition: conf.objectPosition,
@@ -120,7 +121,7 @@ function FighterArt({ characters }: { characters: string[] }) {
       })}
     </div>
   );
-}
+});
 
 export default function HotCoffeeRanking() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -446,6 +447,7 @@ export default function HotCoffeeRanking() {
           box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 35px rgba(180, 77, 29, 0.2);
           overflow: hidden;
           position: relative;
+          transform: translateZ(0); /* 🚀 Aceleración por hardware para reducir CPU */
         }
         .pr-card.is-wide { max-width: 920px; }
         .pr-card.is-exporting { max-width: 920px; width: 920px; }
@@ -463,7 +465,7 @@ export default function HotCoffeeRanking() {
           font-weight: bold;
           text-shadow: 0 1px 2px rgba(255,255,255,0.4);
           border-bottom: 2px solid #d0ca53;
-          animation: shine 3s linear infinite;
+          animation: shine 4s linear infinite; /* Animación más lenta para menor consumo de CPU */
         }
         @media (min-width: 768px) {
           .pr-birthday-banner {
@@ -488,33 +490,33 @@ export default function HotCoffeeRanking() {
           .pr-header { padding: 1.75rem 1.75rem 1.2rem; }
         }
 
-        /* 🆕 Animación y estilos para el enlace del avatar */
-          .pr-avatar-link {
-            display: inline-block;
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-          .pr-avatar-link:hover {
-            transform: scale(1.15);
-          }
-          .pr-user-avatar-frame {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 2px solid #d0ca53;
-            background: #1a1008;
-            overflow: hidden;
-            box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
-            flex-shrink: 0;
-            transition: border-color 0.25s, box-shadow 0.25s;
-          }
-          .pr-avatar-link:hover .pr-user-avatar-frame {
-            border-color: #f5f5f4;
-            box-shadow: 0 0 16px rgba(208, 202, 83, 0.8);
-          }
-          @media (min-width: 768px) {
-            .pr-user-avatar-frame { width: 46px; height: 46px; }
-          }
-          .pr-user-avatar-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        /* Enlace del avatar optimizado */
+        .pr-avatar-link {
+          display: inline-block;
+          will-change: transform;
+          transition: transform 0.2s ease;
+        }
+        .pr-avatar-link:hover {
+          transform: scale(1.12);
+        }
+        .pr-user-avatar-frame {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: 2px solid #d0ca53;
+          background: #1a1008;
+          overflow: hidden;
+          box-shadow: 0 0 8px rgba(208, 202, 83, 0.2);
+          flex-shrink: 0;
+        }
+        .pr-avatar-link:hover .pr-user-avatar-frame {
+          border-color: #f5f5f4;
+          box-shadow: 0 0 12px rgba(208, 202, 83, 0.6);
+        }
+        @media (min-width: 768px) {
+          .pr-user-avatar-frame { width: 46px; height: 46px; }
+        }
+        .pr-user-avatar-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .pr-title-area { display: flex; flex-direction: column; min-width: 0; flex: 1; }
         .pr-title {
@@ -523,7 +525,7 @@ export default function HotCoffeeRanking() {
           color: #f5f5f4;
           line-height: 0.95;
           letter-spacing: 0.03em;
-          text-shadow: 0 4px 15px rgba(0,0,0,0.8);
+          text-shadow: 0 2px 8px rgba(0,0,0,0.8);
           word-break: break-word;
         }
         @media (min-width: 768px) {
@@ -536,7 +538,6 @@ export default function HotCoffeeRanking() {
           color: #d0ca53;
           letter-spacing: 0.1em;
           margin-top: 4px;
-          text-shadow: 0 0 10px rgba(208, 202, 83, 0.4);
         }
         @media (min-width: 768px) {
           .pr-subtitle { font-size: 1.25rem; }
@@ -552,7 +553,7 @@ export default function HotCoffeeRanking() {
           align-items: center;
           justify-content: center;
           padding: 6px;
-          box-shadow: 0 8px 25px rgba(0,0,0,0.8), 0 0 15px rgba(208, 202, 83, 0.2);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.8);
           flex-shrink: 0;
           transform: rotate(3deg);
         }
@@ -580,6 +581,7 @@ export default function HotCoffeeRanking() {
           background: #1d120a;
           padding: 0 0.7rem 0 0.3rem;
           height: 80px;
+          transform: translateZ(0);
         }
         @media (min-width: 768px) {
           .pr-podium-row.top-1 { height: 100px; }
@@ -591,7 +593,6 @@ export default function HotCoffeeRanking() {
         .pr-podium-row.top-1 {
           background: linear-gradient(90deg, rgba(208, 202, 83, 0.25) 0%, rgba(29, 18, 10, 0.98) 75%);
           border: 1px solid #d0ca53;
-          box-shadow: 0 4px 18px rgba(208, 202, 83, 0.2);
         }
         .pr-podium-row.top-2 {
           background: linear-gradient(90deg, rgba(215, 223, 142, 0.2) 0%, rgba(29, 18, 10, 0.98) 75%);
@@ -606,9 +607,9 @@ export default function HotCoffeeRanking() {
           position: absolute; left: 0; top: 0; bottom: 0;
           z-index: 4;
         }
-        .pr-podium-row.top-1::before { width: 5px; background: #d0ca53; box-shadow: 0 0 12px #d0ca53; }
-        .pr-podium-row.top-2::before { width: 4px; background: #d7df8e; box-shadow: 0 0 10px #d7df8e; }
-        .pr-podium-row.top-3::before { width: 4px; background: #738c3e; box-shadow: 0 0 8px #738c3e; }
+        .pr-podium-row.top-1::before { width: 5px; background: #d0ca53; }
+        .pr-podium-row.top-2::before { width: 4px; background: #d7df8e; }
+        .pr-podium-row.top-3::before { width: 4px; background: #738c3e; }
 
         .pr-row {
           background: linear-gradient(90deg, rgba(204, 160, 138, 0.07) 0%, #191008 70%);
@@ -632,15 +633,12 @@ export default function HotCoffeeRanking() {
           z-index: 2;
           pointer-events: none;
           opacity: 0.45;
-          -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
-          mask-image: linear-gradient(90deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
         }
         @media (min-width: 768px) {
           .pr-art { opacity: 0.92; left: 34%; right: 22%; }
           .pr-card:not(.is-wide) .pr-art { left: 42%; right: 30%; }
         }
 
-        /* 🆕 Corrección limpia para móvil: ensancha ligeramente los laterales para evitar cortar caras sin tocar PODIUM_ART_CONFIG */
         @media (max-width: 767px) {
           .pr-art {
             left: 16% !important;
@@ -662,7 +660,7 @@ export default function HotCoffeeRanking() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
+          /* Se eliminó el drop-shadow pesado para liberar la CPU de Chrome */
         }
 
         .pr-rank {
@@ -680,10 +678,10 @@ export default function HotCoffeeRanking() {
           .pr-rank { font-size: 2.6rem; width: 44px; margin-left: 6px; }
         }
 
-        .pr-rank.gold   { color: #d0ca53; text-shadow: 0 0 10px rgba(208, 202, 83, 0.6); }
-        .pr-rank.silver { color: #d7df8e; text-shadow: 0 0 8px rgba(215, 223, 142, 0.5); }
-        .pr-rank.bronze { color: #738c3e; text-shadow: 0 0 8px rgba(115, 140, 62, 0.6); }
-        .pr-rank.white  { color: #9d958b; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); }
+        .pr-rank.gold   { color: #d0ca53; }
+        .pr-rank.silver { color: #d7df8e; }
+        .pr-rank.bronze { color: #738c3e; }
+        .pr-rank.white  { color: #9d958b; }
 
         .pr-name-wrap {
           position: relative;
@@ -716,7 +714,6 @@ export default function HotCoffeeRanking() {
           text-transform: uppercase;
           letter-spacing: 0.03em;
           line-height: 1.1;
-          text-shadow: 2px 2px 5px rgba(0,0,0,0.9);
           display: flex;
           align-items: center;
           gap: 4px;
@@ -755,21 +752,6 @@ export default function HotCoffeeRanking() {
           .pr-right-group { gap: 14px; }
         }
 
-        .pr-user-avatar-frame {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          border: 2px solid #d0ca53;
-          background: #1a1008;
-          overflow: hidden;
-          box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
-          flex-shrink: 0;
-        }
-        @media (min-width: 768px) {
-          .pr-user-avatar-frame { width: 46px; height: 46px; }
-        }
-        .pr-user-avatar-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
         .pr-points {
           font-family: 'Bebas Neue', Impact, sans-serif;
           font-size: 1.1rem;
@@ -779,7 +761,6 @@ export default function HotCoffeeRanking() {
           padding: 2px 8px;
           border-radius: 5px;
           letter-spacing: 0.03em;
-          box-shadow: 0 0 10px rgba(208, 202, 83, 0.3);
           white-space: nowrap;
           font-weight: 800;
         }
@@ -795,11 +776,6 @@ export default function HotCoffeeRanking() {
         }
         @media (min-width: 768px) {
           .pr-list-section { padding: 0 1.2rem 1.6rem; gap: 10px; }
-          .pr-card.is-wide .pr-list-section.cols-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px 14px;
-          }
         }
 
         .pr-empty {
@@ -911,7 +887,6 @@ export default function HotCoffeeRanking() {
                 ))}
               </div>
 
-              {/* 🆕 Selectores "Smart" para evitar combinaciones ilógicas */}
               <div className="pr-range-fields">
                 <label>Desde</label>
                 <select
@@ -961,7 +936,6 @@ export default function HotCoffeeRanking() {
           ref={tableRef}
           className={`pr-card${wide ? ' is-wide' : ''}${exporting ? ' is-exporting' : ''}`}
         >
-          {/* 🎉 Banderín de Cumpleaños para Chill Fever */}
           <div className="pr-birthday-banner">
             🎉 ¡FELIZ CUMPLEAÑOS CHILL FEVER! 🎂🎈
           </div>
@@ -974,7 +948,7 @@ export default function HotCoffeeRanking() {
               <div className="pr-subtitle">ORGANIZADO POR BANEADO SENSEI</div>
             </div>
             <div className="pr-logo-badge">
-              <img src="/logo-Hot.jpg" alt="Hot Coffee x 2XKO" />
+              <img src="/logo-Hot.jpg" alt="Hot Coffee x 2XKO" loading="lazy" />
             </div>
           </div>
 
@@ -1063,7 +1037,6 @@ export default function HotCoffeeRanking() {
                 : `Rango: Torneos ${tourneyFrom} al ${tourneyTo}`}
             </span>
 
-            {/* 🆕 Controles de paginación integrados abajo en el footer */}
             <div className="pr-footer-pagination">
               <button
                 className="pr-page-btn"
