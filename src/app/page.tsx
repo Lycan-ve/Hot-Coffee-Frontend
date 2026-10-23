@@ -15,10 +15,12 @@ interface Player {
 
 type Status = 'loading' | 'ok' | 'offline';
 
-// Enfoque y recorte de cada personaje en las filas
-const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string }> = {
+const PODIUM_ART_CONFIG: Record<
+  string,
+  { objectPosition: string; scale?: string; x?: string; y?: string }
+> = {
   caitlyn: { objectPosition: 'center -10%', scale: '2.5' },
-  akali: { objectPosition: 'center 12%', scale: '2.0' },
+  akali: { objectPosition: 'center 12%', scale: '2.0', x: '-10%' }, // 👈 negativo = mueve a la izquierda
   yasuo: { objectPosition: 'center 12%', scale: '2.0' },
   blitzcrank: { objectPosition: 'center 22%', scale: '2.0' },
   braum: { objectPosition: 'center -8%', scale: '2.5' },
@@ -38,11 +40,8 @@ const PODIUM_ART_CONFIG: Record<string, { objectPosition: string; scale?: string
 const DEFAULT_ART = { objectPosition: 'center 15%', scale: '1.2' };
 const FALLBACK_AVATAR = '/logo-Hot.jpg';
 const ITEMS_PER_PAGE = 10;
-
-// Columnas de la lista general (puesto 4 en adelante): 1 = fila ancha como el podio, 2 = como antes
 const LIST_COLUMNS: 1 | 2 = 1;
 
-// Valores que el backend puede devolver cuando aún no hay personaje (ej. "2XKO_FIGHTER")
 const PLACEHOLDER_CHARACTER = /fighter|2xko|unknown|^n\/?a$|^-+$/i;
 
 const BLANK_PIXEL =
@@ -78,7 +77,6 @@ function Avatar({ url, alt }: { url?: string; alt: string }) {
   );
 }
 
-// Arte de los personajes (se usa igual en el podio y en la lista general)
 function FighterArt({ characters }: { characters: string[] }) {
   if (characters.length === 0) return null;
   return (
@@ -96,7 +94,6 @@ function FighterArt({ characters }: { characters: string[] }) {
                 transform: `scale(${conf.scale || DEFAULT_ART.scale})`,
               }}
               onError={(e) => {
-                // Si falta la imagen, el otro personaje ocupa todo el espacio
                 const frame = e.currentTarget.parentElement;
                 if (frame) frame.style.display = 'none';
               }}
@@ -116,13 +113,18 @@ export default function HotCoffeeRanking() {
   const [exporting, setExporting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState('');
-  const tableRef = useRef<HTMLDivElement>(null);
+  
+  // Estados para el Range Picker (rango de torneos)
+  const [tourneyFrom, setTourneyFrom] = useState<number>(1);
+  const [tourneyTo, setTourneyTo] = useState<number>(17); // Puedes cambiar el máximo por defecto
 
+  const tableRef = useRef<HTMLDivElement>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
   const fetchRankings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/rankings/2xko`);
+      // Enviamos el rango de torneos como parámetros en la URL (?from=X&to=Y)
+      const response = await fetch(`${API_URL}/api/rankings/2xko?from=${tourneyFrom}&to=${tourneyTo}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const list: Player[] = Array.isArray(data) ? data : [];
@@ -133,7 +135,7 @@ export default function HotCoffeeRanking() {
       setPlayers(FALLBACK_PLAYERS);
       setStatus('offline');
     }
-  }, [API_URL]);
+  }, [API_URL, tourneyFrom, tourneyTo]);
 
   useEffect(() => {
     fetchRankings();
@@ -220,7 +222,6 @@ export default function HotCoffeeRanking() {
           font-family: 'Barlow Condensed', sans-serif;
         }
 
-        /* ---------- Controles (fuera de la imagen exportada) ---------- */
         .pr-controls {
           display: flex;
           justify-content: space-between;
@@ -233,6 +234,51 @@ export default function HotCoffeeRanking() {
         }
         @media (min-width: 768px) {
           .pr-controls { width: 920px; }
+        }
+
+        /* ---------- Rango de Torneos (Range Picker) estilo Discord/Gaming ---------- */
+        .pr-range-picker {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 540px;
+          max-width: 100%;
+          background: #25170d;
+          border: 1px solid rgba(204, 160, 138, 0.3);
+          border-radius: 8px;
+          padding: 0.6rem 1rem;
+          margin-bottom: 1rem;
+          color: #f5f5f4;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        @media (min-width: 768px) {
+          .pr-range-picker { width: 920px; }
+        }
+        .pr-range-title {
+          font-family: 'Bebas Neue', Impact, sans-serif;
+          font-size: 1.15rem;
+          color: #d0ca53;
+          letter-spacing: 0.08em;
+        }
+        .pr-range-inputs {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+        }
+        .pr-range-inputs label {
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: #cca08a;
+          text-transform: uppercase;
+        }
+        .pr-range-inputs select, .pr-range-inputs input {
+          background: #191008;
+          color: #f5f5f4;
+          border: 1px solid rgba(204, 160, 138, 0.4);
+          border-radius: 4px;
+          padding: 0.3rem 0.5rem;
+          font-family: inherit;
+          font-weight: 700;
         }
 
         .pr-pagination { display: flex; align-items: center; gap: 0.5rem; }
@@ -289,7 +335,6 @@ export default function HotCoffeeRanking() {
           .pr-notice { width: 920px; }
         }
 
-        /* ---------- Tarjeta ---------- */
         .pr-card {
           width: 540px;
           max-width: 100%;
@@ -345,7 +390,6 @@ export default function HotCoffeeRanking() {
         }
         .pr-logo-badge img { width: 100%; height: 100%; object-fit: contain; }
 
-        /* ---------- Filas ---------- */
         .pr-podium-section {
           display: flex;
           flex-direction: column;
@@ -401,9 +445,6 @@ export default function HotCoffeeRanking() {
           margin: 0.2rem 1.2rem 0.9rem;
         }
 
-        /* ---------- Arte de personajes (podio y lista) ----------
-           Los bordes se difuminan con una máscara, así no queda una costura
-           aunque el fondo de la fila cambie de color. */
         .pr-art {
           position: absolute;
           top: 0; bottom: 0;
@@ -434,7 +475,6 @@ export default function HotCoffeeRanking() {
           filter: drop-shadow(0 4px 10px rgba(0,0,0,0.9));
         }
 
-        /* ---------- Textos ---------- */
         .pr-rank {
           position: relative;
           z-index: 4;
@@ -535,7 +575,6 @@ export default function HotCoffeeRanking() {
           font-weight: 800;
         }
 
-        /* ---------- Lista general (puesto 4 en adelante) ---------- */
         .pr-list-section {
           display: flex;
           flex-direction: column;
@@ -572,6 +611,7 @@ export default function HotCoffeeRanking() {
       `}</style>
 
       <main className="pr-root">
+        {/* Controles superiores (Paginación y Botones de Sincronizar/PNG) */}
         <div className="pr-controls">
           <div className="pr-pagination">
             <button
@@ -602,6 +642,31 @@ export default function HotCoffeeRanking() {
             <button className="pr-export-btn" onClick={handleExportPNG} disabled={exporting}>
               {exporting ? 'Generando…' : '↓ PNG'}
             </button>
+          </div>
+        </div>
+
+        {/* 🎛️ Rango de Torneos (Range Picker solicitado por Baneado Sensei) */}
+        <div className="pr-range-picker">
+          <span className="pr-range-title">Rango de Torneos:</span>
+          <div className="pr-range-inputs">
+            <label>Desde</label>
+            <input
+              type="number"
+              min={1}
+              max={tourneyTo}
+              value={tourneyFrom}
+              onChange={(e) => setTourneyFrom(Math.max(1, Number(e.target.value)))}
+              style={{ width: '60px' }}
+            />
+            <label>Hasta</label>
+            <input
+              type="number"
+              min={tourneyFrom}
+              max={17}
+              value={tourneyTo}
+              onChange={(e) => setTourneyTo(Math.max(tourneyFrom, Number(e.target.value)))}
+              style={{ width: '60px' }}
+            />
           </div>
         </div>
 
@@ -664,7 +729,7 @@ export default function HotCoffeeRanking() {
             </>
           )}
 
-          {/* 2. LISTA GENERAL (puesto 4 en adelante, mismo formato que el podio) */}
+          {/* 2. LISTA GENERAL (puesto 4 en adelante) */}
           <div className={`pr-list-section cols-${LIST_COLUMNS}`}>
             {restPlayers.length === 0 && top3Players.length === 0 && (
               <div className="pr-empty">
