@@ -259,14 +259,27 @@ export default function HotCoffeeRanking() {
     if (syncing) return;
     setSyncing(true);
     try {
+      // Esta llamada ahora se quedará parada en "Sincronizando..." 
+      // hasta que Go termine por completo de procesar los torneos y guardar en la BD.
       const res = await fetch(`${API_URL}/api/sync`);
+      
+      if (!res.ok) throw new Error('Error en el servidor');
+      
       const json = await res.json();
       setNotice(json.message || 'Sincronizado con éxito');
+
+      // Volvemos a pedir los rankings para asegurar consistencia visual
       await fetchRankings();
+
+      // 🔄 Como el backend ya confirmó el fin de la ejecución, recargamos la página por completo
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+
     } catch (err) {
+      console.error(err);
       setNotice('Error al sincronizar con Start.gg');
-    } finally {
-      setSyncing(false);
+      setSyncing(false); // Solo liberamos si hubo error para permitir reintentar
     }
   };
 
