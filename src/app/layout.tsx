@@ -3,13 +3,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: '🎉 ¡Feliz Cumpleaños Chill Fever! | Hot Coffee 2XKO',
-  description: 'Ranking Oficial de Hot Coffee 2XKO - ¡Celebrando el cumpleaños de Chill Fever!',
+  title: 'Hot Coffee 2XKO',
+  description: 'Ranking Oficial de Hot Coffee 2XKO Discord',
   icons: {
     icon: '/favicon.ico',
   },
   openGraph: {
-    title: '🎉 ¡Feliz Cumpleaños Chill Fever! | Hot Coffee 2XKO',
+    title: 'Hot Coffee 2XKO',
     description: 'Ranking Oficial de Hot Coffee 2XKO Discord',
     images: ['/logo-Hot.jpg'],
   },

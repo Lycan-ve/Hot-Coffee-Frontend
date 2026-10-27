@@ -1027,9 +1027,9 @@ export default function HotCoffeeRanking() {
           ref={tableRef}
           className={`pr-card${wide ? ' is-wide' : ''}${exporting ? ' is-exporting' : ''}`}
         >
-          <div className="pr-birthday-banner">
+          {/* <div className="pr-birthday-banner">
             🎉 ¡FELIZ CUMPLEAÑOS CHILL FEVER! 🎂🎈
-          </div>
+          </div> */}
 
           <div className="pr-header">
             <div className="pr-title-area">
