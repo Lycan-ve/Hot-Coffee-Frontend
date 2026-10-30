@@ -30,12 +30,14 @@ const PODIUM_ART_CONFIG: Record<
   ekko: { objectPosition: 'center -5%', scale: '2.5', x: '-20%' },
   illaoi: { objectPosition: 'center -5%', scale: '2.5', x: '30%' },
   jinx: { objectPosition: 'center 5%', scale: '2.5', x: '10%' },
-  lux: { objectPosition: 'center 10%', scale: '1.25' },
-  senna: { objectPosition: 'center 14%', scale: '1.2' },
+  lux: { objectPosition: 'center -12%', scale: '2.5', x:'10%' },
+  senna: { objectPosition: 'center 13%', scale: '2.5', x:'-10%' },
   teemo: { objectPosition: 'center 75%', scale: '1.3', x: '-15%' },
   thresh: { objectPosition: 'center -5%', scale: '2.8' },
   vi: { objectPosition: 'center 0%', scale: '2.0' },
   warwick: { objectPosition: 'center 45%', scale: '2.8', x: '-10%' },
+  sett: { objectPosition: 'center -5%', scale: '2.5', x: '-15%'},
+  samira: { objectPosition: 'center -13%', scale: '2.5', x: '-20%'},
 };
 
 const DEFAULT_ART = { objectPosition: 'center 15%', scale: '1.2' };
