@@ -48,13 +48,6 @@ const PLACEHOLDER_CHARACTER = /fighter|2xko|unknown|^n\/?a$|^-+$/i;
 const BLANK_PIXEL =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
-const FALLBACK_PLAYERS: Player[] = [
-  { id: 1, ranking: 1, gamerTag: 'ÑEMBO', sponsor: 'RZS', character: 'AKALI, YASUO', avatarUrl: '', points: 800 },
-  { id: 2, ranking: 2, gamerTag: 'GAPPY', sponsor: 'TKF', character: 'BLITZCRANK', avatarUrl: '', points: 350 },
-  { id: 3, ranking: 3, gamerTag: 'HIAMJOY', sponsor: 'HCN', character: 'DARIUS, BRAUM', avatarUrl: '', points: 300 },
-  { id: 4, ranking: 4, gamerTag: 'MIKU', sponsor: 'FKC', character: 'AHRI', avatarUrl: '', points: 205 },
-];
-
 const parseCharacters = (raw?: string): string[] =>
   (raw ?? '')
     .split(',')
@@ -198,7 +191,6 @@ export default function HotCoffeeRanking() {
       setStatus('ok');
     } catch (error) {
       console.error('Error cargando rankings, aplicando datos de prueba...', error);
-      setPlayers(FALLBACK_PLAYERS);
       setStatus('offline');
     }
   }, [API_URL, tourneyFrom, tourneyTo]);
