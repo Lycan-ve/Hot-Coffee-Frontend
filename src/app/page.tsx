@@ -930,6 +930,7 @@ export default function HotCoffeeRanking() {
         <div className="pr-controls">
           <div className="pr-pagination">
             <DiscordLoginButton />
+            <a href="/matchmaking">Matchmaking</a>
           </div>
 
           <div className="pr-action-btns">
