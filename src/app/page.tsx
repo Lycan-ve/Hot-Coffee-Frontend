@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { toPng } from 'html-to-image';
+import DiscordLoginButton from '@/components/DiscordLoginButton';
 
 interface Player {
   id: number;
@@ -928,25 +929,7 @@ export default function HotCoffeeRanking() {
         {/* Controles superiores */}
         <div className="pr-controls">
           <div className="pr-pagination">
-            <button
-              className="pr-page-btn"
-              disabled={page === 1}
-              onClick={() => setCurrentPage(page - 1)}
-              aria-label="Página anterior"
-            >
-              ◀ Ant
-            </button>
-            <span className="pr-page-info">
-              Pág {page} / {totalPages}
-            </span>
-            <button
-              className="pr-page-btn"
-              disabled={page === totalPages}
-              onClick={() => setCurrentPage(page + 1)}
-              aria-label="Página siguiente"
-            >
-              Sig ▶
-            </button>
+            <DiscordLoginButton />
           </div>
 
           <div className="pr-action-btns">
