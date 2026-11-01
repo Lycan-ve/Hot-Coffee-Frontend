@@ -38,7 +38,7 @@ const PODIUM_ART_CONFIG: Record<
   vi: { objectPosition: 'center 0%', scale: '2.0' },
   warwick: { objectPosition: 'center 45%', scale: '2.8', x: '-10%' },
   sett: { objectPosition: 'center -5%', scale: '2.5', x: '-15%'},
-  samira: { objectPosition: 'center -13%', scale: '2.5', x: '-20%'},
+  samira: { objectPosition: 'center -15%', scale: '3.0', x: '-20%'},
 };
 
 const DEFAULT_ART = { objectPosition: 'center 15%', scale: '1.2' };
