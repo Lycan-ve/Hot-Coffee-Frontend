@@ -923,16 +923,607 @@ export default function HotCoffeeRanking() {
           border: 1px solid #d0ca53;
           object-fit: cover;
         }
+
+        /* Dashboard layout: keeps the Hot Coffee palette and ranking behavior. */
+        .pr-root {
+          display: grid;
+          grid-template-columns: 214px minmax(0, 1fr);
+          grid-template-areas:
+            "sidebar main"
+            "sidebar info";
+          align-items: start;
+          gap: 18px;
+          width: min(100%, 1580px);
+          margin: 0 auto;
+          padding: 18px;
+          overflow: visible;
+          background-color: #392415;
+          background-image:
+            radial-gradient(ellipse at 48% 0%, rgba(180, 77, 29, 0.22), transparent 56%),
+            repeating-linear-gradient(-45deg, transparent, transparent 14px, rgba(157, 149, 139, 0.025) 14px, rgba(157, 149, 139, 0.025) 15px);
+        }
+
+        .pr-sidebar {
+          grid-area: sidebar;
+          position: sticky;
+          top: 18px;
+          min-width: 0;
+          min-height: calc(100vh - 36px);
+          display: flex;
+          flex-direction: column;
+          padding: 18px 14px;
+          border: 1px solid rgba(204, 160, 138, 0.2);
+          border-radius: 14px;
+          background: linear-gradient(180deg, rgba(37, 23, 13, 0.96), rgba(29, 18, 10, 0.92));
+          box-shadow: 0 16px 38px rgba(0, 0, 0, 0.24);
+        }
+
+        .pr-side-brand {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #f5f5f4;
+          text-decoration: none;
+        }
+
+        .pr-sidebar-logo {
+          width: 44px;
+          height: 44px;
+          flex: 0 0 auto;
+          overflow: hidden;
+          border: 1px solid #d0ca53;
+          border-radius: 10px;
+          background: #191008;
+          padding: 4px;
+        }
+
+        .pr-sidebar-logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .pr-side-brand-name {
+          display: flex;
+          flex-direction: column;
+          font-family: 'Bebas Neue', Impact, sans-serif;
+          font-size: 1.25rem;
+          line-height: 0.95;
+          letter-spacing: 0.04em;
+        }
+
+        .pr-side-brand-name strong {
+          color: #d0ca53;
+          font-weight: inherit;
+        }
+
+        .pr-sidebar-caption {
+          margin: 15px 0 8px;
+          color: #9d958b;
+          font-size: 0.68rem;
+          font-weight: 800;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .pr-sidebar-nav {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .pr-nav-link {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-height: 42px;
+          padding: 0 10px;
+          border: 1px solid transparent;
+          border-radius: 8px;
+          color: #cca08a;
+          font-size: 0.95rem;
+          font-weight: 700;
+          text-decoration: none;
+          transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+        }
+
+        .pr-nav-link span {
+          width: 23px;
+          color: #9d958b;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .pr-nav-link:hover,
+        .pr-nav-link.is-active {
+          border-color: rgba(208, 202, 83, 0.22);
+          background: linear-gradient(90deg, rgba(180, 77, 29, 0.22), rgba(208, 202, 83, 0.07));
+          color: #f5f5f4;
+        }
+
+        .pr-nav-link.is-active span {
+          color: #d0ca53;
+        }
+
+        .pr-sidebar-rule {
+          height: 1px;
+          margin: 18px 0;
+          background: linear-gradient(90deg, rgba(208, 202, 83, 0.42), transparent);
+        }
+
+        .pr-sidebar-season {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          padding: 13px;
+          border: 1px solid rgba(204, 160, 138, 0.14);
+          border-radius: 9px;
+          background: rgba(25, 16, 8, 0.74);
+          color: #cca08a;
+          font-size: 0.78rem;
+          font-weight: 700;
+          line-height: 1.3;
+        }
+
+        .pr-sidebar-season strong {
+          color: #d0ca53;
+          font-family: 'Bebas Neue', Impact, sans-serif;
+          font-size: 1.65rem;
+          font-weight: 400;
+          line-height: 1;
+        }
+
+        .pr-sidebar-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+          margin-top: auto;
+          padding-top: 18px;
+        }
+
+        .pr-sidebar-actions .inline-flex {
+          justify-content: center;
+          min-height: 40px;
+          border-color: rgba(208, 202, 83, 0.35);
+          background: rgba(208, 202, 83, 0.1);
+          color: #f5f5f4;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-weight: 800;
+          text-align: center;
+        }
+
+        .pr-sidebar-actions .inline-flex:hover {
+          border-color: #d0ca53;
+          background: rgba(208, 202, 83, 0.18);
+        }
+
+        .pr-discord-link {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 40px;
+          padding: 7px 10px;
+          border: 1px solid rgba(204, 160, 138, 0.23);
+          border-radius: 7px;
+          color: #cca08a;
+          font-size: 0.83rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          text-decoration: none;
+          text-transform: uppercase;
+          transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+        }
+
+        .pr-discord-link:hover {
+          border-color: #b44d1d;
+          background: rgba(180, 77, 29, 0.15);
+          color: #f5f5f4;
+        }
+
+        .pr-main-column {
+          grid-area: main;
+          min-width: 0;
+        }
+
+        .pr-page-heading {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 16px;
+          margin: 2px 2px 16px;
+        }
+
+        .pr-page-kicker {
+          margin: 0 0 3px;
+          color: #d0ca53;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .pr-page-title {
+          margin: 0;
+          color: #f5f5f4;
+          font-family: 'Bebas Neue', Impact, sans-serif;
+          font-size: clamp(1.9rem, 3vw, 2.55rem);
+          font-weight: 400;
+          line-height: 0.96;
+          letter-spacing: 0.035em;
+        }
+
+        .pr-page-description {
+          margin: 6px 0 0;
+          color: #cca08a;
+          font-size: 0.92rem;
+        }
+
+        .pr-status-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          flex: 0 0 auto;
+          padding: 8px 11px;
+          border: 1px solid rgba(204, 160, 138, 0.2);
+          border-radius: 999px;
+          background: rgba(37, 23, 13, 0.7);
+          color: #cca08a;
+          font-size: 0.78rem;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .pr-status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #9d958b;
+          box-shadow: 0 0 8px currentColor;
+        }
+
+        .pr-status-pill.is-ok .pr-status-dot { background: #738c3e; }
+        .pr-status-pill.is-loading .pr-status-dot { background: #d0ca53; }
+        .pr-status-pill.is-offline .pr-status-dot { background: #b44d1d; }
+
+        .pr-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+
+        .pr-summary-card {
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          gap: 4px;
+          padding: 12px 14px;
+          border: 1px solid rgba(204, 160, 138, 0.17);
+          border-radius: 9px;
+          background: linear-gradient(135deg, rgba(37, 23, 13, 0.88), rgba(29, 18, 10, 0.68));
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .pr-summary-label {
+          color: #9d958b;
+          font-size: 0.67rem;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .pr-summary-value {
+          overflow: hidden;
+          color: #d0ca53;
+          font-family: 'Bebas Neue', Impact, sans-serif;
+          font-size: 1.7rem;
+          line-height: 1;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .pr-summary-value.is-name {
+          color: #f5f5f4;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 1.08rem;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        .pr-summary-detail {
+          overflow: hidden;
+          color: #cca08a;
+          font-size: 0.76rem;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .pr-info-panel {
+          grid-area: info;
+          display: grid;
+          grid-template-columns: 1fr;
+          align-content: start;
+          gap: 12px;
+          min-width: 0;
+        }
+
+        .pr-info-card {
+          min-width: 0;
+          padding: 16px;
+          border: 1px solid rgba(204, 160, 138, 0.19);
+          border-radius: 12px;
+          background: linear-gradient(160deg, rgba(37, 23, 13, 0.94), rgba(29, 18, 10, 0.82));
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+        }
+
+        .pr-info-eyebrow {
+          margin: 0 0 6px;
+          color: #b44d1d;
+          font-size: 0.68rem;
+          font-weight: 800;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+        }
+
+        .pr-info-title {
+          margin: 0;
+          color: #f5f5f4;
+          font-family: 'Bebas Neue', Impact, sans-serif;
+          font-size: 1.35rem;
+          font-weight: 400;
+          line-height: 1;
+          letter-spacing: 0.04em;
+        }
+
+        .pr-info-copy {
+          margin: 8px 0 0;
+          color: #cca08a;
+          font-size: 0.84rem;
+          line-height: 1.45;
+        }
+
+        .pr-info-stat {
+          display: flex;
+          justify-content: space-between;
+          gap: 8px;
+          margin-top: 13px;
+          padding-top: 10px;
+          border-top: 1px solid rgba(204, 160, 138, 0.14);
+          color: #9d958b;
+          font-size: 0.78rem;
+          font-weight: 700;
+        }
+
+        .pr-info-stat strong { color: #d0ca53; }
+
+        .pr-leader {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 12px;
+        }
+
+        .pr-leader .pr-user-avatar-frame {
+          width: 42px;
+          height: 42px;
+        }
+
+        .pr-leader-name {
+          overflow: hidden;
+          color: #f5f5f4;
+          font-size: 0.95rem;
+          font-weight: 800;
+          text-overflow: ellipsis;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .pr-leader-points {
+          color: #d0ca53;
+          font-size: 0.78rem;
+          font-weight: 800;
+        }
+
+        .pr-controls,
+        .pr-range-picker-wrap,
+        .pr-notice,
+        .pr-card {
+          max-width: none;
+        }
+
+        .pr-controls { margin-bottom: 12px; }
+        .pr-range-picker-wrap { margin-bottom: 12px; }
+        .pr-mobile-login { display: none; }
+
+        .pr-card.is-wide,
+        .pr-card.is-exporting {
+          width: 100%;
+          max-width: none;
+        }
+
+        @media (min-width: 1280px) {
+          .pr-root {
+            grid-template-columns: 224px minmax(0, 1fr) 278px;
+            grid-template-areas: "sidebar main info";
+            gap: 20px;
+            padding: 22px;
+          }
+          .pr-sidebar { min-height: calc(100vh - 44px); }
+          .pr-info-panel { padding-top: 0; }
+        }
+
+        @media (min-width: 900px) and (max-width: 1279px) {
+          .pr-root { grid-template-columns: 190px minmax(0, 1fr); gap: 14px; padding: 14px; }
+          .pr-sidebar { min-height: calc(100vh - 28px); }
+          .pr-info-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 899px) {
+          .pr-root {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
+            padding: 12px;
+          }
+          .pr-sidebar {
+            position: static;
+            min-height: 0;
+            padding: 12px;
+          }
+          .pr-sidebar-caption,
+          .pr-sidebar-season,
+          .pr-sidebar-rule,
+          .pr-sidebar-actions { display: none; }
+          .pr-sidebar-nav {
+            flex-direction: row;
+            gap: 6px;
+            margin-top: 10px;
+          }
+          .pr-nav-link {
+            flex: 1;
+            justify-content: center;
+            min-height: 36px;
+            padding: 0 8px;
+            font-size: 0.84rem;
+          }
+          .pr-main-column { width: 100%; }
+          .pr-mobile-login { display: flex; width: 100%; }
+          .pr-mobile-login .inline-flex { justify-content: center; width: 100%; }
+          .pr-info-panel {
+            width: 100%;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+          .pr-info-card { padding: 14px; }
+          .pr-controls { max-width: none; }
+          .pr-range-picker-wrap,
+          .pr-notice { max-width: none; }
+        }
+
+        @media (max-width: 560px) {
+          .pr-root { gap: 11px; padding: 8px; }
+          .pr-sidebar { border-radius: 10px; padding: 10px; }
+          .pr-sidebar-logo { width: 38px; height: 38px; }
+          .pr-side-brand-name { font-size: 1.08rem; }
+          .pr-nav-link span { display: none; }
+          .pr-nav-link { font-size: 0.78rem; }
+          .pr-page-heading { align-items: flex-start; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+          .pr-summary-grid { gap: 6px; margin-bottom: 10px; }
+          .pr-summary-card { padding: 9px 8px; }
+          .pr-summary-label { font-size: 0.57rem; letter-spacing: 0.07em; }
+          .pr-summary-value { font-size: 1.4rem; }
+          .pr-summary-value.is-name { font-size: 0.86rem; }
+          .pr-summary-detail { font-size: 0.66rem; }
+          .pr-info-panel { grid-template-columns: 1fr; gap: 9px; }
+          .pr-controls { align-items: stretch; gap: 8px; }
+          .pr-action-btns { width: 100%; justify-content: space-between; gap: 6px; }
+          .pr-filter-toggle-btn,
+          .pr-sync-btn,
+          .pr-export-btn { padding: 0.42rem 0.55rem; font-size: 0.76rem; }
+          .pr-card { border-radius: 9px; }
+          .pr-header { padding: 0.95rem 0.8rem 0.75rem; }
+          .pr-title { font-size: 1.65rem; }
+          .pr-logo-badge { width: 58px; height: 58px; }
+          .pr-podium-section { padding: 0.65rem 0.55rem 0.45rem; }
+          .pr-list-section { padding: 0 0.55rem 0.9rem; }
+          .pr-podium-row,
+          .pr-row { height: 72px; }
+          .pr-rank { font-size: 1.7rem; width: 28px; }
+          .pr-name { font-size: 0.94rem; }
+          .pr-fighter-tag { font-size: 0.6rem; }
+          .pr-right-group { gap: 5px; }
+          .pr-user-avatar-frame { width: 31px; height: 31px; }
+          .pr-points { padding: 2px 6px; font-size: 0.94rem; }
+          .pr-render-badge { font-size: 0.7rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .pr-root *,
+          .pr-root *::before,
+          .pr-root *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
       `}</style>
 
       <main className="pr-root">
-        {/* Controles superiores */}
-        <div className="pr-controls">
-          <div className="pr-pagination">
-            <DiscordLoginButton />
-            <a href="/matchmaking">Matchmaking</a>
+        <aside className="pr-sidebar" aria-label="Navegación principal">
+          <a href="/" className="pr-side-brand">
+            <span className="pr-sidebar-logo">
+              <img src="/logo-Hot.jpg" alt="" />
+            </span>
+            <span className="pr-side-brand-name">
+              <span>HOT COFFEE</span>
+              <strong>2XKO RANKING</strong>
+            </span>
+          </a>
+
+          <p className="pr-sidebar-caption">Competitivo · Comunidad</p>
+          <nav className="pr-sidebar-nav">
+            <a href="/" className="pr-nav-link is-active" aria-current="page">
+              <span>01</span> Ranking
+            </a>
+            <a href="/matchmaking" className="pr-nav-link">
+              <span>02</span> Matchmaking
+            </a>
+          </nav>
+
+          <div className="pr-sidebar-rule" />
+          <div className="pr-sidebar-season">
+            TEMPORADA DE TORNEOS
+            <strong>{tourneyMax || '—'}</strong>
+            eventos registrados
           </div>
 
+          <div className="pr-sidebar-actions">
+            <DiscordLoginButton />
+            <a className="pr-discord-link" href="https://discord.gg/8NbFuJcSCH" target="_blank" rel="noopener noreferrer">
+              Unirse al Discord
+            </a>
+          </div>
+        </aside>
+
+        <section className="pr-main-column">
+          <div className="pr-page-heading">
+            <div>
+              <p className="pr-page-kicker">HOT COFFEE · 2XKO</p>
+              <h1 className="pr-page-title">Clasificación de jugadores</h1>
+              <p className="pr-page-description">El progreso competitivo de la comunidad, en un solo lugar.</p>
+            </div>
+            <div className={`pr-status-pill is-${status}`}>
+              <span className="pr-status-dot" />
+              {status === 'ok' ? 'Ranking actualizado' : status === 'loading' ? 'Cargando ranking' : 'Modo sin conexión'}
+            </div>
+          </div>
+
+          <div className="pr-summary-grid" aria-label="Resumen del ranking">
+            <div className="pr-summary-card">
+              <span className="pr-summary-label">Participantes</span>
+              <strong className="pr-summary-value">{players.length}</strong>
+              <span className="pr-summary-detail">en el ranking de torneos</span>
+            </div>
+            <div className="pr-summary-card">
+              <span className="pr-summary-label">Torneos registrados</span>
+              <strong className="pr-summary-value">{tourneyMax || '—'}</strong>
+              <span className="pr-summary-detail">eventos contabilizados</span>
+            </div>
+            <div className="pr-summary-card">
+              <span className="pr-summary-label">Líder actual</span>
+              <strong className="pr-summary-value is-name">{players[0]?.gamerTag || 'Por definir'}</strong>
+              <span className="pr-summary-detail">{players[0] ? `${players[0].points} puntos` : 'A la espera de resultados'}</span>
+            </div>
+          </div>
+
+        {/* Controles superiores */}
+        <div className="pr-controls">
+          <div className="pr-mobile-login">
+            <DiscordLoginButton />
+          </div>
           <div className="pr-action-btns">
             <button
               type="button"
@@ -1174,6 +1765,40 @@ export default function HotCoffeeRanking() {
             </div>
           </div>
         </div>
+        </section>
+
+        <aside className="pr-info-panel" aria-label="Información del ranking">
+          <section className="pr-info-card">
+            <p className="pr-info-eyebrow">Temporada</p>
+            <h2 className="pr-info-title">Puntos por torneo</h2>
+            <p className="pr-info-copy">La clasificación se construye con los resultados registrados en los eventos de 2XKO.</p>
+            <div className="pr-info-stat">
+              <span>Filtro visible</span>
+              <strong>{isAllSelected ? 'Todos' : `${tourneyFrom}–${tourneyTo}`}</strong>
+            </div>
+            <div className="pr-info-stat">
+              <span>Eventos en temporada</span>
+              <strong>{tourneyMax || '—'}</strong>
+            </div>
+          </section>
+
+          <section className="pr-info-card">
+            <p className="pr-info-eyebrow">En la cima</p>
+            <h2 className="pr-info-title">Jugador destacado</h2>
+            {players[0] ? (
+              <div className="pr-leader">
+                <Avatar url={players[0].avatarUrl} alt={players[0].gamerTag} profileUrl={players[0].profileUrl} />
+                <div>
+                  <div className="pr-leader-name">{players[0].gamerTag}</div>
+                  <div className="pr-leader-points">{players[0].points} PTS · Puesto #1</div>
+                </div>
+              </div>
+            ) : (
+              <p className="pr-info-copy">El líder aparecerá cuando se carguen los resultados.</p>
+            )}
+            <p className="pr-info-copy">Usa el filtro de torneos para comparar el avance en distintos tramos.</p>
+          </section>
+        </aside>
       </main>
     </>
   );
