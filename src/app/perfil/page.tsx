@@ -1,18 +1,3 @@
-// ============================================================
-// REEMPLAZO COMPLETO: src/app/perfil/page.tsx
-// (Hot-Coffee-Frontend)
-//
-// Rediseño inspirado en la referencia estilo "cliente de juego":
-// - Banner de jugador con arte de fondo y esquinas recortadas
-// - Nav lateral vertical (Resumen / Rango / Tabla / Matchmaking)
-// - Tarjeta de rango tipo cliente: emblema + nombre + barra de LP
-// - Franja de rendimiento en 4 tarjetas con acento de color
-//
-// NO CAMBIA NINGUNA LÓGICA: estados (loading/anon/error/ok),
-// manejo de #token=..., ?error=..., fetchMe(), ERROR_MESSAGES
-// y el modelo de datos quedan exactamente igual.
-// ============================================================
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -20,12 +5,16 @@ import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   ArrowUpRight,
+  CalendarDays,
   CircleCheck,
   CircleX,
   Coffee,
+  Crown,
+  ExternalLink,
   Flame,
   LayoutList,
   LoaderCircle,
+  Medal,
   Percent,
   Swords,
   Trophy,
@@ -33,12 +22,13 @@ import {
 } from 'lucide-react';
 import {
   fetchMe,
+  fuseIconUrl,
   getToken,
   loginUrl,
-  MeResponse,
   rankIconFallbackUrl,
   rankIconUrl,
 } from '@/lib/auth';
+import type { MeResponse, ProfileFight, ProfileTournament } from '@/lib/auth';
 
 type Status = 'loading' | 'anon' | 'error' | 'ok';
 
@@ -83,7 +73,7 @@ export default function PerfilPage() {
           <div className="mb-5 grid h-16 w-16 place-items-center border border-[#b44d1d]/50 bg-[#28180f] text-[#d0ca53] [clip-path:polygon(15%_0,100%_0,100%_85%,85%_100%,0_100%,0_15%)]">
             <LoaderCircle className="h-7 w-7 animate-spin motion-reduce:animate-none" />
           </div>
-          <p className="font-condensed text-2xl font-semibold uppercase tracking-[0.16em] text-white/80">
+          <p className="font-game text-2xl font-semibold uppercase tracking-[0.16em] text-white/80">
             Cargando ficha
           </p>
           <p className="mt-2 text-sm text-white/45">Conectando con la arena...</p>
@@ -98,7 +88,7 @@ export default function PerfilPage() {
         <ProfileNotice
           eyebrow="HOT COFFEE 2XKO / PLAYER CARD"
           title="Tu próxima partida empieza aquí."
-          message="Conecta tu cuenta de Discord para consultar tu rango, tus puntos y tu rendimiento en matchmaking."
+          message="Conecta tu cuenta de Discord para consultar tu rango, tu historial de peleas y tus resultados en torneos."
           action="Iniciar sesión con Discord"
           href={loginUrl()}
         />
@@ -130,6 +120,9 @@ export default function PerfilPage() {
   const name = user.guildNickname || user.globalName || user.username;
   const position = stats.rankingPosition > 0 ? `#${stats.rankingPosition}` : '—';
   const progress = Math.max(0, Math.min(rank.progress, 100));
+  const fights = me.fights ?? [];
+  const tournaments = me.tournaments ?? [];
+  const championships = tournaments.filter((tournament) => tournament.isWinner);
 
   return (
     <ProfileCanvas>
@@ -158,6 +151,7 @@ export default function PerfilPage() {
 
         {/* ---------- Banner de jugador (estilo cliente) ---------- */}
         <section
+          id="resumen"
           aria-labelledby="player-name"
           className="relative isolate mb-5 overflow-hidden border border-[#b44d1d]/45 bg-[#21150f] shadow-[0_24px_80px_rgba(0,0,0,0.35)] [clip-path:polygon(0_0,calc(100%_-_26px)_0,100%_26px,100%_100%,0_100%)]"
         >
@@ -207,7 +201,7 @@ export default function PerfilPage() {
                 </p>
                 <h2
                   id="player-name"
-                  className="truncate font-display text-4xl leading-[0.95] text-white sm:text-6xl"
+                  className="truncate font-game text-4xl font-bold leading-[0.95] text-white sm:text-6xl"
                 >
                   {name}
                 </h2>
@@ -232,7 +226,7 @@ export default function PerfilPage() {
                 <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/40">
                   Posición en ranking
                 </p>
-                <p className="font-display text-5xl leading-none text-[#ffe787]">
+                <p className="font-game text-5xl font-bold leading-none text-[#ffe787]">
                   {position}
                 </p>
               </div>
@@ -245,21 +239,21 @@ export default function PerfilPage() {
           {/* Nav lateral estilo cliente */}
           <aside aria-label="Secciones del perfil" className="lg:sticky lg:top-6 lg:self-start">
             <nav className="flex gap-2 overflow-x-auto border border-white/10 bg-[#21150f] p-2 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:p-3">
-              <NavItem icon={LayoutList} label="Resumen" active />
+              <NavItem icon={LayoutList} label="Resumen" href="#resumen" active />
               <NavItem icon={Flame} label="Rango actual" href="#rango" />
+              <NavItem icon={Swords} label="Historial de peleas" href="#peleas" />
+              <NavItem icon={Trophy} label="Torneos y posiciones" href="#torneos" />
               <NavItem icon={Trophy} label="Tabla de posiciones" href="/" />
-              <NavItem icon={Swords} label="Matchmaking" href="/matchmaking" />
             </nav>
             <div className="mt-3 hidden border border-white/10 bg-[#21150f] p-4 lg:block">
               <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.22em] text-white/35">
-                Temporada activa
+                Historial competitivo
               </p>
-              <p className="font-condensed text-xl font-bold uppercase tracking-[0.06em] text-[#d0ca53]">
-                Torneos 2XKO
+              <p className="font-game text-xl font-bold uppercase tracking-[0.06em] text-[#d0ca53]">
+                {championships.length} {championships.length === 1 ? 'campeonato' : 'campeonatos'}
               </p>
               <p className="mt-2 text-[11px] leading-relaxed text-white/40">
-                Suma puntos con <b className="text-[#ffe787]">/ft</b> en Discord para
-                escalar de rango.
+                {fights.length} peleas recientes y resultados de torneos asociados a tu perfil.
               </p>
             </div>
           </aside>
@@ -304,7 +298,7 @@ export default function PerfilPage() {
                     Rango competitivo
                   </p>
                   <h2
-                    className="break-words font-display text-4xl leading-[0.95] sm:text-5xl"
+                    className="break-words font-game text-4xl font-bold leading-[0.95] sm:text-5xl"
                     style={{ color: rank.color }}
                   >
                     {rank.displayName.toUpperCase()}
@@ -312,7 +306,7 @@ export default function PerfilPage() {
 
                   {rank.isRp ? (
                     <div className="mt-5">
-                      <p className="font-condensed text-3xl font-bold text-white sm:text-4xl">
+                      <p className="font-game text-3xl font-bold text-white sm:text-4xl">
                         {rank.rp}{' '}
                         <span className="text-base font-medium text-white/45">RP</span>
                       </p>
@@ -333,7 +327,7 @@ export default function PerfilPage() {
                   ) : (
                     <div className="mt-5">
                       <div className="flex flex-wrap items-baseline justify-between gap-3">
-                        <p className="font-condensed text-3xl font-bold text-white sm:text-4xl">
+                        <p className="font-game text-3xl font-bold text-white sm:text-4xl">
                           {rank.lp}{' '}
                           <span className="text-base font-medium text-white/45">LP</span>
                         </p>
@@ -414,33 +408,13 @@ export default function PerfilPage() {
                   icon={Percent}
                 />
               </div>
+              <p className="border-t border-white/[0.08] px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+                {games} peleas registradas
+              </p>
             </section>
 
-            {games === 0 && (
-              <div className="flex flex-col gap-4 border border-[#c48a4a]/25 bg-[#211a15] p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 text-[#d0ca53]">
-                    <Swords className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="font-condensed text-xl font-bold uppercase tracking-[0.08em] text-white">
-                      Tu primera serie te espera
-                    </p>
-                    <p className="mt-1 max-w-xl text-sm leading-relaxed text-white/50">
-                      Aún no tienes sets registrados. Usa{' '}
-                      <b className="text-[#ffe787]">/ft</b> en el servidor de Discord
-                      para empezar a sumar puntos y subir de rango.
-                    </p>
-                  </div>
-                </div>
-                <a
-                  href="/"
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 border border-[#b44d1d]/60 bg-[#b44d1d]/10 px-4 text-xs font-bold uppercase tracking-[0.15em] text-[#ffd7ba] transition hover:bg-[#b44d1d]/20"
-                >
-                  Ver ranking <ArrowUpRight className="h-4 w-4" />
-                </a>
-              </div>
-            )}
+            <FightHistory fights={fights} />
+            <TournamentHistory tournaments={tournaments} />
           </div>
         </div>
 
@@ -477,6 +451,342 @@ function ProfileCanvas({ children }: { children: ReactNode }) {
   );
 }
 
+function FightHistory({ fights }: { fights: ProfileFight[] }) {
+  return (
+    <section
+      id="peleas"
+      aria-labelledby="fight-history-heading"
+      className="overflow-hidden border border-white/10 bg-[#211a15]"
+    >
+      <SectionHeading
+        id="fight-history-heading"
+        icon={Swords}
+        label="Historial de peleas"
+        index="03"
+      />
+      {fights.length === 0 ? (
+        <div className="flex items-center gap-4 p-5 sm:p-7">
+          <div className="grid h-12 w-12 shrink-0 place-items-center border border-[#c48a4a]/25 bg-[#c48a4a]/[0.05] text-[#c48a4a]">
+            <Swords className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-game text-sm font-bold uppercase tracking-[0.12em] text-white/75">
+              Sin peleas registradas todavía
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-white/40">
+              Cuando haya sets finalizados, aquí verás el marcador, los dos equipos y la fusión de cada lado.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="divide-y divide-white/[0.08]">
+          {fights.map((fight) => (
+            <FightCard key={fight.id} fight={fight} />
+          ))}
+          <p className="px-4 py-2.5 text-[10px] text-white/35 sm:px-5">
+            Se muestran hasta 25 peleas finalizadas, de la más reciente a la más antigua.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function FightCard({ fight }: { fight: ProfileFight }) {
+  const won = fight.result === 'WIN';
+  const opponent = fight.opponentTag || 'Rival';
+  const date = new Date(fight.playedAt);
+  const dateLabel = Number.isNaN(date.getTime())
+    ? 'Fecha no disponible'
+    : new Intl.DateTimeFormat('es', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }).format(date);
+
+  return (
+    <article className="p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span
+            className={`border px-2 py-1 font-game text-[10px] font-bold uppercase tracking-[0.15em] ${
+              won
+                ? 'border-[#50d484]/30 bg-[#50d484]/[0.08] text-[#72dda0]'
+                : 'border-[#f07070]/30 bg-[#f07070]/[0.08] text-[#f18a82]'
+            }`}
+          >
+            {won ? 'Victoria' : 'Derrota'}
+          </span>
+          <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/35">
+            FT{fight.targetFT || 3}
+          </span>
+        </div>
+        <time
+          dateTime={fight.playedAt}
+          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.1em] text-white/35"
+        >
+          <CalendarDays className="h-3 w-3" />
+          {dateLabel}
+        </time>
+      </div>
+
+      <div className="mt-4 grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <TeamDisplay label="Tu equipo" team={fight.playerTeam} />
+        <div className="flex items-center justify-center gap-3 py-1 lg:flex-col lg:px-2">
+          <span className="font-game text-[9px] font-bold uppercase tracking-[0.2em] text-white/25">
+            VS
+          </span>
+          <div className="flex items-center gap-2 font-game text-2xl font-bold">
+            <span className={won ? 'text-[#50d484]' : 'text-white/70'}>
+              {fight.scoreFor}
+            </span>
+            <span className="text-white/20">:</span>
+            <span className={!won ? 'text-[#f07070]' : 'text-white/70'}>
+              {fight.scoreAgainst}
+            </span>
+          </div>
+          <div className="flex min-w-0 items-center gap-1.5 lg:max-w-28 lg:flex-col">
+            {fight.opponentAvatar && (
+              <img
+                src={fight.opponentAvatar}
+                alt=""
+                className="h-5 w-5 border border-white/10 object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none';
+                }}
+              />
+            )}
+            <span className="max-w-32 truncate text-[9px] font-semibold uppercase tracking-[0.1em] text-white/45">
+              vs. {opponent}
+            </span>
+          </div>
+        </div>
+        <TeamDisplay label={`Equipo rival · ${opponent}`} team={fight.opponentTeam} />
+      </div>
+    </article>
+  );
+}
+
+function TeamDisplay({
+  label,
+  team,
+}: {
+  label: string;
+  team: ProfileFight['playerTeam'];
+}) {
+  const fighters = [team?.point, team?.assist].filter(
+    (fighter) => fighter?.id || fighter?.name,
+  );
+
+  return (
+    <div className="min-w-0 border border-white/[0.07] bg-[#1b1511] p-3">
+      <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
+        {label}
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {fighters.length > 0 ? (
+          fighters.map((fighter, index) => (
+            <div
+              key={`${fighter.id}-${index}`}
+              className="flex min-w-0 items-center gap-2 border border-white/[0.06] bg-white/[0.02] p-1.5"
+            >
+              {fighter.id && (
+                <img
+                  src={`/fighters/${encodeURIComponent(fighter.id)}.png`}
+                  alt=""
+                  className="h-10 w-9 shrink-0 object-contain"
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
+                />
+              )}
+              <span className="truncate font-game text-[10px] font-semibold uppercase text-white/75">
+                {fighter.name || fighter.id}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="col-span-2 py-3 text-xs text-white/30">
+            Personajes no registrados
+          </p>
+        )}
+      </div>
+      <div className="mt-2 flex min-w-0 items-center gap-2 border-t border-white/[0.06] pt-2">
+        {team?.fuse?.id ? (
+          <img
+            src={fuseIconUrl(team.fuse.id)}
+            alt=""
+            className="h-7 w-7 shrink-0 object-contain"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <span className="grid h-7 w-7 shrink-0 place-items-center border border-[#d0ca53]/20 text-[9px] font-bold text-[#d0ca53]/70">
+            F
+          </span>
+        )}
+        <span className="min-w-0 truncate text-[10px] uppercase tracking-[0.08em] text-[#d0ca53]/80">
+          Fuse · {team?.fuse?.name || 'No registrada'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function TournamentHistory({
+  tournaments,
+}: {
+  tournaments: ProfileTournament[];
+}) {
+  const winners = tournaments.filter((tournament) => tournament.isWinner);
+
+  return (
+    <section
+      id="torneos"
+      aria-labelledby="tournament-history-heading"
+      className="overflow-hidden border border-white/10 bg-[#211a15]"
+    >
+      <SectionHeading
+        id="tournament-history-heading"
+        icon={Trophy}
+        label="Torneos y posiciones"
+        index="04"
+      />
+      {tournaments.length === 0 ? (
+        <div className="flex items-center gap-4 p-5 sm:p-7">
+          <div className="grid h-12 w-12 shrink-0 place-items-center border border-[#d0ca53]/25 bg-[#d0ca53]/[0.05] text-[#d0ca53]">
+            <Trophy className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-game text-sm font-bold uppercase tracking-[0.12em] text-white/75">
+              Aún no hay resultados de torneos
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-white/40">
+              Cuando un resultado quede vinculado a tu cuenta de Discord, aparecerá aquí con su puesto final.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-3 p-3 sm:p-4 xl:grid-cols-[0.8fr_1.2fr]">
+          <div className="border border-[#d0ca53]/20 bg-[#d0ca53]/[0.035] p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center border border-[#d0ca53]/30 bg-[#d0ca53]/[0.07] text-[#d0ca53]">
+                <Crown className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  Campeonatos ganados
+                </p>
+                <p className="font-game text-3xl font-bold leading-none text-[#ffe787]">
+                  {winners.length}
+                </p>
+              </div>
+            </div>
+            {winners.length > 0 ? (
+              <ul className="mt-4 divide-y divide-white/[0.08]">
+                {winners.map((tournament) => (
+                  <li
+                    key={tournament.eventId}
+                    className="flex items-center gap-2 py-2.5 text-xs text-white/75"
+                  >
+                    <Crown className="h-3.5 w-3.5 shrink-0 text-[#d0ca53]" />
+                    <span className="min-w-0 flex-1 truncate">
+                      {tournament.name || `Torneo #${tournament.eventId}`}
+                    </span>
+                    <span className="shrink-0 text-[9px] uppercase tracking-[0.1em] text-[#ffe787]">
+                      Campeón
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 border-t border-white/[0.08] pt-3 text-xs text-white/40">
+                Todavía no hay campeonatos registrados.
+              </p>
+            )}
+          </div>
+
+          <div className="overflow-hidden border border-white/[0.08]">
+            <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] px-4 py-3">
+              <p className="font-game text-xs font-bold uppercase tracking-[0.12em] text-white/75">
+                Resultados registrados
+              </p>
+              <span className="font-game text-xs text-[#d0ca53]">
+                {tournaments.length}
+              </span>
+            </div>
+            <div className="divide-y divide-white/[0.07]">
+              {tournaments.map((tournament) => (
+                <TournamentRow key={tournament.eventId} tournament={tournament} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      <p className="border-t border-white/[0.07] px-4 py-2.5 text-[10px] leading-relaxed text-white/35 sm:px-5">
+        El historial antiguo conserva resultados con puntos (Top 8); las nuevas sincronizaciones guardan el puesto completo cuando el jugador está vinculado a Discord.
+      </p>
+    </section>
+  );
+}
+
+function TournamentRow({ tournament }: { tournament: ProfileTournament }) {
+  const content = (
+    <>
+      <span
+        className={`grid h-8 w-8 shrink-0 place-items-center border ${
+          tournament.isWinner
+            ? 'border-[#d0ca53]/30 bg-[#d0ca53]/[0.07] text-[#d0ca53]'
+            : 'border-white/[0.08] bg-white/[0.025] text-white/40'
+        }`}
+      >
+        {tournament.isWinner ? (
+          <Crown className="h-4 w-4" />
+        ) : (
+          <Medal className="h-4 w-4" />
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-xs font-semibold text-white/80">
+          {tournament.name || `Torneo #${tournament.eventId}`}
+        </span>
+        <span className="mt-0.5 block text-[9px] uppercase tracking-[0.12em] text-white/35">
+          {tournament.points} puntos
+        </span>
+      </span>
+      <span
+        className={`shrink-0 border px-2 py-1 font-game text-[9px] font-bold uppercase tracking-[0.08em] ${
+          tournament.isWinner
+            ? 'border-[#d0ca53]/30 text-[#ffe787]'
+            : 'border-white/[0.08] text-white/60'
+        }`}
+      >
+        {tournament.placementLabel || 'Puesto registrado'}
+      </span>
+      {tournament.slug && (
+        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-white/25" />
+      )}
+    </>
+  );
+
+  const className =
+    'flex min-w-0 items-center gap-3 px-3 py-3 transition hover:bg-white/[0.025] sm:px-4';
+
+  return tournament.slug ? (
+    <a
+      href={`https://www.start.gg/tournament/${encodeURIComponent(tournament.slug)}`}
+      target="_blank"
+      rel="noreferrer"
+      className={className}
+    >
+      {content}
+    </a>
+  ) : (
+    <div className={className}>{content}</div>
+  );
+}
+
 function NavItem({
   icon: Icon,
   label,
@@ -492,7 +802,7 @@ function NavItem({
     <a
       href={href ?? '#'}
       aria-current={active ? 'page' : undefined}
-      className={`flex min-h-11 shrink-0 items-center gap-2.5 border px-3 text-xs font-bold uppercase tracking-[0.14em] transition ${
+      className={`flex min-h-11 shrink-0 items-center gap-2.5 border px-3 font-game text-xs font-bold uppercase tracking-[0.12em] transition ${
         active
           ? 'border-[#d0ca53]/30 bg-[#d0ca53]/[0.08] text-[#ffe787]'
           : 'border-transparent text-white/55 hover:border-white/10 hover:bg-white/[0.03] hover:text-white'
@@ -547,7 +857,7 @@ function ProfileNotice({
               {eyebrow}
             </p>
             <h1
-              className={`font-display text-4xl leading-[0.95] sm:text-5xl ${
+              className={`font-game text-4xl font-bold leading-[0.95] sm:text-5xl ${
                 error ? 'text-[#f07070]' : 'text-[#fff4df]'
               }`}
             >
@@ -585,11 +895,11 @@ function SectionHeading({
       <Icon className="h-4 w-4 text-[#d0ca53]" />
       <h2
         id={id}
-        className="font-condensed text-lg font-bold uppercase tracking-[0.13em] text-white/90"
+        className="font-game text-sm font-bold uppercase tracking-[0.13em] text-white/90"
       >
         {label}
       </h2>
-      <span className="ml-auto font-condensed text-xs font-semibold tracking-[0.18em] text-white/25">
+      <span className="ml-auto font-game text-[10px] font-semibold tracking-[0.18em] text-white/25">
         {index}
       </span>
     </div>
@@ -621,7 +931,7 @@ function Stat({
         <Icon className="h-4 w-4 shrink-0" style={{ color }} />
       </div>
       <span
-        className="mt-5 truncate font-display text-3xl leading-none sm:text-4xl"
+        className="mt-5 truncate font-game text-3xl font-bold leading-none sm:text-4xl"
         style={{ color }}
       >
         {value}

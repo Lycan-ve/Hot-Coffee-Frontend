@@ -19,6 +19,40 @@ export interface RankInfo {
   color: string;
 }
 
+export interface ProfileCharacter {
+  id: string;
+  name: string;
+}
+
+export interface ProfileTeam {
+  point: ProfileCharacter;
+  assist: ProfileCharacter;
+  fuse: ProfileCharacter;
+}
+
+export interface ProfileFight {
+  id: number;
+  playedAt: string;
+  result: 'WIN' | 'LOSS';
+  scoreFor: number;
+  scoreAgainst: number;
+  targetFT: number;
+  opponentTag: string;
+  opponentAvatar: string;
+  playerTeam: ProfileTeam;
+  opponentTeam: ProfileTeam;
+}
+
+export interface ProfileTournament {
+  eventId: number;
+  name: string;
+  slug: string;
+  points: number;
+  placement: number;
+  placementLabel: string;
+  isWinner: boolean;
+}
+
 export interface MeResponse {
   user: {
     discordId: string;
@@ -34,6 +68,8 @@ export interface MeResponse {
     rankingPosition: number;
   };
   rank: RankInfo;
+  fights?: ProfileFight[];
+  tournaments?: ProfileTournament[];
 }
 
 /**
@@ -83,4 +119,9 @@ export function rankIconUrl(iconPath: string): string {
 
 export function rankIconFallbackUrl(iconPath: string): string {
   return `https://raw.githubusercontent.com/Lycan-ve/Hot-Coffee-Backend/main/${iconPath}`;
+}
+
+/** Icono de fuse servido por el backend desde sus assets de 2XKO. */
+export function fuseIconUrl(fuseId: string): string {
+  return `${API_URL}/Fusion/file_${encodeURIComponent(fuseId)}V.png`;
 }
