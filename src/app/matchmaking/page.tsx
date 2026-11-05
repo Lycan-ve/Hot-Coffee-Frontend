@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+
 import DiscordLoginButton from '@/components/DiscordLoginButton';
+import SiteHeader from '@/components/SiteHeader';
 import { fetchMe, getToken, MeResponse, RankInfo, rankIconUrl } from '@/lib/auth';
 import {
   QueueState,
@@ -160,22 +163,11 @@ export default function MatchmakingPage() {
     : 0;
 
   return (
-    <main className="min-h-screen bg-[#121212] text-white">
-      {/* Barra superior */}
-      <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <div>
-          <a
-            href="/"
-            className="text-[11px] uppercase tracking-widest text-white/40 transition hover:text-white/70"
-          >
-            ← Hot Coffee 2XKO
-          </a>
-          <h1 className="font-condensed text-2xl font-bold">⚔️ Matchmaking</h1>
-        </div>
-        <DiscordLoginButton />
-      </header>
+    <main className="min-h-screen bg-[#18100b] text-white">
+      <SiteHeader />
 
       <div className="mx-auto max-w-3xl px-6 py-8">
+        <h1 className="mb-6 font-condensed text-3xl font-bold">⚔️ Matchmaking</h1>
         {/* Mi tarjeta (visible solo logueado) */}
         {me && (
           <div className="mb-6 flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
@@ -420,18 +412,27 @@ export default function MatchmakingPage() {
                   ¡Set creado!
                 </h2>
                 <p className="max-w-md text-sm text-white/50">
-                  El hilo del set ya está en Discord. Arma tu equipo en el panel
-                  del hilo (o en el MD del bot), compartan el código de sala y a
-                  jugar. El reporte de games va game a game como siempre.
+                  {state.match.web
+                    ? 'El set es 100% web: entra a la sala para armar tu equipo, compartir el código, chatear y reportar los games.'
+                    : 'El hilo del set ya está en Discord. Arma tu equipo en el panel del hilo (o en el MD del bot), compartan el código de sala y a jugar.'}
                 </p>
-                <a
-                  href={state.match.threadUrl || 'https://discord.com/channels/'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl bg-[#5865F2] px-8 py-4 font-condensed text-xl font-bold transition hover:bg-[#4752c4]"
-                >
-                  🥊 Abrir el hilo en Discord
-                </a>
+                {state.match.web ? (
+                  <Link
+                    href="/sala"
+                    className="rounded-xl bg-[#50d484] px-8 py-4 font-condensed text-xl font-bold text-black transition hover:bg-[#3fb56e]"
+                  >
+                    🌐 Entrar a la sala web
+                  </Link>
+                ) : (
+                  <a
+                    href={state.match.threadUrl || 'https://discord.com/channels/'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl bg-[#5865F2] px-8 py-4 font-condensed text-xl font-bold transition hover:bg-[#4752c4]"
+                  >
+                    🥊 Abrir el hilo en Discord
+                  </a>
+                )}
               </div>
             )}
 
