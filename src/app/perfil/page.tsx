@@ -850,25 +850,40 @@ function NavItem({
   label,
   href,
   active = false,
+  onClick,
 }: {
   icon: LucideIcon;
   label: string;
   href?: string;
   active?: boolean;
+  onClick?: () => void;
 }) {
+  const className = `flex min-h-11 shrink-0 items-center gap-2.5 border px-3 font-game text-xs font-bold uppercase tracking-[0.12em] transition ${
+    active
+      ? 'border-[#d0ca53]/30 bg-[#d0ca53]/[0.08] text-[#ffe787]'
+      : 'border-transparent text-white/55 hover:border-white/10 hover:bg-white/[0.03] hover:text-white'
+  }`;
+  const icon = (
+    <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-[#d0ca53]' : 'text-white/35'}`} />
+  );
+  if (href) {
+    return (
+      <a href={href} className={className}>
+        {icon}
+        {label}
+      </a>
+    );
+  }
   return (
-    <a
-      href={href ?? '#'}
+    <button
+      type="button"
+      onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={`flex min-h-11 shrink-0 items-center gap-2.5 border px-3 font-game text-xs font-bold uppercase tracking-[0.12em] transition ${
-        active
-          ? 'border-[#d0ca53]/30 bg-[#d0ca53]/[0.08] text-[#ffe787]'
-          : 'border-transparent text-white/55 hover:border-white/10 hover:bg-white/[0.03] hover:text-white'
-      }`}
+      className={className + ' text-left'}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-[#d0ca53]' : 'text-white/35'}`} />
+      {icon}
       {label}
-    </a>
+    </button>
   );
 }
 
