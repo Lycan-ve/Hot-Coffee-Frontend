@@ -23,7 +23,7 @@ export interface QueueState {
   status: 'idle' | 'searching' | 'found' | 'confirmed' | 'matched' | 'failed';
   queue?: { ft: number; since: string; players: number; radius: number };
   proposal?: QueueProposal;
-  match?: { id: number; threadId: string; threadUrl: string };
+  match?: { id: number; threadId: string; threadUrl: string; web: boolean };
 }
 
 async function authFetch(path: string, init?: RequestInit) {

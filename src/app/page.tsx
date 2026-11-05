@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { toPng } from 'html-to-image';
 import DiscordLoginButton from '@/components/DiscordLoginButton';
+import { getToken } from '@/lib/auth';
 
 interface Player {
   id: number;
@@ -148,6 +149,9 @@ export default function HotCoffeeRanking() {
   const [tourneyMax, setTourneyMax] = useState<number>(0);
   const [rangeReady, setRangeReady] = useState(false);
 
+  // 🕒 Hora del último refresco para el indicador "En vivo" del espectador.
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
   const selectLast = useCallback((n: number, max: number) => {
     setTourneyTo(max);
     setTourneyFrom(Math.max(1, max - n + 1));
@@ -191,7 +195,7 @@ export default function HotCoffeeRanking() {
 
   const isAllSelected = tourneyFrom === 1 && tourneyTo === tourneyMax;
 
-  const fetchRankings = useCallback(async () => {
+  const fetchRankings = useCallback(async (silent = false) => {
     try {
       const response = await fetch(`${API_URL}/api/rankings/2xko?from=${tourneyFrom}&to=${tourneyTo}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -199,7 +203,9 @@ export default function HotCoffeeRanking() {
       const list: Player[] = Array.isArray(data) ? data : [];
       setPlayers([...list].sort((a, b) => a.ranking - b.ranking));
       setStatus('ok');
+      setLastRefresh(new Date());
     } catch (error) {
+      if (silent) return; // el refresco automático nunca tumba la vista
       console.error('Error cargando rankings, aplicando datos de prueba...', error);
       setPlayers(FALLBACK_PLAYERS);
       setStatus('offline');
@@ -209,6 +215,15 @@ export default function HotCoffeeRanking() {
   useEffect(() => {
     if (rangeReady) fetchRankings();
   }, [fetchRankings, rangeReady]);
+
+  // 🔄 Auto-refresh silencioso cada 60 s: el espectador ve los cambios sin recargar.
+  useEffect(() => {
+    if (status !== 'ok') return;
+    const id = setInterval(() => {
+      fetchRankings(true);
+    }, 60000);
+    return () => clearInterval(id);
+  }, [status, fetchRankings]);
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
@@ -264,8 +279,12 @@ export default function HotCoffeeRanking() {
     try {
       // Esta llamada ahora se quedará parada en "Sincronizando..." 
       // hasta que Go termine por completo de procesar los torneos y guardar en la BD.
-      const res = await fetch(`${API_URL}/api/sync`);
+      const token = getToken();
+      const res = await fetch(`${API_URL}/api/sync`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       
+      if (res.status === 401) throw new Error('Inicia sesión con Discord para sincronizar');
       if (!res.ok) throw new Error('Error en el servidor');
       
       const json = await res.json();
@@ -281,7 +300,7 @@ export default function HotCoffeeRanking() {
 
     } catch (err) {
       console.error(err);
-      setNotice('Error al sincronizar con Start.gg');
+      setNotice(err instanceof Error && err.message ? err.message : 'Error al sincronizar con Start.gg');
       setSyncing(false); // Solo liberamos si hubo error para permitir reintentar
     }
   };
@@ -1449,6 +1468,38 @@ export default function HotCoffeeRanking() {
             transition-duration: 0.01ms !important;
           }
         }
+
+        /* --- Carga y feedback para el espectador (esqueletos, "En vivo", hover) --- */
+        .pr-skeleton-list { display: grid; gap: 8px; grid-column: 1 / -1; }
+        .pr-skeleton-row {
+          display: flex; align-items: center; gap: 12px;
+          height: 56px; padding: 0 1rem;
+          border: 1px solid #ffffff0f; border-radius: 6px;
+          background: #ffffff05;
+        }
+        .pr-skeleton-shape {
+          background: linear-gradient(100deg, #ffffff08 40%, #ffffff14 50%, #ffffff08 60%);
+          background-size: 200% 100%;
+          animation: pr-shimmer 1.4s ease-in-out infinite;
+          border-radius: 4px;
+        }
+        .pr-skeleton-shape.is-rank { width: 28px; height: 28px; border-radius: 50%; }
+        .pr-skeleton-shape.is-art { width: 48px; height: 48px; border-radius: 6px; }
+        .pr-skeleton-lines { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .pr-skeleton-shape.is-name { width: 38%; height: 12px; }
+        .pr-skeleton-shape.is-tag { width: 24%; height: 9px; }
+        .pr-skeleton-shape.is-points { width: 56px; height: 14px; }
+        @keyframes pr-shimmer { to { background-position: -200% 0; } }
+
+        .pr-heading-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .pr-refresh-note {
+          font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #ffffff59;
+        }
+
+        .pr-row { animation: pr-enter 0.35s ease both; }
+        .pr-row { transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease; }
+        .pr-row:hover { transform: translateX(3px); border-color: #d0ca5366; background: #ffffff08; }
+        @keyframes pr-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
       <main className="pr-root">
@@ -1495,9 +1546,16 @@ export default function HotCoffeeRanking() {
               <h1 className="pr-page-title">Clasificación de jugadores</h1>
               <p className="pr-page-description">El progreso competitivo de la comunidad, en un solo lugar.</p>
             </div>
-            <div className={`pr-status-pill is-${status}`}>
-              <span className="pr-status-dot" />
-              {status === 'ok' ? 'Ranking actualizado' : status === 'loading' ? 'Cargando ranking' : 'Modo sin conexión'}
+            <div className="pr-heading-right">
+              <div className={`pr-status-pill is-${status}`}>
+                <span className="pr-status-dot" />
+                {status === 'ok' ? 'En vivo' : status === 'loading' ? 'Cargando ranking' : 'Modo sin conexión'}
+              </div>
+              {status === 'ok' && lastRefresh && (
+                <span className="pr-refresh-note">
+                  ↻ Auto · {lastRefresh.toLocaleTimeString('es-VE')}
+                </span>
+              )}
             </div>
           </div>
 
@@ -1673,10 +1731,24 @@ export default function HotCoffeeRanking() {
 
           {/* 2. LISTA GENERAL */}
           <div className={`pr-list-section cols-${LIST_COLUMNS}`}>
-            {restPlayers.length === 0 && top3Players.length === 0 && (
-              <div className="pr-empty">
-                {status === 'loading' ? 'Cargando ranking…' : 'Todavía no hay jugadores en el ranking.'}
+            {restPlayers.length === 0 && top3Players.length === 0 && status === 'loading' && (
+              <div className="pr-skeleton-list" aria-hidden="true">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="pr-skeleton-row">
+                    <span className="pr-skeleton-shape is-rank" />
+                    <span className="pr-skeleton-shape is-art" />
+                    <span className="pr-skeleton-lines">
+                      <span className="pr-skeleton-shape is-name" />
+                      <span className="pr-skeleton-shape is-tag" />
+                    </span>
+                    <span className="pr-skeleton-shape is-points" />
+                  </div>
+                ))}
               </div>
+            )}
+
+            {restPlayers.length === 0 && top3Players.length === 0 && status !== 'loading' && (
+              <div className="pr-empty">Todavía no hay jugadores en el ranking.</div>
             )}
 
             {restPlayers.map((player) => {
