@@ -1504,8 +1504,6 @@ export default function HotCoffeeRanking() {
         @keyframes pr-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
-      <SiteHeader />
-
       <main className="pr-root">
         <aside className="pr-sidebar" aria-label="Navegación principal">
           <a href="/" className="pr-side-brand">
