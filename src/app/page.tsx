@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { toPng } from 'html-to-image';
 import DiscordLoginButton from '@/components/DiscordLoginButton';
+import SiteHeader from '@/components/SiteHeader';
 import { getToken } from '@/lib/auth';
 
 interface Player {
@@ -311,6 +312,7 @@ export default function HotCoffeeRanking() {
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,600;1,700;1,800&display=swap');
 
         * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background-color: #392415; }
 
         .pr-root {
           min-height: 100vh;
@@ -965,7 +967,7 @@ export default function HotCoffeeRanking() {
         .pr-sidebar {
           grid-area: sidebar;
           position: sticky;
-          top: 18px;
+          top: 78px;
           min-width: 0;
           min-height: calc(100vh - 36px);
           display: flex;
@@ -1502,6 +1504,8 @@ export default function HotCoffeeRanking() {
         @keyframes pr-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
+      <SiteHeader />
+
       <main className="pr-root">
         <aside className="pr-sidebar" aria-label="Navegación principal">
           <a href="/" className="pr-side-brand">
@@ -1519,8 +1523,11 @@ export default function HotCoffeeRanking() {
             <a href="/" className="pr-nav-link is-active" aria-current="page">
               <span>01</span> Ranking
             </a>
+            <a href="/perfil" className="pr-nav-link">
+              <span>02</span> Mi perfil
+            </a>
             <a href="/matchmaking" className="pr-nav-link">
-              <span>02</span> Matchmaking
+              <span>03</span> Matchmaking
             </a>
           </nav>
 

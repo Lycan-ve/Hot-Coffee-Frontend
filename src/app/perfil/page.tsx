@@ -29,6 +29,7 @@ import {
   rankIconUrl,
 } from '@/lib/auth';
 import type { MeResponse, ProfileFight, ProfileTournament } from '@/lib/auth';
+import SiteHeader from '@/components/SiteHeader';
 
 type Status = 'loading' | 'anon' | 'error' | 'ok';
 
@@ -45,6 +46,8 @@ export default function PerfilPage() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [status, setStatus] = useState<Status>('loading');
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [tab, setTab] = useState<'rango' | 'stats' | 'peleas' | 'torneos'>('rango');
+  const [showAllFights, setShowAllFights] = useState(false);
 
   useEffect(() => {
     // ¿vino con ?error=... desde el callback del backend?
@@ -123,31 +126,13 @@ export default function PerfilPage() {
   const fights = me.fights ?? [];
   const tournaments = me.tournaments ?? [];
   const championships = tournaments.filter((tournament) => tournament.isWinner);
+  const top1 = tournaments.filter((t) => t.placement === 1).length;
+  const top3 = tournaments.filter((t) => t.placement > 0 && t.placement <= 3).length;
+  const top8 = tournaments.filter((t) => t.placement > 0 && t.placement <= 8).length;
 
   return (
     <ProfileCanvas>
       <div className="mx-auto w-full max-w-6xl">
-        {/* ---------- Barra superior ---------- */}
-        <header className="mb-6 flex items-center justify-between gap-4 border-b border-[#c48a4a]/20 pb-4">
-          <a
-            href="/"
-            className="group inline-flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-white/55 transition hover:text-[#ffe787]"
-          >
-            <span className="grid h-9 w-9 place-items-center border border-white/10 bg-white/[0.03] transition group-hover:border-[#c48a4a]/50 group-hover:bg-[#b44d1d]/10">
-              <ArrowLeft className="h-4 w-4" />
-            </span>
-            Volver al ranking
-          </a>
-          <div className="hidden items-center gap-3 sm:flex">
-            <span className="h-px w-8 bg-[#b44d1d]" />
-            <span className="font-condensed text-sm font-semibold uppercase tracking-[0.24em] text-[#d0ca53]">
-              Hot Coffee 2XKO
-            </span>
-            <span className="text-[10px] uppercase tracking-[0.22em] text-white/30">
-              Perfil de jugador
-            </span>
-          </div>
-        </header>
 
         {/* ---------- Banner de jugador (estilo cliente) ---------- */}
         <section
@@ -239,10 +224,30 @@ export default function PerfilPage() {
           {/* Nav lateral estilo cliente */}
           <aside aria-label="Secciones del perfil" className="lg:sticky lg:top-6 lg:self-start">
             <nav className="flex gap-2 overflow-x-auto border border-white/10 bg-[#21150f] p-2 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:p-3">
-              <NavItem icon={LayoutList} label="Resumen" href="#resumen" active />
-              <NavItem icon={Flame} label="Rango actual" href="#rango" />
-              <NavItem icon={Swords} label="Historial de peleas" href="#peleas" />
-              <NavItem icon={Trophy} label="Torneos y posiciones" href="#torneos" />
+              <NavItem
+                icon={Flame}
+                label="Rango actual"
+                active={tab === 'rango'}
+                onClick={() => setTab('rango')}
+              />
+              <NavItem
+                icon={LayoutList}
+                label="Rendimiento"
+                active={tab === 'stats'}
+                onClick={() => setTab('stats')}
+              />
+              <NavItem
+                icon={Swords}
+                label="Historial de peleas"
+                active={tab === 'peleas'}
+                onClick={() => setTab('peleas')}
+              />
+              <NavItem
+                icon={Trophy}
+                label="Torneos y posiciones"
+                active={tab === 'torneos'}
+                onClick={() => setTab('torneos')}
+              />
               <NavItem icon={Trophy} label="Tabla de posiciones" href="/" />
             </nav>
             <div className="mt-3 hidden border border-white/10 bg-[#21150f] p-4 lg:block">
@@ -255,11 +260,27 @@ export default function PerfilPage() {
               <p className="mt-2 text-[11px] leading-relaxed text-white/40">
                 {fights.length} peleas recientes y resultados de torneos asociados a tu perfil.
               </p>
+              <ul className="mt-3 divide-y divide-white/[0.08] text-[11px]">
+                <li className="flex items-center justify-between gap-2 py-1.5">
+                  <span className="text-white/40">Veces Top 1</span>
+                  <span className="font-game font-bold text-[#ffe787]">{top1}</span>
+                </li>
+                <li className="flex items-center justify-between gap-2 py-1.5">
+                  <span className="text-white/40">Veces Top 3</span>
+                  <span className="font-game font-bold text-[#d0ca53]">{top3}</span>
+                </li>
+                <li className="flex items-center justify-between gap-2 py-1.5">
+                  <span className="text-white/40">Veces Top 8</span>
+                  <span className="font-game font-bold text-white/70">{top8}</span>
+                </li>
+              </ul>
             </div>
           </aside>
 
           {/* Columna principal */}
           <div className="min-w-0 space-y-5">
+            {tab === 'rango' && (
+            <>
             {/* Rango actual */}
             <section
               id="rango"
@@ -369,7 +390,11 @@ export default function PerfilPage() {
                 </div>
               </div>
             </section>
+            </>
+            }
 
+            {tab === 'stats' && (
+            <>
             {/* Rendimiento */}
             <section
               id="rendimiento"
@@ -412,9 +437,17 @@ export default function PerfilPage() {
                 {games} peleas registradas
               </p>
             </section>
+            </>
+            }
 
-            <FightHistory fights={fights} />
-            <TournamentHistory tournaments={tournaments} />
+            {tab === 'peleas' && (
+              <FightHistory
+                fights={fights}
+                showAll={showAllFights}
+                onToggleShowAll={() => setShowAllFights((v) => !v)}
+              />
+            )}
+            {tab === 'torneos' && <TournamentHistory tournaments={tournaments} />}
           </div>
         </div>
 
@@ -433,7 +466,9 @@ export default function PerfilPage() {
 
 function ProfileCanvas({ children }: { children: ReactNode }) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#18100b] px-4 py-5 text-white sm:px-6 sm:py-8 lg:px-8">
+    <>
+      <SiteHeader />
+      <main className="relative min-h-screen overflow-hidden bg-[#18100b] text-white">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-70"
@@ -446,12 +481,24 @@ function ProfileCanvas({ children }: { children: ReactNode }) {
         aria-hidden="true"
         className="pointer-events-none absolute -left-48 top-[28%] h-[30rem] w-[30rem] rotate-45 border border-[#c48a4a]/[0.08]"
       />
-      <div className="relative mx-auto w-full max-w-6xl">{children}</div>
-    </main>
+        <div className="relative px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+          <div className="relative mx-auto w-full max-w-6xl">{children}</div>
+        </div>
+      </main>
+    </>
   );
 }
 
-function FightHistory({ fights }: { fights: ProfileFight[] }) {
+function FightHistory({
+  fights,
+  showAll,
+  onToggleShowAll,
+}: {
+  fights: ProfileFight[];
+  showAll: boolean;
+  onToggleShowAll: () => void;
+}) {
+  const visible = showAll ? fights : fights.slice(0, 3);
   return (
     <section
       id="peleas"
@@ -480,9 +527,20 @@ function FightHistory({ fights }: { fights: ProfileFight[] }) {
         </div>
       ) : (
         <div className="divide-y divide-white/[0.08]">
-          {fights.map((fight) => (
+          {visible.map((fight) => (
             <FightCard key={fight.id} fight={fight} />
           ))}
+          {fights.length > 3 && (
+            <button
+              type="button"
+              onClick={onToggleShowAll}
+              className="flex w-full items-center justify-center gap-2 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#d0ca53] transition hover:bg-white/[0.03] hover:text-[#ffe787] sm:px-5"
+            >
+              {showAll
+                ? 'Ver solo las últimas 3'
+                : `Ver todas las peleas (${fights.length})`}
+            </button>
+          )}
           <p className="px-4 py-2.5 text-[10px] text-white/35 sm:px-5">
             Se muestran hasta 25 peleas finalizadas, de la más reciente a la más antigua.
           </p>
@@ -507,6 +565,13 @@ function FightCard({ fight }: { fight: ProfileFight }) {
   return (
     <article className="p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
+        <time
+          dateTime={fight.playedAt}
+          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.1em] text-white/35"
+        >
+          <CalendarDays className="h-3 w-3" />
+          {dateLabel}
+        </time>
         <div className="flex items-center gap-2">
           <span
             className={`border px-2 py-1 font-game text-[10px] font-bold uppercase tracking-[0.15em] ${
@@ -521,13 +586,6 @@ function FightCard({ fight }: { fight: ProfileFight }) {
             FT{fight.targetFT || 3}
           </span>
         </div>
-        <time
-          dateTime={fight.playedAt}
-          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.1em] text-white/35"
-        >
-          <CalendarDays className="h-3 w-3" />
-          {dateLabel}
-        </time>
       </div>
 
       <div className="mt-4 grid items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">

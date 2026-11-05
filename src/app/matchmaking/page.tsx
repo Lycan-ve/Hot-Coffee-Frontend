@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import DiscordLoginButton from '@/components/DiscordLoginButton';
+import SiteHeader from '@/components/SiteHeader';
 import { fetchMe, getToken, MeResponse, RankInfo, rankIconUrl } from '@/lib/auth';
 import {
   QueueState,
@@ -162,22 +163,11 @@ export default function MatchmakingPage() {
     : 0;
 
   return (
-    <main className="min-h-screen bg-[#121212] text-white">
-      {/* Barra superior */}
-      <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <div>
-          <a
-            href="/"
-            className="text-[11px] uppercase tracking-widest text-white/40 transition hover:text-white/70"
-          >
-            ← Hot Coffee 2XKO
-          </a>
-          <h1 className="font-condensed text-2xl font-bold">⚔️ Matchmaking</h1>
-        </div>
-        <DiscordLoginButton />
-      </header>
+    <main className="min-h-screen bg-[#18100b] text-white">
+      <SiteHeader />
 
       <div className="mx-auto max-w-3xl px-6 py-8">
+        <h1 className="mb-6 font-condensed text-3xl font-bold">⚔️ Matchmaking</h1>
         {/* Mi tarjeta (visible solo logueado) */}
         {me && (
           <div className="mb-6 flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
