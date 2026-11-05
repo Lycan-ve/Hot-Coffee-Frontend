@@ -967,7 +967,7 @@ export default function HotCoffeeRanking() {
         .pr-sidebar {
           grid-area: sidebar;
           position: sticky;
-          top: 78px;
+          top: 18px;
           min-width: 0;
           min-height: calc(100vh - 36px);
           display: flex;
