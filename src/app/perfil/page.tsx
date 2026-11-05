@@ -391,7 +391,7 @@ export default function PerfilPage() {
               </div>
             </section>
             </>
-            }
+            )}
 
             {tab === 'stats' && (
             <>
@@ -438,7 +438,7 @@ export default function PerfilPage() {
               </p>
             </section>
             </>
-            }
+            )}
 
             {tab === 'peleas' && (
               <FightHistory
