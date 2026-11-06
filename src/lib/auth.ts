@@ -48,6 +48,8 @@ export interface ProfileTournament {
   eventId: number;
   name: string;
   slug: string;
+  /** Ícono del torneo en Start.gg (lo llena el backend; puede venir vacío). */
+  image?: string;
   image?: string;
   points: number;
   placement: number;

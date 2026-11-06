@@ -1,8 +1,8 @@
 'use client';
 
 import Link from "next/link";
-import { useState } from "react";
-import { fuseIconUrl, type MeResponse, type ProfileFight, type ProfileTeam } from "@/lib/auth";
+import { useMemo, useState } from "react";
+import { fuseIconUrl, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
 import { RankBadge, SectionTitle, Stat } from "./shared";
 
@@ -61,6 +61,31 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
   const { stats, rank } = me;
   const fights = me.fights ?? [];
   const tournaments = me.tournaments ?? [];
+
+  // Torneos ordenados por puesto: 1.º, 2.º, 3.º... Los históricos sin
+  // placement real se ordenan por los puntos equivalentes; los puestos
+  // desconocidos van al final. Desempates: puntos y evento más reciente.
+  const orderedTournaments = useMemo(() => {
+    const rankOf = (t: ProfileTournament) => {
+      if (t.placement && t.placement > 0) return t.placement;
+      switch (t.points) {
+        case 100: return 1;
+        case 70: return 2;
+        case 50: return 3;
+        case 35: return 4;
+        case 20: return 5;
+        case 10: return 7;
+        default: return 999;
+      }
+    };
+    return [...tournaments].sort((a, b) => {
+      const ra = rankOf(a);
+      const rb = rankOf(b);
+      if (ra !== rb) return ra - rb;
+      if (b.points !== a.points) return b.points - a.points;
+      return b.eventId - a.eventId;
+    });
+  }, [tournaments]);
   const games = stats.wins + stats.losses;
   const winRate = games ? Math.round((stats.wins / games) * 100) : 0;
   const titles = tournaments.filter((t) => t.isWinner).length;
@@ -245,7 +270,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
             <p className="hc-empty">Sin torneos registrados.</p>
           ) : (
             <div className="hc-tournaments">
-              {tournaments.map((t) => (
+              {orderedTournaments.map((t) => (
                 <a
                   key={t.eventId}
                   className={`achievement ${t.isWinner ? "featured" : ""}`}
@@ -258,7 +283,13 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                       <img src={t.image} alt="" loading="lazy" />
                     </span>
                   ) : (
+                    {t.image ? (
+                    <span className="hc-tournament-icon">
+                      <img src={t.image} alt={t.name} loading="lazy" />
+                    </span>
+                  ) : (
                     <span>{t.isWinner ? "★" : "◆"}</span>
+                  )}
                   )}
                   <div>
                     <strong>{t.name}</strong>
