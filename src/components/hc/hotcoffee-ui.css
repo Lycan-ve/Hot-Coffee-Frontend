@@ -1,14 +1,20 @@
-/* ---------- Ajustes globales de UI: footer más legible ---------- */
+/* ---------- Ajustes globales de UI: footer compacto ---------- */
 
-/* Letras más grandes en el footer (antes 8px / 7px). */
-.app-shell footer { font-size: 13px; }
-.app-shell footer strong { font-size: 12px; }
+/* Texto del footer más pequeño (antes 13px / 12px). */
+.app-shell footer {
+  font-size: 10px;
+  min-height: 46px;
+  margin-top: 16px;
+}
+.app-shell footer strong {
+  font-size: 10px;
+}
 
 /* Enlace del footer al Discord de la comunidad. */
 .app-shell footer .footer-link {
   color: var(--cream);
   font-weight: 600;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   text-decoration: none;
   border-bottom: 1px solid rgba(208, 202, 83, 0.45);
