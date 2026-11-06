@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import SiteHeader from '@/components/SiteHeader';
+import GameSpotlight from '@/components/GameSpotlight';
 import RankingRow, { RankPlayer } from '@/components/RankingRow';
 import PodiumRow from '@/components/PodiumRow';
 import FiltersBar from '@/components/FiltersBar';
@@ -68,29 +70,36 @@ export default function Home() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">SALTAR AL CONTENIDO</a>
       <SiteHeader />
-      <main className="site-main">
+      <main id="main-content" className="site-main">
         <div className="content-column">
           <section className="hero" aria-labelledby="ranking-title">
-            <div>
+            <div className="hero-copy">
               <span className="eyebrow">TEMPORADA DE TORNEOS · 2026</span>
-              <h1 id="ranking-title">HOT COFFEE <em>2XKO</em><br /><span>RANKING</span></h1>
-              <p>LA CLASIFICACIÓN COMPETITIVA DE LA COMUNIDAD.</p>
+              <h1 id="ranking-title">EL RANKING<br /><span>DEL LOBBY</span></h1>
+              <p>LA ESCENA COMPETITIVA DE HOT COFFEE · 2XKO.</p>
             </div>
-            <div className="live-pill" aria-live="polite"><i /> {loading ? 'CARGANDO' : 'EN VIVO'}</div>
+            <div className="hero-meta">
+              <div className="live-pill" aria-live="polite"><i /> {loading ? 'CARGANDO' : 'EN VIVO'}</div>
+              <span className="hero-meta-note">TEMPORADA 2026 <b>·</b> CLASIFICACIÓN ABIERTA</span>
+            </div>
           </section>
+
+          <GameSpotlight />
 
           <FiltersBar from={from} to={to} onFrom={selectRange(setFrom)} onTo={selectRange(setTo)} syncing={syncing} onSync={handleSync} />
 
-          <section className="ranking-board" aria-labelledby="board-title">
+          <section id="ranking" className="ranking-board" aria-labelledby="board-title" tabIndex={-1}>
             <div className="board-heading">
               <div><span className="eyebrow">TOP 3 · TEMPORADA ACTUAL</span><h2 id="board-title">LOS QUE MANDAN</h2></div>
               <span className="board-count">{list.length} JUGADORES</span>
             </div>
-            <div className="podium-list">{podium.map((player) => <PodiumRow key={player.ranking} player={player} />)}</div>
+            <div className="podium-list" role="list" aria-label="Podio de la temporada">{podium.map((player) => <PodiumRow key={player.ranking} player={player} />)}</div>
             <div className="list-heading" aria-hidden="true"><span>POSICIÓN / JUGADOR</span><span>EQUIPO</span><span>PUNTOS</span></div>
-            <div className="ranking-list">
-              {loading ? [1, 2, 3, 4].map((item) => <div key={item} className="skeleton-row" aria-label="Cargando jugador" />) : rows.length ? rows.map((player) => <RankingRow key={player.ranking} player={player} maxPoints={maxPoints} />) : <div className="empty-state">NO HAY JUGADORES EN ESTE RANGO.</div>}
+            <div className="ranking-list" aria-busy={loading}>
+              {loading ? <span className="sr-only">Cargando clasificación...</span> : null}
+              {loading ? [1, 2, 3, 4].map((item) => <div key={item} className="skeleton-row" aria-hidden="true" />) : rows.length ? rows.map((player) => <RankingRow key={player.ranking} player={player} maxPoints={maxPoints} />) : <div className="empty-state">NO HAY JUGADORES EN ESTE RANGO.</div>}
             </div>
             <div className="board-footer"><span>10 POR PÁGINA</span><Pagination page={page} total={total} onChange={setPage} /></div>
           </section>
@@ -98,7 +107,7 @@ export default function Home() {
 
         <aside className="sidebar" aria-label="Resumen de la temporada">
           <InfoCard eyebrow="RESUMEN" title="TEMPORADA"><div className="stat-line"><span>PARTICIPANTES</span><b>{list.length || 56}</b></div><div className="stat-line"><span>TORNEOS REGISTRADOS</span><b>22</b></div></InfoCard>
-          <InfoCard eyebrow="EN LA CIMA" title="JUGADOR DESTACADO"><div className="featured"><div className="featured-avatar"><img src="/logo-Hot.jpg" alt="Logo Hot Coffee" /></div><div><strong>{list[0]?.gamerTag || 'ÑEMBO'}</strong><span>{list[0]?.points || 890} PTS · PUESTO #1</span></div></div></InfoCard>
+          <InfoCard eyebrow="EN LA CIMA" title="JUGADOR DESTACADO"><div className="featured"><div className="featured-avatar"><Image src="/logo-Hot.jpg" alt="Logo Hot Coffee" width={50} height={50} sizes="50px" /></div><div><strong>{list[0]?.gamerTag || 'ÑEMBO'}</strong><span>{list[0]?.points || 890} PTS · PUESTO #1</span></div></div></InfoCard>
           <div className="discord-card"><span className="eyebrow">COMUNIDAD</span><h2>ENTRA AL LOBBY</h2><p>RANKED, TORNEOS Y CAFÉ.</p><a href="https://discord.com" target="_blank" rel="noreferrer">ÚNETE AL DISCORD</a></div>
         </aside>
       </main>
