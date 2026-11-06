@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import "./hotcoffee-ui.css";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { DiscordLogin } from "./DiscordLogin";
@@ -55,6 +56,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <span>Organizado por Baneado Sensei / Dev: Lycan</span>
         <strong>HECHO EN COMUNIDAD. JUGADO CON CARÁCTER.</strong>
         <span>Comunidad independiente · 2XKO de Riot Games</span>
+        <a
+          className="footer-link"
+          href="https://discord.gg/8NbFuJcSCH"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          On Render
+        </a>
       </footer>
     </div>
   );

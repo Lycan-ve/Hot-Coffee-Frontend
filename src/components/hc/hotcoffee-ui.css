@@ -1,0 +1,20 @@
+/* ---------- Ajustes globales de UI: footer más legible ---------- */
+
+/* Letras más grandes en el footer (antes 8px / 7px). */
+.app-shell footer { font-size: 11px; }
+.app-shell footer strong { font-size: 10px; }
+
+/* Enlace exclusivo "On Render" del footer. */
+.app-shell footer .footer-link {
+  color: var(--cream);
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(208, 202, 83, 0.45);
+  padding-bottom: 1px;
+}
+.app-shell footer .footer-link:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
