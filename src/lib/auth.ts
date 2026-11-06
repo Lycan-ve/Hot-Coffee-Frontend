@@ -1,4 +1,4 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hot-coffee-backend.onrender.com';
 
 const TOKEN_KEY = 'hc_token';
 
@@ -48,6 +48,8 @@ export interface ProfileTournament {
   eventId: number;
   name: string;
   slug: string;
+  /** Ícono del torneo en Start.gg (lo llena el backend; puede venir vacío). */
+  image?: string;
   points: number;
   placement: number;
   placementLabel: string;

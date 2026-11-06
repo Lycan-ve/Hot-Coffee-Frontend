@@ -1,117 +1,48 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
-
-import DiscordLoginButton from '@/components/DiscordLoginButton';
-import SiteHeader from '@/components/SiteHeader';
-import { fetchMe, getToken, MeResponse, RankInfo, rankIconUrl } from '@/lib/auth';
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { A, AppShell, RankBadge, SectionTitle } from "@/components/hc/shared";
+import { displayName, LoginLink } from "@/components/hc/DiscordLogin";
+import { fetchMe, getToken, type MeResponse, type RankInfo } from "@/lib/auth";
 import {
-  QueueState,
   acceptProposal,
   declineProposal,
   getQueueState,
   joinQueue,
   leaveQueue,
-} from '@/lib/matchmaking';
+  type QueueState,
+} from "@/lib/matchmaking";
 
-type Status =
-  | 'loading'
-  | 'anon'
-  | 'idle'
-  | 'searching'
-  | 'found'
-  | 'confirmed'
-  | 'matched'
-  | 'failed';
-
-function fmtClock(ms: number) {
+const clock = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000));
-  const m = Math.floor(s / 60);
-  return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-}
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+};
 
-function RankIcon({ rank, size = 44 }: { rank: RankInfo; size?: number }) {
+function VsCard({ name, avatar, points, rank, ok }: { name: string; avatar?: string; points: number; rank: RankInfo; ok: boolean }) {
   return (
-    <img
-      src={rankIconUrl(rank.iconPath)}
-      alt={rank.displayName}
-      width={size}
-      height={size}
-      style={{ width: size, height: size }}
-      className="object-contain"
-    />
-  );
-}
-
-function VsCard({
-  name,
-  avatar,
-  points,
-  rank,
-  highlight,
-}: {
-  name: string;
-  avatar?: string;
-  points: number;
-  rank: RankInfo;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className="flex flex-1 flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-5"
-      style={{ boxShadow: `inset 0 -3px 0 0 ${rank.color}${highlight ? '' : '55'}` }}
-    >
-      <img
-        src={avatar || '/favicon.ico'}
-        alt={name}
-        className="h-16 w-16 rounded-full border-2 object-cover"
-        style={{ borderColor: rank.color }}
-      />
-      <span className="max-w-40 truncate font-condensed text-xl font-bold text-white">
-        {name}
-      </span>
-      <RankIcon rank={rank} size={52} />
-      <span className="text-sm font-bold" style={{ color: rank.color }}>
-        {rank.displayName}
-      </span>
-      <span className="text-xs text-white/50">{points} pts</span>
+    <div className={`hc-vs-card ${ok ? "ok" : ""}`}>
+      {avatar ? <img className="av" src={avatar} alt="" /> : <span className="av">{name[0]}</span>}
+      <strong>{name}</strong>
+      <RankBadge small rank={rank} />
+      <span>{rank.displayName} · {points} pts</span>
+      <small>{ok ? "✓ ACEPTÓ" : "ESPERANDO"}</small>
     </div>
   );
 }
 
-function Chip({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <span
-      className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-        ok
-          ? 'border-[#50d484]/40 bg-[#50d484]/10 text-[#50d484]'
-          : 'border-white/10 bg-white/5 text-white/45'
-      }`}
-    >
-      {ok ? '✓' : '•'} {label}
-    </span>
-  );
-}
-
 export default function MatchmakingPage() {
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [state, setState] = useState<QueueState | null>(null);
   const [ft, setFt] = useState<3 | 5>(3);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tick, setTick] = useState(0);
-
-  const authed = !!getToken();
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    let alive = true;
-    fetchMe().then((data) => {
-      if (alive) setMe(data);
-    });
-    return () => {
-      alive = false;
-    };
+    setAuthed(!!getToken());
+    fetchMe().then(setMe);
   }, []);
 
   useEffect(() => {
@@ -129,7 +60,6 @@ export default function MatchmakingPage() {
     };
   }, [authed]);
 
-  // Reloj de 1 s: cronómetro de la cola y cuenta atrás de la propuesta.
   useEffect(() => {
     const id = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(id);
@@ -145,342 +75,229 @@ export default function MatchmakingPage() {
       setState(await getQueueState());
       setBusy(false);
     },
-    [busy]
+    [busy],
   );
 
-  const status: Status = !authed
-    ? 'anon'
-    : state === null
-      ? 'loading'
-      : (state.status as Status);
-
+  const status = authed === false ? "anon" : !state ? "loading" : state.status;
   const now = Date.now();
-  const elapsed = state?.queue
-    ? Math.max(0, now - new Date(state.queue.since).getTime())
-    : 0;
-  const remaining = state?.proposal
-    ? Math.max(0, new Date(state.proposal.expiresAt).getTime() - now)
-    : 0;
+  const elapsed = state?.queue ? now - new Date(state.queue.since).getTime() : 0;
+  const remaining = state?.proposal ? new Date(state.proposal.expiresAt).getTime() - now : 0;
+  const searching = status === "searching";
+  const games = me ? me.stats.wins + me.stats.losses : 0;
 
   return (
-    <main className="min-h-screen bg-[#18100b] text-white">
-      <SiteHeader />
-
-      <div className="mx-auto max-w-3xl px-6 py-8">
-        <h1 className="mb-6 font-condensed text-3xl font-bold">⚔️ Matchmaking</h1>
-        {/* Mi tarjeta (visible solo logueado) */}
-        {me && (
-          <div className="mb-6 flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
-            <img
-              src={me.user.avatarUrl}
-              alt=""
-              className="h-14 w-14 rounded-full border-2 object-cover"
-              style={{ borderColor: me.rank.color }}
+    <AppShell>
+      <main className="page matchmaking-page">
+        <section className="hero matchmaking-hero">
+          <div className="hero-copy">
+            <SectionTitle
+              eyebrow="CENTRO DE COMBATE / EN LÍNEA"
+              title="MATCHMAKING"
+              copy="Elige tu formato. Nosotros encontramos a tu próximo rival."
             />
-            <div className="min-w-0">
-              <p className="truncate font-condensed text-xl font-bold">
-                {me.user.guildNickname || me.user.globalName || me.user.username}
-              </p>
-              <p className="text-xs text-white/50">
-                {me.stats.points} pts · {me.stats.wins}W {me.stats.losses}L
-                {me.stats.rankingPosition > 0
-                  ? ` · #${me.stats.rankingPosition}`
-                  : ''}
-              </p>
+          </div>
+          <div className="hero-motto">
+            <span>LA ARENA ESTÁ ABIERTA</span>
+            <strong>ARMA TU EQUIPO. SIRVE LA PELEA.</strong>
+          </div>
+        </section>
+
+        <section className="queue-layout">
+          <aside className="fighter-summary panel">
+            <div className="panel-heading">
+              <h3>TU PERFIL</h3>
+              {me ? (
+                <span className="online">
+                  <i /> LISTO
+                </span>
+              ) : (
+                <span>SIN SESIÓN</span>
+              )}
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              <RankIcon rank={me.rank} size={56} />
-              <div className="text-right">
-                <p
-                  className="font-condensed text-lg font-bold leading-tight"
-                  style={{ color: me.rank.color }}
-                >
-                  {me.rank.displayName}
+            {me ? (
+              <>
+                <div className="fighter-rank">
+                  <RankBadge small rank={me.rank} />
+                  <div>
+                    <span>{displayName(me)}</span>
+                    <strong>{me.rank.displayName.toUpperCase()}</strong>
+                    <p>
+                      {me.stats.points} PTS{me.stats.rankingPosition > 0 ? ` · #${me.stats.rankingPosition}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="compact-stats">
+                  <div>
+                    <small>WIN RATE</small>
+                    <strong>{games ? Math.round((me.stats.wins / games) * 100) : 0}%</strong>
+                  </div>
+                  <div>
+                    <small>RÉCORD</small>
+                    <strong className="success">
+                      {me.stats.wins}W {me.stats.losses}L
+                    </strong>
+                  </div>
+                </div>
+                <div className="roster">
+                  <small>PROGRESO DE RANGO</small>
+                  <div>
+                    <span>◆</span>
+                    <strong>{me.rank.isRp ? `${me.rank.rp} RP` : `${me.rank.lp} LP`}</strong>
+                    <b>{me.rank.isRp ? "" : `FALTAN ${me.rank.lpToNext}`}</b>
+                  </div>
+                  <div>
+                    <span>→</span>
+                    <strong>{me.rank.next?.toUpperCase()}</strong>
+                    <b>SIGUIENTE</b>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="hc-empty">Inicia sesión para ver tu rango y entrar a la cola.</p>
+            )}
+          </aside>
+
+          <article className={`queue-console cut-panel ${searching ? "searching" : ""}`}>
+            <div className="queue-grid" />
+            <span className="queue-kicker">
+              {status === "anon" && "INICIA SESIÓN PARA JUGAR"}
+              {status === "loading" && "CONECTANDO CON LA COLA…"}
+              {status === "idle" && "COLA COMPETITIVA DISPONIBLE"}
+              {searching && `BUSCANDO RIVAL · FT ${state?.queue?.ft ?? ft}`}
+              {(status === "found" || status === "confirmed") && "¡RIVAL ENCONTRADO!"}
+              {status === "matched" && "SET CREADO"}
+              {status === "failed" && "ALGO SALIÓ MAL"}
+            </span>
+
+            {(status === "found" || status === "confirmed") && state?.proposal ? (
+              <>
+                <div className="hc-vs">
+                  <VsCard name={state.proposal.me.tag} avatar={state.proposal.me.avatarUrl} points={state.proposal.me.points} rank={state.proposal.me.rank} ok={state.proposal.acceptedByMe} />
+                  <div className="mid">
+                    <b>VS</b>
+                    <span>{clock(remaining)}</span>
+                  </div>
+                  <VsCard name={state.proposal.opponent.tag} avatar={state.proposal.opponent.avatarUrl} points={state.proposal.opponent.points} rank={state.proposal.opponent.rank} ok={state.proposal.acceptedByOpponent} />
+                </div>
+                <p>
+                  FT {state.proposal.ft} · <strong className="gold">{state.proposal.pointsAtStake} pts</strong> en juego
                 </p>
-                <p className="text-[11px] text-white/45">
-                  {me.rank.isRp
-                    ? `${me.rank.rp} RP`
-                    : `${me.rank.lp} LP · faltan ${me.rank.lpToNext}`}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* No autenticado */}
-        {status === 'anon' && (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-16 text-center">
-            <span className="text-5xl">🎮</span>
-            <h2 className="font-condensed text-2xl font-bold">
-              Entra a la cola de matchmaking
-            </h2>
-            <p className="max-w-md text-sm text-white/50">
-              Inicia sesión con Discord (debes ser miembro de Hot Coffee 2XKO),
-              elige el formato y el sistema buscará un rival de tu nivel.
-            </p>
-            <DiscordLoginButton />
-          </div>
-        )}
-
-        {status === 'loading' && (
-          <div className="py-20 text-center text-sm text-white/40">
-            Cargando estado de la cola…
-          </div>
-        )}
-
-        {authed && status !== 'loading' && status !== 'anon' && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-            {/* ---------- IDLE: elegir formato y entrar ---------- */}
-            {status === 'idle' && (
-              <div className="flex flex-col items-center gap-5">
-                <h2 className="font-condensed text-3xl font-bold">
-                  Buscar rival
-                </h2>
-                <div className="grid w-full max-w-sm grid-cols-2 gap-3">
-                  {([3, 5] as const).map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setFt(n)}
-                      disabled={busy}
-                      className={`rounded-xl border p-4 transition ${
-                        ft === n
-                          ? 'border-[#f5d060]/70 bg-[#f5d060]/10'
-                          : 'border-white/10 bg-white/[0.03] hover:border-white/25'
-                      }`}
-                    >
-                      <p className="font-condensed text-2xl font-bold">FT {n}</p>
-                      <p className="text-xs text-white/45">{n * 5} pts en juego</p>
+                {status === "found" && !state.proposal.acceptedByMe ? (
+                  <div className="hc-actions">
+                    <button className="search-button" disabled={busy} onClick={() => act(acceptProposal)} type="button">
+                      ACEPTAR
                     </button>
+                    <button className="search-button cancel" disabled={busy} onClick={() => act(declineProposal)} type="button">
+                      RECHAZAR
+                    </button>
+                  </div>
+                ) : status === "confirmed" ? (
+                  <span className="queue-note success">Ambos aceptaron — creando el set…</span>
+                ) : (
+                  <button className="secondary-button" disabled={busy} onClick={() => act(declineProposal)} type="button">
+                    ACEPTASTE · CANCELAR
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="versus-mark">
+                  <span className="orbit one" />
+                  <span className="orbit two" />
+                  <img src={`${A}/1985f.svg`} alt="" />
+                </div>
+                <h2>
+                  {status === "matched" ? "¡A PELEAR!" : status === "failed" ? "NO SE PUDO CREAR EL SET" : searching ? "BUSCANDO RIVAL" : "LISTO PARA PELEAR"}
+                </h2>
+                <p>
+                  {status === "anon" && "Inicia sesión con Discord (debes ser miembro de Hot Coffee 2XKO)."}
+                  {status === "idle" && "Selecciona un formato y entra a la arena."}
+                  {status === "loading" && "Consultando el estado de tu cola…"}
+                  {searching && "Buscando rivales con puntos parecidos a los tuyos…"}
+                  {status === "matched" &&
+                    (state?.match?.web
+                      ? "Entra a la sala para armar tu equipo, compartir el código, chatear y reportar."
+                      : "El hilo del set ya está en Discord. Arma tu equipo y a jugar.")}
+                  {status === "failed" && "Hubo un problema lanzando el set (¿está el bot en línea?)."}
+                </p>
+                {searching && (
+                  <div className="queue-time">
+                    <strong>{clock(elapsed)}</strong>
+                    <span>
+                      {state?.queue?.players ?? 1} EN COLA · BÚSQUEDA ±{state?.queue?.radius ?? 25} PTS
+                    </span>
+                  </div>
+                )}
+                {(status === "idle" || searching || status === "failed") && (
+                  <div className="mode-switch" aria-label="Formato">
+                    {([3, 5] as const).map((n, i) => (
+                      <button key={n} className={ft === n ? "selected" : ""} onClick={() => !searching && setFt(n)} type="button">
+                        <small>0{i + 1}</small>
+                        <strong>FT {n}</strong>
+                        <span>{n * 5} PTS EN JUEGO</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {status === "anon" && <LoginLink className="search-button" />}
+                {(status === "idle" || status === "failed") && (
+                  <button className="search-button" disabled={busy} onClick={() => act(() => joinQueue(ft))} type="button">
+                    <img src={`${A}/3508d.svg`} alt="" /> {status === "failed" ? "REINTENTAR" : "BUSCAR PARTIDA"}
+                  </button>
+                )}
+                {searching && (
+                  <button className="search-button cancel" disabled={busy} onClick={() => act(leaveQueue)} type="button">
+                    CANCELAR BÚSQUEDA
+                  </button>
+                )}
+                {status === "matched" &&
+                  (state?.match?.web ? (
+                    <Link href="/sala" className="search-button">
+                      ENTRAR A LA SALA WEB
+                    </Link>
+                  ) : (
+                    <a className="search-button" href={state?.match?.threadUrl || "https://discord.com/channels/"} target="_blank" rel="noreferrer">
+                      ABRIR EL HILO EN DISCORD
+                    </a>
                   ))}
-                </div>
-                <button
-                  onClick={() => act(() => joinQueue(ft))}
-                  disabled={busy}
-                  className="w-full max-w-sm rounded-xl bg-[#5865F2] px-6 py-4 font-condensed text-xl font-bold transition hover:bg-[#4752c4] disabled:opacity-50"
-                >
-                  🎲 Entrar a la cola
-                </button>
-                <p className="max-w-md text-center text-xs text-white/40">
-                  El sistema busca rivales con puntos parecidos a los tuyos.
-                  El rango de búsqueda se amplía mientras esperas.
-                </p>
-              </div>
+              </>
             )}
+            {error && <span className="queue-note danger">{error}</span>}
+            <span className="queue-note">
+              {searching ? "Puedes dejar esta pestaña abierta: te avisamos aquí cuando aparezca el rival." : "Al buscar, aceptas las reglas competitivas de Hot Coffee."}
+            </span>
+          </article>
 
-            {/* ---------- SEARCHING ---------- */}
-            {status === 'searching' && (
-              <div className="flex flex-col items-center gap-5">
-                <div className="flex items-center gap-3">
-                  <span className="relative flex h-3 w-3">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#5865F2] opacity-75" />
-                    <span className="relative inline-flex h-3 w-3 rounded-full bg-[#5865F2]" />
-                  </span>
-                  <h2 className="font-condensed text-2xl font-bold">
-                    Buscando rival (FT {state?.queue?.ft})…
-                  </h2>
-                </div>
-                <p
-                  key={tick}
-                  className="font-mono text-4xl font-bold tabular-nums text-white/90"
-                >
-                  {fmtClock(elapsed)}
-                </p>
-                <div className="flex flex-wrap justify-center gap-2 text-xs">
-                  <Chip ok label={`${state?.queue?.players ?? 1} en cola`} />
-                  <Chip ok label={`Búsqueda: ±${state?.queue?.radius ?? 25} pts`} />
-                  <Chip ok label="Se amplía con la espera" />
-                </div>
-                <button
-                  onClick={() => act(() => leaveQueue())}
-                  disabled={busy}
-                  className="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white/70 transition hover:border-white/30 hover:text-white disabled:opacity-50"
-                >
-                  ✕ Salir de la cola
-                </button>
-                <p className="max-w-md text-center text-xs text-white/40">
-                  Puedes dejar esta pestaña abierta: te avisamos aquí cuando
-                  aparezca el rival. Si la cierras, sales de la cola.
-                </p>
-              </div>
-            )}
-
-            {/* ---------- FOUND: propuesta con doble aceptación ---------- */}
-            {(status === 'found' || status === 'confirmed') && state?.proposal && (
-              <div className="flex flex-col gap-5">
-                <div className="text-center">
-                  <h2 className="font-condensed text-3xl font-bold">
-                    ⚔️ ¡Rival encontrado!
-                  </h2>
-                  <p className="text-sm text-white/50">
-                    FT {state.proposal.ft} ·{' '}
-                    <span className="font-semibold text-[#f5d060]">
-                      {state.proposal.pointsAtStake} pts
-                    </span>{' '}
-                    en juego
-                  </p>
-                </div>
-
-                <div className="flex items-stretch gap-3">
-                  <VsCard
-                    name={state.proposal.me.tag}
-                    avatar={state.proposal.me.avatarUrl}
-                    points={state.proposal.me.points}
-                    rank={state.proposal.me.rank}
-                    highlight={state.proposal.acceptedByMe}
-                  />
-                  <div className="flex flex-col items-center justify-center gap-1 px-1">
-                    <span className="font-condensed text-3xl font-black text-white/30">
-                      VS
-                    </span>
-                    <span
-                      key={tick}
-                      className="font-mono text-lg font-bold tabular-nums text-white/60"
-                    >
-                      {fmtClock(remaining)}
-                    </span>
-                  </div>
-                  <VsCard
-                    name={state.proposal.opponent.tag}
-                    avatar={state.proposal.opponent.avatarUrl}
-                    points={state.proposal.opponent.points}
-                    rank={state.proposal.opponent.rank}
-                    highlight={state.proposal.acceptedByOpponent}
-                  />
-                </div>
-
-                <div className="flex justify-center gap-2">
-                  <Chip ok={state.proposal.acceptedByMe} label="Tú" />
-                  <Chip
-                    ok={state.proposal.acceptedByOpponent}
-                    label={state.proposal.opponent.tag}
-                  />
-                </div>
-
-                {status === 'found' && !state.proposal.acceptedByMe ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => act(() => acceptProposal())}
-                      disabled={busy}
-                      className="rounded-xl bg-[#50d484] px-6 py-4 font-condensed text-xl font-bold text-[#06130b] transition hover:brightness-110 disabled:opacity-50"
-                    >
-                      ✅ Aceptar
-                    </button>
-                    <button
-                      onClick={() => act(() => declineProposal())}
-                      disabled={busy}
-                      className="rounded-xl border border-[#f07070]/40 bg-[#f07070]/10 px-6 py-4 font-condensed text-xl font-bold text-[#f07070] transition hover:bg-[#f07070]/20 disabled:opacity-50"
-                    >
-                      ✕ Rechazar
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 py-2">
-                    {status === 'confirmed' ? (
-                      <>
-                        <span className="animate-pulse text-sm font-semibold text-[#50d484]">
-                          Ambos aceptaron — creando el set en Discord…
-                        </span>
-                        <span className="text-xs text-white/40">
-                          En segundos se abre el hilo del set con los paneles de
-                          equipo. También te llega un MD.
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm font-semibold text-white/70">
-                          ✓ Aceptaste — esperando al rival…
-                        </span>
-                        <button
-                          onClick={() => act(() => declineProposal())}
-                          disabled={busy}
-                          className="text-xs font-semibold uppercase tracking-wide text-white/35 transition hover:text-[#f07070]"
-                        >
-                          Cancelar
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ---------- MATCHED: set creado ---------- */}
-            {status === 'matched' && state?.match && (
-              <div className="flex flex-col items-center gap-4 py-4 text-center">
-                <span className="text-5xl">🏁</span>
-                <h2 className="font-condensed text-3xl font-bold text-[#50d484]">
-                  ¡Set creado!
-                </h2>
-                <p className="max-w-md text-sm text-white/50">
-                  {state.match.web
-                    ? 'El set es 100% web: entra a la sala para armar tu equipo, compartir el código, chatear y reportar los games.'
-                    : 'El hilo del set ya está en Discord. Arma tu equipo en el panel del hilo (o en el MD del bot), compartan el código de sala y a jugar.'}
-                </p>
-                {state.match.web ? (
-                  <Link
-                    href="/sala"
-                    className="rounded-xl bg-[#50d484] px-8 py-4 font-condensed text-xl font-bold text-black transition hover:bg-[#3fb56e]"
-                  >
-                    🌐 Entrar a la sala web
-                  </Link>
-                ) : (
-                  <a
-                    href={state.match.threadUrl || 'https://discord.com/channels/'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl bg-[#5865F2] px-8 py-4 font-condensed text-xl font-bold transition hover:bg-[#4752c4]"
-                  >
-                    🥊 Abrir el hilo en Discord
-                  </a>
-                )}
-              </div>
-            )}
-
-            {/* ---------- FAILED ---------- */}
-            {status === 'failed' && (
-              <div className="flex flex-col items-center gap-4 text-center">
-                <span className="text-4xl">⚠️</span>
-                <h2 className="font-condensed text-2xl font-bold">
-                  No se pudo crear el set
-                </h2>
-                <p className="max-w-md text-sm text-white/50">
-                  Hubo un problema lanzando el set en Discord (¿está el bot en
-                  línea?). Vuelve a intentarlo.
-                </p>
-                <button
-                  onClick={() => act(() => joinQueue(ft))}
-                  disabled={busy}
-                  className="rounded-xl bg-[#5865F2] px-6 py-3 font-condensed text-lg font-bold transition hover:bg-[#4752c4] disabled:opacity-50"
-                >
-                  Reintentar
-                </button>
-              </div>
-            )}
-
-            {error && (
-              <p className="mt-4 text-center text-sm text-[#f07070]">{error}</p>
-            )}
-          </div>
-        )}
-
-        {/* Cómo funciona */}
-        {authed && (
-          <div className="mt-6 grid grid-cols-3 gap-3 text-center text-[11px] text-white/40">
-            <div className="rounded-xl border border-white/5 p-3">
-              <p className="mb-1 text-lg">1️⃣</p>
-              Entras a la cola y el sistema busca rival de tu nivel
+          <aside className="match-rules panel">
+            <div className="panel-heading">
+              <h3>CÓMO FUNCIONA</h3>
+              <span>AUTOMÁTICO</span>
             </div>
-            <div className="rounded-xl border border-white/5 p-3">
-              <p className="mb-1 text-lg">2️⃣</p>
-              Ambos aceptan y el bot crea el hilo del set
+            <div className="rule">
+              <span>1</span>
+              <div>
+                <small>ENTRAS A LA COLA</small>
+                <strong>RIVAL DE TU NIVEL</strong>
+              </div>
             </div>
-            <div className="rounded-xl border border-white/5 p-3">
-              <p className="mb-1 text-lg">3️⃣</p>
-              Arman equipo, juegan y reportan; los puntos van al ranking
+            <div className="rule">
+              <span>2</span>
+              <div>
+                <small>AMBOS ACEPTAN</small>
+                <strong>SE CREA EL SET</strong>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </main>
+            <div className="rule">
+              <span>3</span>
+              <div>
+                <small>JUEGAN Y REPORTAN</small>
+                <strong>PUNTOS AL RANKING</strong>
+              </div>
+            </div>
+            <p className="rule-note">El rango de búsqueda se amplía mientras esperas. Si cierras la pestaña, sales de la cola.</p>
+          </aside>
+        </section>
+      </main>
+    </AppShell>
   );
 }
