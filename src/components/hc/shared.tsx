@@ -56,14 +56,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <span>Organizado por Baneado Sensei / Dev: Lycan</span>
         <strong>HECHO EN COMUNIDAD. JUGADO CON CARÁCTER.</strong>
         <span>Comunidad independiente · 2XKO de Riot Games</span>
-        <a
-          className="footer-link"
-          href="https://discord.gg/8NbFuJcSCH"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Únete al Discord
-        </a>
       </footer>
     </div>
   );
