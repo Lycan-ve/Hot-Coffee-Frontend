@@ -65,7 +65,8 @@ async function postAction(path: string, body?: unknown): Promise<string | null> 
   }
 }
 
-export const joinQueue = (ft: 3 | 5) => postAction('/api/matchmaking/queue/join', { ft });
+// Todos los sets ahora son FT 3 (partidas equitativas por rango).
+export const joinQueue = () => postAction('/api/matchmaking/queue/join', { ft: 3 });
 export const leaveQueue = () => postAction('/api/matchmaking/queue/leave');
 export const acceptProposal = () => postAction('/api/matchmaking/accept');
 export const declineProposal = () => postAction('/api/matchmaking/decline');

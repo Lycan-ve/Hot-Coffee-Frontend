@@ -35,7 +35,6 @@ export default function MatchmakingPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [state, setState] = useState<QueueState | null>(null);
-  const [ft, setFt] = useState<3 | 5>(3);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, setTick] = useState(0);
@@ -93,7 +92,7 @@ export default function MatchmakingPage() {
             <SectionTitle
               eyebrow="CENTRO DE COMBATE / EN LÍNEA"
               title="MATCHMAKING"
-              copy="Elige tu formato. Nosotros encontramos a tu próximo rival."
+              copy="Todos los sets son FT 3. Te emparejamos con un rival de tu rango."
             />
           </div>
           <div className="hero-motto">
@@ -163,7 +162,7 @@ export default function MatchmakingPage() {
               {status === "anon" && "INICIA SESIÓN PARA JUGAR"}
               {status === "loading" && "CONECTANDO CON LA COLA…"}
               {status === "idle" && "COLA COMPETITIVA DISPONIBLE"}
-              {searching && `BUSCANDO RIVAL · FT ${state?.queue?.ft ?? ft}`}
+              {searching && "BUSCANDO RIVAL · FT 3"}
               {(status === "found" || status === "confirmed") && "¡RIVAL ENCONTRADO!"}
               {status === "matched" && "SET CREADO"}
               {status === "failed" && "ALGO SALIÓ MAL"}
@@ -211,9 +210,9 @@ export default function MatchmakingPage() {
                 </h2>
                 <p>
                   {status === "anon" && "Inicia sesión con Discord (debes ser miembro de Hot Coffee 2XKO)."}
-                  {status === "idle" && "Selecciona un formato y entra a la arena."}
+                  {status === "idle" && "Entra a la cola y te encontramos un rival de tu rango."}
                   {status === "loading" && "Consultando el estado de tu cola…"}
-                  {searching && "Buscando rivales con puntos parecidos a los tuyos…"}
+                  {searching && "Buscando un rival de tu rango (partidas equitativas)…"}
                   {status === "matched" &&
                     (state?.match?.web
                       ? "Entra a la sala para armar tu equipo, compartir el código, chatear y reportar."
@@ -224,24 +223,13 @@ export default function MatchmakingPage() {
                   <div className="queue-time">
                     <strong>{clock(elapsed)}</strong>
                     <span>
-                      {state?.queue?.players ?? 1} EN COLA · BÚSQUEDA ±{state?.queue?.radius ?? 25} PTS
+                      {state?.queue?.players ?? 1} EN COLA · RIVAL DE TU RANGO
                     </span>
-                  </div>
-                )}
-                {(status === "idle" || searching || status === "failed") && (
-                  <div className="mode-switch" aria-label="Formato">
-                    {([3, 5] as const).map((n, i) => (
-                      <button key={n} className={ft === n ? "selected" : ""} onClick={() => !searching && setFt(n)} type="button">
-                        <small>0{i + 1}</small>
-                        <strong>FT {n}</strong>
-                        <span>{n * 5} PTS EN JUEGO</span>
-                      </button>
-                    ))}
                   </div>
                 )}
                 {status === "anon" && <LoginLink className="search-button" />}
                 {(status === "idle" || status === "failed") && (
-                  <button className="search-button" disabled={busy} onClick={() => act(() => joinQueue(ft))} type="button">
+                  <button className="search-button" disabled={busy} onClick={() => act(() => joinQueue())} type="button">
                     <img src={`${A}/3508d.svg`} alt="" /> {status === "failed" ? "REINTENTAR" : "BUSCAR PARTIDA"}
                   </button>
                 )}
@@ -277,14 +265,14 @@ export default function MatchmakingPage() {
               <span>1</span>
               <div>
                 <small>ENTRAS A LA COLA</small>
-                <strong>RIVAL DE TU NIVEL</strong>
+                <strong>RIVAL DE TU RANGO</strong>
               </div>
             </div>
             <div className="rule">
               <span>2</span>
               <div>
                 <small>AMBOS ACEPTAN</small>
-                <strong>SE CREA EL SET</strong>
+                <strong>SE CREA EL SET FT 3</strong>
               </div>
             </div>
             <div className="rule">
@@ -294,7 +282,10 @@ export default function MatchmakingPage() {
                 <strong>PUNTOS AL RANKING</strong>
               </div>
             </div>
-            <p className="rule-note">El rango de búsqueda se amplía mientras esperas. Si cierras la pestaña, sales de la cola.</p>
+            <p className="rule-note">
+              El emparejamiento es por rango (Gold I, II y III son el mismo nivel). Con racha de 3 victorias se te sube un rival
+              de rango superior, y vencer a un rango más alto paga más puntos. Si esperas demasiado, la búsqueda se amplía.
+            </p>
           </aside>
         </section>
       </main>
