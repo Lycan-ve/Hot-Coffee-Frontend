@@ -183,6 +183,15 @@ export default function RankingPage() {
   const mm = mode === "matchmaking";
   const cols = mm ? 7 : 5;
   const leader = rows[0];
+  const { data: leaderProf } = useQuery({
+    queryKey: ["profile", leader?.profileId],
+    queryFn: () => fetchUserProfile(String(leader?.profileId)),
+    enabled: mm && !!leader?.profileId,
+    staleTime: 120_000,
+  });
+  const leaderChar = mm
+    ? leaderProf?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam?.point?.id
+    : leader?.character?.split(/[,/]/)[0]?.trim();
   const mmSets = useMemo(() => mmPlayers.reduce((n, p) => n + p.wins, 0), [mmPlayers]);
 
   const switchMode = (m: "torneos" | "matchmaking") => {
@@ -443,7 +452,14 @@ export default function RankingPage() {
 
           <aside className="rk-side">
             <article className="rk-featured">
-              <img src={`${A}/6237f.png`} alt="" />
+              <img
+                key={leaderChar ?? "default"}
+                src={leaderChar ? `/fighters/${encodeURIComponent(leaderChar)}.png` : `${A}/6237f.png`}
+                alt=""
+                onError={(e) => {
+                  if (!e.currentTarget.src.endsWith("6237f.png")) e.currentTarget.src = `${A}/6237f.png`;
+                }}
+              />
               <span className="tag"><Crown /> JUGADOR DESTACADO</span>
               <div className="info">
                 <small>#1 {mode === "torneos" ? "DE LA LIGA" : "DEL MATCHMAKING"}</small>
