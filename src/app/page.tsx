@@ -78,6 +78,10 @@ async function fetchMatchmaking(): Promise<MmPlayer[]> {
 const PER_PAGE = 10;
 const DEFAULT_RANGE = 10;
 
+// El ranking de matchmaking parte de Gold I (1.000 pts): el total mostrado
+// incluye la base, igual que la escalera de rangos que calcula el backend.
+const MM_BASE_POINTS = 1000;
+
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
 // Normaliza el nombre de un personaje para buscar su arte ("YASUO, ekko" -> "Yasuo").
@@ -180,7 +184,7 @@ export default function RankingPage() {
         avatar: p.avatarUrl,
         wins: p.wins,
         losses: p.losses,
-        points: p.points,
+        points: MM_BASE_POINTS + p.points,
         profileId: p.discordId,
       }));
     }
