@@ -1,8 +1,9 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import DiscordLoginButton from '@/components/DiscordLoginButton';
+import Link from "next/link";
+import { AppShell } from '@/components/hc/shared';
+import { LoginLink } from '@/components/hc/DiscordLogin';
 import { getToken, rankIconUrl } from '@/lib/auth';
 import {
   RosterEntry,
@@ -32,7 +33,7 @@ function TeamChips({ team }: { team: SalaTeam }) {
     <div className="flex flex-wrap items-center justify-center gap-1">
       <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-semibold text-white/80">{team.char1Name}</span>
       <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-semibold text-white/80">{team.char2Name}</span>
-      <span className="rounded bg-[#5865F2]/30 px-2 py-0.5 text-xs font-semibold text-[#aab2ff]">{team.fuseName}</span>
+      <span className="rounded bg-primary/30 px-2 py-0.5 text-xs font-semibold text-hc-cream">{team.fuseName}</span>
     </div>
   );
 }
@@ -42,8 +43,7 @@ function SideCard(props: { tag: string; avatarUrl: string; score: number; points
   return (
     <div className="flex w-full flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-4">
       {avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={avatarUrl} alt={tag} className="h-16 w-16 rounded-full border-2" style={{ borderColor: accent }} />
+                <img src={avatarUrl} alt={tag} className="h-16 w-16 rounded-full border-2" style={{ borderColor: accent }} />
       ) : (
         <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 text-2xl" style={{ borderColor: accent }}>☕</div>
       )}
@@ -150,18 +150,18 @@ export default function SalaPage() {
 
   if (authed === false) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0b0f14] px-4 text-center text-white">
+      <AppShell><main className="page hc-sala flex min-h-[60vh] flex-col items-center justify-center gap-4  px-4 text-center text-white">
         <span className="text-5xl">🔐</span>
         <h1 className="font-condensed text-3xl font-bold text-white/80">Inicia sesión para entrar a la sala</h1>
         <p className="max-w-sm text-sm text-white/50">La sala del set es privada: solo tú y tu rival pueden verla.</p>
-        <DiscordLoginButton />
-      </main>
+        <LoginLink />
+      </main></AppShell>
     );
   }
 
   if (connFails >= 3 && !state) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0b0f14] px-4 text-center text-white">
+      <AppShell><main className="page hc-sala flex min-h-[60vh] flex-col items-center justify-center gap-4  px-4 text-center text-white">
         <span className="text-5xl">📡</span>
         <h1 className="font-condensed text-3xl font-bold text-white/80">No se pudo conectar con la sala</h1>
         <p className="text-sm text-white/50">Revisa tu conexión y vuelve a intentarlo.</p>
@@ -170,39 +170,39 @@ export default function SalaPage() {
             setConnFails(0);
             refresh();
           }}
-          className="rounded-xl bg-[#50d484] px-6 py-3 font-condensed text-lg font-bold text-black transition hover:bg-[#3fb56e]"
+          className="rounded-xl bg-hc-success px-6 py-3 font-condensed text-lg font-bold text-hc-ink transition hover:bg-hc-success/80"
         >
           Reintentar
         </button>
-      </main>
+      </main></AppShell>
     );
   }
 
   if (authed === null || !state) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0b0f14] text-white/60">
+      <AppShell><main className="page hc-sala flex min-h-[60vh] items-center justify-center  text-white/60">
         <span className="animate-pulse font-condensed text-xl">Cargando la sala…</span>
-      </main>
+      </main></AppShell>
     );
   }
 
   if (!match) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0b0f14] px-4 text-center text-white">
+      <AppShell><main className="page hc-sala flex min-h-[60vh] flex-col items-center justify-center gap-4  px-4 text-center text-white">
         <span className="text-5xl">☕</span>
         <h1 className="font-condensed text-3xl font-bold text-white/80">No tienes ningún set en curso</h1>
         <p className="max-w-sm text-sm text-white/50">
           Cuando aceptes una propuesta del matchmaking, tu sala aparece aquí: equipo, código de sala, chat y reporte, todo en la web.
         </p>
         <div className="flex gap-3">
-          <Link href="/matchmaking" className="rounded-xl bg-[#50d484] px-6 py-3 font-condensed text-lg font-bold text-black transition hover:bg-[#3fb56e]">
+          <Link href="/matchmaking" className="rounded-xl bg-hc-success px-6 py-3 font-condensed text-lg font-bold text-hc-ink transition hover:bg-hc-success/80">
             Ir al matchmaking
           </Link>
           <Link href="/" className="rounded-xl border border-white/15 px-6 py-3 font-condensed text-lg font-bold text-white/80 transition hover:bg-white/10">
             Ranking
           </Link>
         </div>
-      </main>
+      </main></AppShell>
     );
   }
 
@@ -210,44 +210,43 @@ export default function SalaPage() {
     const f = match.finished;
     if (f.status === 'CANCELLED') {
       return (
-        <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0b0f14] px-4 text-center text-white">
+        <AppShell><main className="page hc-sala flex min-h-[60vh] flex-col items-center justify-center gap-4  px-4 text-center text-white">
           <span className="text-5xl">🚫</span>
           <h1 className="font-condensed text-3xl font-bold text-white/80">Set cancelado</h1>
           <p className="text-sm text-white/50">Marcador al cancelar: {f.myScore} - {f.oppScore}</p>
-          <Link href="/matchmaking" className="rounded-xl bg-[#50d484] px-6 py-3 font-condensed text-lg font-bold text-black transition hover:bg-[#3fb56e]">
+          <Link href="/matchmaking" className="rounded-xl bg-hc-success px-6 py-3 font-condensed text-lg font-bold text-hc-ink transition hover:bg-hc-success/80">
             Volver al matchmaking
           </Link>
-        </main>
+        </main></AppShell>
       );
     }
     const won = !!f.won;
     const delta = f.delta ?? 0;
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0b0f14] px-4 text-center text-white">
+      <AppShell><main className="page hc-sala flex min-h-[60vh] flex-col items-center justify-center gap-4  px-4 text-center text-white">
         <span className="text-6xl">{won ? '🏆' : '💀'}</span>
-        <h1 className="font-condensed text-4xl font-black" style={{ color: won ? '#50d484' : '#f07070' }}>
+        <h1 className="font-condensed text-4xl font-black" style={{ color: won ? 'var(--success)' : 'var(--danger)' }}>
           {won ? '¡Victoria!' : 'Derrota'}
         </h1>
         <p className="font-condensed text-2xl font-bold text-white/80">{f.myScore} - {f.oppScore}</p>
         <p className="text-sm text-white/50">
-          <span className="font-bold" style={{ color: won ? '#50d484' : '#f07070' }}>
+          <span className="font-bold" style={{ color: won ? 'var(--success)' : 'var(--danger)' }}>
             {won ? '+' + delta : delta}
           </span>{' '}
           puntos · ahora tienes {f.myPoints ?? '—'} pts
         </p>
         {f.rank && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={rankIconUrl(f.rank.iconPath)} alt={f.rank.displayName} className="h-16 w-16" />
+                    <img src={rankIconUrl(f.rank.iconPath)} alt={f.rank.displayName} className="h-16 w-16" />
         )}
         <div className="mt-2 flex gap-3">
-          <Link href="/matchmaking" className="rounded-xl bg-[#50d484] px-6 py-3 font-condensed text-lg font-bold text-black transition hover:bg-[#3fb56e]">
+          <Link href="/matchmaking" className="rounded-xl bg-hc-success px-6 py-3 font-condensed text-lg font-bold text-hc-ink transition hover:bg-hc-success/80">
             Jugar otro set
           </Link>
           <Link href="/" className="rounded-xl border border-white/15 px-6 py-3 font-condensed text-lg font-bold text-white/80 transition hover:bg-white/10">
             Ver ranking
           </Link>
         </div>
-      </main>
+      </main></AppShell>
     );
   }
 
@@ -265,58 +264,58 @@ export default function SalaPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0b0f14] px-4 py-8 text-white">
+    <AppShell><main className="page hc-sala min-h-[60vh]  px-4 py-8 text-white">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <header className="flex items-center justify-between">
           <Link href="/matchmaking" className="text-sm text-white/40 transition hover:text-white/70">
             ← Volver
           </Link>
-          <p className="font-condensed text-xl font-bold tracking-wide text-[#d0ca53]">HOT COFFEE · SALA DEL SET</p>
+          <p className="font-condensed text-xl font-bold tracking-wide text-hc-cream">HOT COFFEE · SALA DEL SET</p>
           <span className="text-xs text-white/40">FT {match.ft}</span>
         </header>
 
         {connFails > 0 && (
-          <p className="text-center text-xs text-[#d0ca53]/80">Reconectando…</p>
+          <p className="text-center text-xs text-hc-cream/80">Reconectando…</p>
         )}
 
         {notice && (
-          <div className="rounded-xl border border-[#f07070]/40 bg-[#f07070]/10 px-4 py-3 text-sm text-[#f0a0a0]">{notice}</div>
+          <div className="rounded-xl border border-hc-danger/40 bg-hc-danger/10 px-4 py-3 text-sm text-hc-danger">{notice}</div>
         )}
 
         {/* Marcador VS */}
         <section className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-3">
-          <SideCard tag={match.me.tag} avatarUrl={match.me.avatarUrl} score={match.me.score} points={match.me.points} team={match.me.team} accent="#50d484" />
+          <SideCard tag={match.me.tag} avatarUrl={match.me.avatarUrl} score={match.me.score} points={match.me.points} team={match.me.team} accent="var(--success)" />
           <div className="flex flex-col items-center justify-center gap-1 px-2">
             <span className="font-condensed text-2xl font-black text-white/30">VS</span>
-            <span className="rounded bg-[#d0ca53]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#d0ca53]">
+            <span className="rounded bg-hc-cream/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-hc-cream">
               +{match.pointsAtStake} pts
             </span>
           </div>
-          <SideCard tag={match.opponent.tag} avatarUrl={match.opponent.avatarUrl} score={match.opponent.score} points={match.opponent.points} team={match.opponent.team} accent="#f07070" />
+          <SideCard tag={match.opponent.tag} avatarUrl={match.opponent.avatarUrl} score={match.opponent.score} points={match.opponent.points} team={match.opponent.team} accent="var(--danger)" />
         </section>
 
         {/* Reporte pendiente de confirmación */}
         {pending && (
-          <section className="rounded-2xl border border-[#d0ca53]/40 bg-[#d0ca53]/10 p-4">
+          <section className="rounded-2xl border border-hc-cream/40 bg-hc-cream/10 p-4">
             {pending.byMe ? (
-              <p className="text-sm text-[#e8e2a0]">
+              <p className="text-sm text-hc-cream">
                 {pending.kind === 'game' && 'Reporte de game enviado: esperando la confirmación de tu rival…'}
                 {pending.kind === 'final' && 'Resultado final propuesto (' + (pending.finalMine ?? 0) + ' - ' + (pending.finalOpp ?? 0) + '): esperando la confirmación de tu rival…'}
                 {pending.kind === 'correct' && 'Corrección del último game propuesta: esperando la confirmación de tu rival…'}
               </p>
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-[#e8e2a0]">
+                <p className="text-sm text-hc-cream">
                   {pending.kind === 'game' && pending.winnerSide === match.mySide && pending.proposerTag + ' reporta que GANASTE el game.'}
                   {pending.kind === 'game' && pending.winnerSide !== match.mySide && pending.proposerTag + ' reporta que ganó el game.'}
                   {pending.kind === 'final' && pending.proposerTag + ' propone el resultado final: ' + (pending.finalMine ?? 0) + ' - ' + (pending.finalOpp ?? 0) + '.'}
                   {pending.kind === 'correct' && pending.proposerTag + ' propone deshacer el último game.'}
                 </p>
                 <div className="flex gap-2">
-                  <button onClick={() => act(() => confirmReport())} className="rounded-lg bg-[#50d484] px-4 py-2 text-sm font-bold text-black transition hover:bg-[#3fb56e]">
+                  <button onClick={() => act(() => confirmReport())} className="rounded-lg bg-hc-success px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-success/80">
                     ✓ Confirmar
                   </button>
-                  <button onClick={() => act(() => rejectReport())} className="rounded-lg bg-[#f07070] px-4 py-2 text-sm font-bold text-black transition hover:bg-[#d95c5c]">
+                  <button onClick={() => act(() => rejectReport())} className="rounded-lg bg-hc-danger px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-danger/80">
                     ✗ Rechazar
                   </button>
                 </div>
@@ -327,20 +326,20 @@ export default function SalaPage() {
 
         {/* Propuesta de cierre anticipado */}
         {closeInfo && (
-          <section className="rounded-2xl border border-[#f07070]/40 bg-[#f07070]/10 p-4">
+          <section className="rounded-2xl border border-hc-danger/40 bg-hc-danger/10 p-4">
             {closeInfo.byMe ? (
-              <p className="text-sm text-[#f0a0a0]">
+              <p className="text-sm text-hc-danger">
                 Cierre propuesto: esperando a tu rival. Si no responde en 2 minutos,{' '}
                 {closeInfo.tie ? 'el set se cancela por empate.' : 'gana ' + closeInfo.leader + ' con los puntos completos.'}
               </p>
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-[#f0a0a0]">
+                <p className="text-sm text-hc-danger">
                   {closeInfo.requestedBy} propone cerrar el set:{' '}
                   {closeInfo.tie ? 'empate, se cancelaría sin puntos.' : 'ganaría ' + closeInfo.leader + '.'}
                 </p>
                 <div className="flex gap-2">
-                  <button onClick={() => act(() => respondClose(true))} className="rounded-lg bg-[#f07070] px-4 py-2 text-sm font-bold text-black transition hover:bg-[#d95c5c]">
+                  <button onClick={() => act(() => respondClose(true))} className="rounded-lg bg-hc-danger px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-danger/80">
                     Aceptar cierre
                   </button>
                   <button onClick={() => act(() => respondClose(false))} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:bg-white/10">
@@ -356,19 +355,19 @@ export default function SalaPage() {
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <h2 className="mb-3 font-condensed text-lg font-bold text-white/85">Tu equipo</h2>
           <div className="grid gap-3 sm:grid-cols-3">
-            <select value={char1} onChange={(e) => setChar1(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-[#50d484]/60 disabled:opacity-50">
+            <select value={char1} onChange={(e) => setChar1(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-hc-success/60 disabled:opacity-50">
               <option value="">Personaje 1</option>
               {roster && roster.characters.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            <select value={char2} onChange={(e) => setChar2(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-[#50d484]/60 disabled:opacity-50">
+            <select value={char2} onChange={(e) => setChar2(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-hc-success/60 disabled:opacity-50">
               <option value="">Personaje 2</option>
               {roster && roster.characters.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            <select value={fuse} onChange={(e) => setFuse(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-[#5865F2]/60 disabled:opacity-50">
+            <select value={fuse} onChange={(e) => setFuse(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-primary/60 disabled:opacity-50">
               <option value="">Fusión</option>
               {roster && roster.fuses.map((f) => (
                 <option key={f.id} value={f.id}>{f.name}</option>
@@ -379,7 +378,7 @@ export default function SalaPage() {
             <button
               onClick={() => act(() => saveTeam(char1, char2, fuse))}
               disabled={teamLocked || !char1 || !char2 || !fuse}
-              className="rounded-lg bg-[#50d484] px-4 py-2 text-sm font-bold text-black transition hover:bg-[#3fb56e] disabled:opacity-40"
+              className="rounded-lg bg-hc-success px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-success/80 disabled:opacity-40"
             >
               Guardar equipo
             </button>
@@ -395,10 +394,10 @@ export default function SalaPage() {
               value={roomDraft}
               onChange={(e) => setRoomDraft(e.target.value)}
               placeholder="Código de sala de 2XKO"
-              className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none placeholder:text-white/25 focus:border-[#d0ca53]/60"
+              className="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none placeholder:text-white/25 focus:border-hc-cream/60"
             />
             <div className="flex gap-2">
-              <button onClick={() => act(() => saveRoom(roomDraft.trim()))} className="rounded-lg bg-[#5865F2] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#4752c4]">
+              <button onClick={() => act(() => saveRoom(roomDraft.trim()))} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary/80">
                 Guardar
               </button>
               {match.roomCode && (
@@ -417,10 +416,10 @@ export default function SalaPage() {
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <h2 className="mb-3 font-condensed text-lg font-bold text-white/85">Reporte de games</h2>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => act(() => reportGame('me'))} disabled={!!pending} className="rounded-lg bg-[#50d484] px-4 py-2 text-sm font-bold text-black transition hover:bg-[#3fb56e] disabled:opacity-40">
+            <button onClick={() => act(() => reportGame('me'))} disabled={!!pending} className="rounded-lg bg-hc-success px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-success/80 disabled:opacity-40">
               🏆 Gané el game
             </button>
-            <button onClick={() => act(() => reportGame('opponent'))} disabled={!!pending} className="rounded-lg bg-[#f07070] px-4 py-2 text-sm font-bold text-black transition hover:bg-[#d95c5c] disabled:opacity-40">
+            <button onClick={() => act(() => reportGame('opponent'))} disabled={!!pending} className="rounded-lg bg-hc-danger px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-danger/80 disabled:opacity-40">
               💀 Ganó mi rival
             </button>
             <button onClick={() => act(() => correctLastGame())} disabled={!!pending || match.roundHistory.length === 0} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:bg-white/10 disabled:opacity-40">
@@ -429,7 +428,7 @@ export default function SalaPage() {
             <button onClick={openFinal} disabled={!!pending} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:bg-white/10 disabled:opacity-40">
               🏁 Resultado final
             </button>
-            <button onClick={() => act(() => closeSet())} className="rounded-lg border border-[#f07070]/40 px-4 py-2 text-sm font-bold text-[#f0a0a0] transition hover:bg-[#f07070]/10">
+            <button onClick={() => act(() => closeSet())} className="rounded-lg border border-hc-danger/40 px-4 py-2 text-sm font-bold text-hc-danger transition hover:bg-hc-danger/10">
               🏳️ Cerrar set
             </button>
           </div>
@@ -456,7 +455,7 @@ export default function SalaPage() {
                     setShowFinal(false);
                     act(() => reportFinal(finalMine, finalOpp));
                   }}
-                  className="rounded-lg bg-[#50d484] px-4 py-2 text-sm font-bold text-black transition hover:bg-[#3fb56e]"
+                  className="rounded-lg bg-hc-success px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-success/80"
                 >
                   Enviar
                 </button>
@@ -473,8 +472,8 @@ export default function SalaPage() {
             )}
             {state.messages.map((msg) => (
               <div key={msg.id} className={msg.mine ? 'self-end' : 'self-start'}>
-                <div className={'max-w-xs rounded-xl px-3 py-2 text-sm ' + (msg.mine ? 'bg-[#50d484]/20 text-[#c9f2d8]' : 'bg-white/10 text-white/85')}>
-                  {!msg.mine && <span className="mr-1 text-[10px] font-bold uppercase text-[#f0a0a0]">{msg.senderTag}</span>}
+                <div className={'max-w-xs rounded-xl px-3 py-2 text-sm ' + (msg.mine ? 'bg-hc-success/20 text-hc-success' : 'bg-white/10 text-white/85')}>
+                  {!msg.mine && <span className="mr-1 text-[10px] font-bold uppercase text-hc-danger">{msg.senderTag}</span>}
                   {msg.content}
                 </div>
               </div>
@@ -488,12 +487,12 @@ export default function SalaPage() {
               placeholder="Escribe un mensaje…"
               className="flex-1 rounded-lg bg-black/40 px-3 py-2 text-sm outline-none placeholder:text-white/25"
             />
-            <button type="submit" className="rounded-lg bg-[#5865F2] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#4752c4]">
+            <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary/80">
               Enviar
             </button>
           </form>
         </section>
       </div>
-    </main>
+    </main></AppShell>
   );
 }
