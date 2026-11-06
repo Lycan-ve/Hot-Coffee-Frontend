@@ -10,33 +10,41 @@
   font-size: 10px;
 }
 
-/* Enlace del footer al Discord de la comunidad. */
-.app-shell footer .footer-link {
-  color: var(--cream);
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(208, 202, 83, 0.45);
-  padding-bottom: 1px;
-}
-.app-shell footer .footer-link:hover {
-  color: var(--gold);
-  border-color: var(--gold);
-}
-
-/* Link "Únete al servidor" junto al botón de iniciar sesión. */
+/* Botón "Únete al Discord": acompaña al botón de iniciar sesión. */
 .hc-join {
-  color: var(--cream);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  color: #fff;
+  background: #5865f2;
+  border: 1px solid #4752c4;
+  font: 600 12px "Inter", sans-serif;
+  letter-spacing: 0.4px;
   text-decoration: none;
-  border-bottom: 1px solid rgba(208, 202, 83, 0.45);
   white-space: nowrap;
+  transition: 0.2s;
 }
 .hc-join:hover {
-  color: var(--gold);
-  border-color: var(--gold);
+  background: #4752c4;
+  border-color: #3c45a5;
+  color: #fff;
+}
+.hc-join img {
+  width: 14px;
+  height: 14px;
+  filter: brightness(0) invert(1);
+}
+
+/* En pantallas pequeñas, el botón queda solo con el ícono (como el login). */
+@media (max-width: 760px) {
+  .top-actions .hc-join {
+    font-size: 0;
+    gap: 0;
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
 }

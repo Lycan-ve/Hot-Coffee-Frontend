@@ -22,7 +22,7 @@ export function LoginLink({ label = "Iniciar sesión con Discord", className = "
         rel="noopener noreferrer"
         title="¿Aún no eres miembro? Únete al servidor Hot Coffee 2XKO"
       >
-        Únete al servidor
+        <img src={`${A}/3508d.svg`} alt="" /> Únete al Discord
       </a>
     </>
   );
