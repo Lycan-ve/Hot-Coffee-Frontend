@@ -20,7 +20,7 @@ export default function SiteHeader() {
           <img
             src="/logo-Hot.jpg"
             alt="Hot Coffee 2XKO"
-            className="h-10 w-10 shrink-0 rounded-lg border border-[#d0ca53]/40 bg-[#191008] object-contain"
+            className="h-10 w-10 shrink-0 border border-[#d0ca53]/70 bg-[#191008] object-contain"
           />
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="font-condensed text-lg font-bold uppercase tracking-[0.08em] text-white">
