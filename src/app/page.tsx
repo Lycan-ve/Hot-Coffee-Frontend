@@ -14,6 +14,7 @@ interface Player {
   character: string;
   avatarUrl?: string;
   profileUrl?: string;
+  discordId?: string;
   points: number;
 }
 
@@ -126,6 +127,39 @@ const FighterArt = memo(function FighterArt({ characters }: { characters: string
         );
       })}
     </div>
+  );
+});
+
+// Info del jugador (tag + personajes). Si tiene Discord vinculado, enlaza a
+// su perfil público en la web en vez de ser texto plano.
+const PlayerInfo = memo(function PlayerInfo({ player }: { player: Player }) {
+  const characters = parseCharacters(player.character);
+  const profileHref = player.discordId
+    ? '/perfil/' + encodeURIComponent(player.discordId)
+    : null;
+
+  const info = (
+    <div className="pr-player-info">
+      <span className="pr-name">
+        {player.sponsor && <span className="pr-sponsor">{player.sponsor} |</span>}
+        {player.gamerTag}
+      </span>
+      {characters.length > 0 && (
+        <span className="pr-fighter-tag">{characters.join(' + ')}</span>
+      )}
+    </div>
+  );
+
+  if (!profileHref) return info;
+
+  return (
+    <a
+      href={profileHref}
+      className="pr-player-link"
+      title={'Ver perfil de ' + player.gamerTag}
+    >
+      {info}
+    </a>
   );
 });
 
@@ -798,6 +832,17 @@ export default function HotCoffeeRanking() {
         @media (min-width: 768px) {
           .pr-fighter-tag { font-size: 0.78rem; }
         }
+
+        /* Enlace al perfil público del jugador (si tiene Discord vinculado) */
+        .pr-player-link {
+          text-decoration: none;
+          color: inherit;
+          min-width: 0;
+          flex: 1;
+          display: block;
+        }
+        .pr-player-link:hover .pr-name { color: #ffe787; }
+        .pr-player-link:hover .pr-fighter-tag { color: #f5f5f4; }
 
         .pr-right-group {
           display: flex;
@@ -1711,15 +1756,7 @@ export default function HotCoffeeRanking() {
                       <FighterArt characters={characters} />
 
                       <div className="pr-name-wrap">
-                        <div className="pr-player-info">
-                          <span className="pr-name">
-                            {player.sponsor && <span className="pr-sponsor">{player.sponsor} |</span>}
-                            {player.gamerTag}
-                          </span>
-                          {characters.length > 0 && (
-                            <span className="pr-fighter-tag">{characters.join(' + ')}</span>
-                          )}
-                        </div>
+                        <PlayerInfo player={player} />
 
                         <div className="pr-right-group">
                           <Avatar url={player.avatarUrl} alt={player.gamerTag} profileUrl={player.profileUrl} />
@@ -1765,15 +1802,7 @@ export default function HotCoffeeRanking() {
                   <FighterArt characters={characters} />
 
                   <div className="pr-name-wrap">
-                    <div className="pr-player-info">
-                      <span className="pr-name">
-                        {player.sponsor && <span className="pr-sponsor">{player.sponsor} |</span>}
-                        {player.gamerTag}
-                      </span>
-                      {characters.length > 0 && (
-                        <span className="pr-fighter-tag">{characters.join(' + ')}</span>
-                      )}
-                    </div>
+                    <PlayerInfo player={player} />
 
                     <div className="pr-right-group">
                       <Avatar url={player.avatarUrl} alt={player.gamerTag} profileUrl={player.profileUrl} />

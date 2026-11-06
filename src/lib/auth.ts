@@ -39,6 +39,7 @@ export interface ProfileFight {
   targetFT: number;
   opponentTag: string;
   opponentAvatar: string;
+  opponentDiscordId: string;
   playerTeam: ProfileTeam;
   opponentTeam: ProfileTeam;
 }
@@ -106,6 +107,23 @@ export async function fetchMe(): Promise<MeResponse | null> {
       clearToken();
       return null;
     }
+    return (await res.json()) as MeResponse;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Perfil público de cualquier jugador por su ID de Discord
+ * (GET /api/users/profile/{discordId}, sin autenticación).
+ */
+export async function fetchUserProfile(discordId: string): Promise<MeResponse | null> {
+  try {
+    const res = await fetch(
+      API_URL + '/api/users/profile/' + encodeURIComponent(discordId),
+      { cache: 'no-store' },
+    );
+    if (!res.ok) return null;
     return (await res.json()) as MeResponse;
   } catch {
     return null;
