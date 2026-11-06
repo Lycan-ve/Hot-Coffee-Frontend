@@ -1,12 +1,13 @@
 'use client';
 
 import Link from "next/link";
+import "../hotcoffee-ranking.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight, Crown, Download, Info, RefreshCw, Search, SlidersHorizontal, Swords, Users } from "lucide-react";
-import { API_URL, getToken } from "@/lib/auth";
-import { A, AppShell, SectionTitle } from "@/components/hc/shared";
+import { API_URL, fetchUserProfile, fuseIconUrl, getToken, type MeResponse } from "@/lib/auth";
+import { A, AppShell, RankBadge, SectionTitle } from "@/components/hc/shared";
 
 type RankPlayer = {
   id?: number | string;
@@ -84,13 +85,13 @@ type Row = {
   key: string;
   ranking: number;
   name: string;
-  sponsor?: string;
-  avatar?: string;
-  character?: string;
-  wins?: number;
-  losses?: number;
+  sponsor?: string | undefined;
+  avatar?: string | undefined;
+  character?: string | undefined;
+  wins?: number | undefined;
+  losses?: number | undefined;
   points: number;
-  profileId?: string;
+  profileId?: string | undefined;
 };
 
 export default function RankingPage() {
@@ -170,7 +171,17 @@ export default function RankingPage() {
   const pages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const current = Math.min(page, pages);
   const shown = filtered.slice((current - 1) * PER_PAGE, current * PER_PAGE);
-  const maxPoints = Math.max(1, ...rows.map((r) => r.points));
+  const profileQs = useQueries({
+    queries: (mode === "matchmaking" ? shown : []).map((r) => ({
+      queryKey: ["profile", r.profileId],
+      queryFn: () => fetchUserProfile(String(r.profileId)),
+      staleTime: 120_000,
+    })),
+  });
+  const profiles: Record<string, MeResponse | null | undefined> = {};
+  if (mode === "matchmaking") shown.forEach((r, i) => (profiles[r.key] = profileQs[i]?.data));
+  const mm = mode === "matchmaking";
+  const cols = mm ? 7 : 5;
   const leader = rows[0];
   const mmSets = useMemo(() => mmPlayers.reduce((n, p) => n + p.wins, 0), [mmPlayers]);
 
@@ -183,7 +194,7 @@ export default function RankingPage() {
     try {
       const token = getToken();
       const res = await fetch(`${API_URL}/api/sync`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json().catch(() => null);
       const message =
@@ -319,19 +330,21 @@ export default function RankingPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>POS.</th><th>JUGADOR</th><th>{mode === "torneos" ? "EQUIPO" : "RECORD"}</th><th className="accent">PUNTOS ↓</th><th className="r">PERFIL</th>
+                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}<th className="accent">PUNTOS ↓</th><th className="r">PERFIL</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading &&
                     Array.from({ length: 6 }, (_, i) => (
-                      <tr key={i}><td colSpan={5}><div className="rk-skeleton" /></td></tr>
+                      <tr key={i}><td colSpan={cols}><div className="rk-skeleton" /></td></tr>
                     ))}
                   {!loading && shown.length === 0 && (
-                    <tr><td colSpan={5} className="c">No hay jugadores con ese nombre.</td></tr>
+                    <tr><td colSpan={cols} className="c">No hay jugadores con ese nombre.</td></tr>
                   )}
                   {shown.map((r) => {
                     const top = r.ranking <= 3;
+                    const prof = profiles[r.key];
+                    const lastTeam = prof?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam;
                     return (
                       <tr key={r.key} className={r.ranking === 1 ? "first" : ""}>
                         <td className={`pos ${top ? "top" : ""}`}>{String(r.ranking).padStart(2, "0")}</td>
@@ -344,27 +357,65 @@ export default function RankingPage() {
                             )}
                             <div>
                               <strong>{r.name} {r.sponsor ? <em>#{r.sponsor}</em> : null}</strong>
+                              {mm && (
+                                <small className="rk-sub">
+                                  {lastTeam ? `${lastTeam.point.name} / ${lastTeam.assist.name}` : `${r.wins ?? 0}V — ${r.losses ?? 0}D`}
+                                </small>
+                              )}
                             </div>
                           </div>
                         </td>
+                        {mm && (
+                          <td>
+                            {prof?.rank ? (
+                              <div className="rk-rank">
+                                <RankBadge small rank={prof.rank} />
+                                <span style={{ color: prof.rank.color }}>{prof.rank.displayName}</span>
+                              </div>
+                            ) : <span className="dim">—</span>}
+                          </td>
+                        )}
                         <td>
-                          {mode === "torneos" ? (
-                            <Team value={r.character} />
+                          {mm ? (
+                            lastTeam ? (
+                              <div className="rk-team">
+                                {[lastTeam.point, lastTeam.assist].map((c) => (
+                                  <span key={c.id} title={c.name}>
+                                    <img src={`/fighters/${encodeURIComponent(c.id)}.png`} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
+                                    {c.name}
+                                  </span>
+                                ))}
+                                {lastTeam.fuse?.id && (
+                                  <span className="fuse" title={`Fuse: ${lastTeam.fuse.name}`}>
+                                    <img src={fuseIconUrl(lastTeam.fuse.id)} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
+                                    {lastTeam.fuse.name}
+                                  </span>
+                                )}
+                              </div>
+                            ) : <span className="dim">—</span>
                           ) : (
-                            <span>
-                              <b className="chg up">{r.wins ?? 0}V</b> · <b className="chg down">{r.losses ?? 0}D</b>
-                            </span>
+                            <Team value={r.character} />
                           )}
                         </td>
+                        {mm && (
+                          <td>
+                            {prof?.fights?.length ? (
+                              <div className="rk-sets">
+                                {prof.fights.slice(0, 5).map((f) => (
+                                  <b key={f.id} className={f.result === "WIN" ? "w" : "l"} title={`${f.scoreFor}-${f.scoreAgainst} vs ${f.opponentTag}`}>
+                                    {f.result === "WIN" ? "V" : "D"}
+                                  </b>
+                                ))}
+                              </div>
+                            ) : <span className="dim">—</span>}
+                          </td>
+                        )}
                         <td>
-                          <div className="pts-cell">
-                            <span className={`pts ${top ? "top" : ""}`}>{fmt(r.points)}</span>
-                            <i><b style={{ width: `${Math.max(6, Math.round((r.points / maxPoints) * 100))}%` }} /></i>
-                          </div>
+                          <span className={`pts ${top ? "top" : ""}`}>{fmt(r.points)}</span>
                         </td>
                         <td className="r">
                           {r.profileId ? (
-                            <Link href={`/perfil/${r.profileId}`} className="rk-link" aria-label={`Ver perfil de ${r.name}`}>
+                            <Link href={`/perfil/${String(r.profileId)}`} className="rk-link" aria-label={`Ver perfil de ${r.name}`}>
                               <ChevronRight />
                             </Link>
                           ) : null}
@@ -406,7 +457,7 @@ export default function RankingPage() {
                 </p>
                 {leader?.profileId ? (
                   <div className="meta">
-                    <Link href={`/perfil/${leader.profileId}`}>Ver ficha completa →</Link>
+                    <Link href={`/perfil/${String(leader.profileId)}`}>Ver ficha completa →</Link>
                   </div>
                 ) : null}
               </div>

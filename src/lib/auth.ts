@@ -50,7 +50,6 @@ export interface ProfileTournament {
   slug: string;
   /** Ícono del torneo en Start.gg (lo llena el backend; puede venir vacío). */
   image?: string;
-  image?: string;
   points: number;
   placement: number;
   placementLabel: string;
