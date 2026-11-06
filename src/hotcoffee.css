@@ -1437,3 +1437,18 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 .hc-actions { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(100%, 480px); }
 .hc-sala { padding-top: 28px; }
 .hc-sala section { background-color: var(--panel); }
+
+/* ---------- Banner de torneos procesados (series) ---------- */
+.rk-tourneys { padding: 16px 18px; }
+.rk-tourneys .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.rk-tourneys .head h3 { font: 600 19px "Barlow Condensed", sans-serif; letter-spacing: .5px; color: var(--cream); }
+.rk-tourneys .head svg { width: 15px; height: 15px; color: var(--gold); }
+.rk-tourneys-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }
+.rk-tourneys .chip { display: grid; gap: 5px; justify-items: center; padding: 12px 8px 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--hc-muted); text-align: center; transition: .2s; }
+.rk-tourneys .chip:hover { border-color: var(--orange); color: #fff; }
+.rk-tourneys .chip.on { border-color: var(--orange); box-shadow: inset 2px 0 var(--orange); background: rgba(180, 77, 29, .12); }
+.rk-tourneys .chip img { width: 54px; height: 54px; object-fit: contain; padding: 4px; background: var(--base); border: 1px solid var(--line); }
+.rk-tourneys .chip .badge-ini { width: 54px; height: 54px; display: grid; place-items: center; background: var(--base); color: var(--gold); font: 700 26px "Barlow Condensed", sans-serif; border: 1px solid var(--line); }
+.rk-tourneys .chip .nm { color: #fff; font-size: 10px; font-weight: 600; letter-spacing: .8px; }
+.rk-tourneys .chip.on .nm { color: var(--gold); }
+.rk-tourneys .chip small { color: var(--dim); font-size: 8px; letter-spacing: .8px; }
