@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight, Crown, Download, Info, RefreshCw, Search, SlidersHorizontal, Swords, Users } from "lucide-react";
@@ -38,15 +38,29 @@ async function fetchRanking(from: number, to: number): Promise<{ players: RankPl
   return { players: fallback, live: false };
 }
 
+async function fetchTournamentCount(): Promise<number> {
+  try {
+    const res = await fetch(`${API_URL}/api/tournaments/count`);
+    if (res.ok) {
+      const data = await res.json();
+      const n = Number(data?.count);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  } catch {
+    /* sin conexión: mantenemos el rango por defecto */
+  }
+  return DEFAULT_RANGE;
+}
+
 const PER_PAGE = 10;
-const RANGES = Array.from({ length: 10 }, (_, i) => i + 1);
+const DEFAULT_RANGE = 10;
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
 export default function RankingPage() {
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState(1);
-  const [to, setTo] = useState(10);
+  const [to, setTo] = useState(DEFAULT_RANGE);
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const boardRef = useRef<HTMLElement>(null);
@@ -55,6 +69,29 @@ export default function RankingPage() {
     queryFn: () => fetchRanking(from, to),
     staleTime: 60_000,
   });
+  const { data: fetchedCount } = useQuery({
+    queryKey: ["tournament-count"],
+    queryFn: fetchTournamentCount,
+    staleTime: 300_000,
+  });
+  const tournamentCount = fetchedCount ?? DEFAULT_RANGE;
+  const ranges = useMemo(() => Array.from({ length: tournamentCount }, (_, i) => i + 1), [tournamentCount]);
+
+  // Al conocer el total real de torneos, mostramos la temporada completa (una sola vez).
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (!fetchedCount || initialized.current) return;
+    initialized.current = true;
+    setTo(fetchedCount);
+    setFrom((f) => Math.min(f, fetchedCount));
+  }, [fetchedCount]);
+
+  // Si el total baja por debajo de lo seleccionado, acotamos los filtros.
+  useEffect(() => {
+    if (from > tournamentCount) setFrom(tournamentCount);
+    if (to > tournamentCount) setTo(tournamentCount);
+  }, [tournamentCount, from, to]);
+
   const players = data?.players ?? [];
   const filtered = players.filter((p) =>
     `${p.gamerTag} ${p.sponsor ?? ""}`.toLowerCase().includes(query.toLowerCase()),
@@ -175,13 +212,13 @@ export default function RankingPage() {
                 <label>
                   Desde
                   <select value={from} onChange={(e) => { const v = Number(e.target.value); setFrom(v); if (v > to) setTo(v); setPage(1); }}>
-                    {RANGES.map((n) => <option key={n} value={n}>{n}</option>)}
+                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
                   </select>
                 </label>
                 <label>
                   Hasta
                   <select value={to} onChange={(e) => { const v = Number(e.target.value); setTo(v); if (v < from) setFrom(v); setPage(1); }}>
-                    {RANGES.map((n) => <option key={n} value={n}>{n}</option>)}
+                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
                   </select>
                 </label>
               </div>
