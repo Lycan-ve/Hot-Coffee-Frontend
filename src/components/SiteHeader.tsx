@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
+import { ChevronDown } from 'lucide-react';
 import DiscordLoginButton from '@/components/DiscordLoginButton';
 
 const NAV_ITEMS: { href: string; label: string }[] = [
@@ -17,9 +19,12 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#1e1610]/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex min-w-0 items-center gap-3">
-          <img
+          <Image
             src="/logo-Hot.jpg"
             alt="Hot Coffee 2XKO"
+            width={44}
+            height={44}
+            sizes="44px"
             className="h-10 w-10 shrink-0 border border-[#d0ca53]/70 bg-[#191008] object-contain"
           />
           <span className="flex min-w-0 flex-col leading-tight">
@@ -32,7 +37,25 @@ export default function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1 overflow-x-auto" aria-label="Navegación principal">
+        <nav className="site-nav flex items-center gap-1" aria-label="Navegación principal">
+          <details className="games-menu">
+            <summary aria-label="Abrir menú de juegos">
+              JUEGOS <ChevronDown size={14} aria-hidden="true" />
+            </summary>
+            <div className="games-menu-panel">
+              <Link
+                href="/#juego"
+                aria-current={pathname === '/' ? 'location' : undefined}
+                onClick={(event) => {
+                  const menu = event.currentTarget.closest('details');
+                  if (menu) menu.open = false;
+                }}
+              >
+                <strong>2XKO</strong>
+                <span>JUEGO DESTACADO</span>
+              </Link>
+            </div>
+          </details>
           {NAV_ITEMS.map((item) => {
             const active =
               item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);

@@ -16,13 +16,19 @@ export default function DiscordLoginButton() {
     load();
   }, [load]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <span className="discord-auth-skeleton" role="status">
+        <span className="sr-only">Cargando sesión de Discord</span>
+      </span>
+    );
+  }
 
   if (!me) {
     return (
       <a
         href={loginUrl()}
-        className="inline-flex items-center gap-2 rounded border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/85 transition hover:border-white/30 hover:bg-white/10"
+        className="discord-login-cta inline-flex items-center gap-2 rounded border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/85 transition hover:border-white/30 hover:bg-white/10"
         title="Debes ser miembro del servidor Hot Coffee 2XKO"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
