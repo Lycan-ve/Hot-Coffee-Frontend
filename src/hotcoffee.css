@@ -1278,7 +1278,7 @@ footer strong {
 
 /* ---------- Ranking (Clasificación) ---------- */
 .brand { color: inherit; }
-.rk-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.rk-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; margin-top: 10px; }
 .rk-stat { display: flex; align-items: center; gap: 18px; min-height: 90px; padding: 0 24px; background: var(--panel); border: 1px solid var(--line); }
 .rk-stat > svg { width: 24px; height: 24px; color: var(--orange); }
 .rk-stat small { display: block; color: var(--hc-muted); font-size: 12px; letter-spacing: 1.5px; }
