@@ -94,6 +94,19 @@ type Row = {
   profileId?: string | undefined;
 };
 
+// Jugador destacado de la portada (columna derecha del ranking).
+// En TORNEOS es el campeón del último torneo; en MATCHMAKING, el #1.
+type Featured = {
+  name: string;
+  sponsor?: string | undefined;
+  avatar?: string | undefined;
+  character?: string | undefined;
+  wins?: number | undefined;
+  losses?: number | undefined;
+  points: number;
+  profileId?: string | undefined;
+};
+
 export default function RankingPage() {
   const [mode, setMode] = useState<"torneos" | "matchmaking">("torneos");
   const [query, setQuery] = useState("");
@@ -183,15 +196,37 @@ export default function RankingPage() {
   const mm = mode === "matchmaking";
   const cols = mm ? 7 : 5;
   const leader = rows[0];
-  const { data: leaderProf } = useQuery({
-    queryKey: ["profile", leader?.profileId],
-    queryFn: () => fetchUserProfile(String(leader?.profileId)),
-    enabled: mm && !!leader?.profileId,
+  // 🏆 Jugador destacado: en TORNEOS es el campeón del último torneo (el #1
+  // del ranking calculado solo con ese torneo); en MATCHMAKING es el #1 de
+  // la liga. Se calcula en la web, sin endpoint adicional.
+  const { data: lastTourney } = useQuery({
+    queryKey: ["last-tournament", tournamentCount],
+    queryFn: () => fetchRanking(tournamentCount, tournamentCount),
+    enabled: mode === "torneos" && tournamentCount > 0,
+    staleTime: 60_000,
+  });
+  const featured: Featured | undefined = useMemo(() => {
+    if (mode === "matchmaking") return rows[0];
+    const champ = lastTourney?.live ? lastTourney.players[0] : undefined;
+    if (!champ) return undefined;
+    return {
+      name: champ.gamerTag,
+      sponsor: champ.sponsor,
+      avatar: champ.avatarUrl,
+      character: champ.character,
+      points: champ.points,
+      profileId: champ.discordId || (champ.id != null ? String(champ.id) : ""),
+    };
+  }, [mode, rows, lastTourney]);
+  const { data: featuredProf } = useQuery({
+    queryKey: ["profile", featured?.profileId],
+    queryFn: () => fetchUserProfile(String(featured?.profileId)),
+    enabled: mm && !!featured?.profileId,
     staleTime: 120_000,
   });
-  const leaderChar = mm
-    ? leaderProf?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam?.point?.id
-    : leader?.character?.split(/[,/]/)[0]?.trim();
+  const featuredChar = mm
+    ? featuredProf?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam?.point?.id
+    : featured?.character?.split(/[,/]/)[0]?.trim();
   const mmSets = useMemo(() => mmPlayers.reduce((n, p) => n + p.wins, 0), [mmPlayers]);
 
   const switchMode = (m: "torneos" | "matchmaking") => {
@@ -453,8 +488,8 @@ export default function RankingPage() {
           <aside className="rk-side">
             <article className="rk-featured">
               <img
-                key={leaderChar ?? "default"}
-                src={leaderChar ? `/fighters/${encodeURIComponent(leaderChar)}.png` : `${A}/6237f.png`}
+                key={featuredChar ?? "default"}
+                src={featuredChar ? `/fighters/${encodeURIComponent(featuredChar)}.png` : `${A}/6237f.png`}
                 alt=""
                 onError={(e) => {
                   if (!e.currentTarget.src.endsWith("6237f.png")) e.currentTarget.src = `${A}/6237f.png`;
@@ -462,18 +497,19 @@ export default function RankingPage() {
               />
               <span className="tag"><Crown /> JUGADOR DESTACADO</span>
               <div className="info">
-                <small>#1 {mode === "torneos" ? "DE LA LIGA" : "DEL MATCHMAKING"}</small>
+                <small>{mode === "torneos" ? "CAMPEÓN DEL ÚLTIMO TORNEO" : "#1 DEL MATCHMAKING"}</small>
                 <div className="row">
-                  <h2>{leader?.name?.toUpperCase() ?? "—"}</h2>
-                  <strong>{leader ? fmt(leader.points) : "—"} <em>PTS</em></strong>
+                  <h2>{featured?.name?.toUpperCase() ?? "—"}</h2>
+                  <strong>{featured ? fmt(featured.points) : "—"} <em>PTS</em></strong>
                 </div>
                 <p>
-                  {[leader?.character, leader?.sponsor ? `#${leader.sponsor}` : ""].filter(Boolean).join(" · ") ||
-                    (mode === "matchmaking" && leader ? `${leader.wins ?? 0}V — ${leader.losses ?? 0}D en sets /ft` : "")}
+                  {[featured?.character, featured?.sponsor ? `#${featured.sponsor}` : ""].filter(Boolean).join(" · ") ||
+                    (mode === "matchmaking" && featured ? `${featured.wins ?? 0}V — ${featured.losses ?? 0}D en sets /ft` : "") ||
+                    (mode === "torneos" ? "Ganador del último torneo de la temporada" : "")}
                 </p>
-                {leader?.profileId ? (
+                {featured?.profileId ? (
                   <div className="meta">
-                    <Link href={`/perfil/${String(leader.profileId)}`}>Ver ficha completa →</Link>
+                    <Link href={`/perfil/${String(featured.profileId)}`}>Ver ficha completa →</Link>
                   </div>
                 ) : null}
               </div>
