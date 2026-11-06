@@ -19,6 +19,16 @@ type RankPlayer = {
   points: number;
 };
 
+type MmPlayer = {
+  discordId: string;
+  username: string;
+  avatarUrl?: string;
+  points: number;
+  wins: number;
+  losses: number;
+  ranking: number;
+};
+
 const fallback: RankPlayer[] = [
   { ranking: 1, gamerTag: "ÑEMBO", sponsor: "RZS", character: "Yasuo, Samira", points: 890 },
   { ranking: 2, gamerTag: "GAPPY", sponsor: "TKF", character: "Blitzcrank, Braum", points: 740 },
@@ -52,12 +62,39 @@ async function fetchTournamentCount(): Promise<number> {
   return DEFAULT_RANGE;
 }
 
+// Ranking de MATCHMAKING (/ft): lee matchmaking_players, independiente de torneos.
+async function fetchMatchmaking(): Promise<MmPlayer[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/rankings/matchmaking`);
+    const data = res.ok ? await res.json() : [];
+    if (Array.isArray(data)) return data as MmPlayer[];
+  } catch {
+    /* sin conexión */
+  }
+  return [];
+}
+
 const PER_PAGE = 10;
 const DEFAULT_RANGE = 10;
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
+// Fila unificada: sirve tanto para el ranking de torneos como el de matchmaking.
+type Row = {
+  key: string;
+  ranking: number;
+  name: string;
+  sponsor?: string;
+  avatar?: string;
+  character?: string;
+  wins?: number;
+  losses?: number;
+  points: number;
+  profileId?: string;
+};
+
 export default function RankingPage() {
+  const [mode, setMode] = useState<"torneos" | "matchmaking">("torneos");
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState(DEFAULT_RANGE);
@@ -73,6 +110,12 @@ export default function RankingPage() {
     queryKey: ["tournament-count"],
     queryFn: fetchTournamentCount,
     staleTime: 300_000,
+  });
+  const { data: mmData, isLoading: mmLoading } = useQuery({
+    queryKey: ["ranking-matchmaking"],
+    queryFn: fetchMatchmaking,
+    staleTime: 60_000,
+    enabled: mode === "matchmaking",
   });
   const tournamentCount = fetchedCount ?? DEFAULT_RANGE;
   const ranges = useMemo(() => Array.from({ length: tournamentCount }, (_, i) => i + 1), [tournamentCount]);
@@ -93,14 +136,48 @@ export default function RankingPage() {
   }, [tournamentCount, from, to]);
 
   const players = data?.players ?? [];
-  const filtered = players.filter((p) =>
-    `${p.gamerTag} ${p.sponsor ?? ""}`.toLowerCase().includes(query.toLowerCase()),
+  const mmPlayers = useMemo(() => mmData ?? [], [mmData]);
+  const loading = mode === "torneos" ? isLoading : mmLoading;
+
+  const rows: Row[] = useMemo(() => {
+    if (mode === "matchmaking") {
+      return mmPlayers.map((p) => ({
+        key: p.discordId,
+        ranking: p.ranking,
+        name: p.username,
+        avatar: p.avatarUrl,
+        wins: p.wins,
+        losses: p.losses,
+        points: p.points,
+        profileId: p.discordId,
+      }));
+    }
+    return players.map((p) => ({
+      key: `${p.ranking}-${p.gamerTag}`,
+      ranking: p.ranking,
+      name: p.gamerTag,
+      sponsor: p.sponsor,
+      avatar: p.avatarUrl,
+      character: p.character,
+      points: p.points,
+      profileId: p.discordId || (p.id != null ? String(p.id) : ""),
+    }));
+  }, [mode, players, mmPlayers]);
+
+  const filtered = rows.filter((r) =>
+    `${r.name} ${r.sponsor ?? ""}`.toLowerCase().includes(query.toLowerCase()),
   );
   const pages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const current = Math.min(page, pages);
   const shown = filtered.slice((current - 1) * PER_PAGE, current * PER_PAGE);
-  const maxPoints = Math.max(1, ...players.map((p) => p.points));
-  const leader = players[0];
+  const maxPoints = Math.max(1, ...rows.map((r) => r.points));
+  const leader = rows[0];
+  const mmSets = useMemo(() => mmPlayers.reduce((n, p) => n + p.wins, 0), [mmPlayers]);
+
+  const switchMode = (m: "torneos" | "matchmaking") => {
+    setMode(m);
+    setPage(1);
+  };
 
   const sync = async () => {
     try {
@@ -144,7 +221,7 @@ export default function RankingPage() {
           <div className="hero-copy">
             <SectionTitle
               eyebrow="TEMPORADA DE TORNEOS / 2026"
-              note={data && !data.live ? "Datos de respaldo" : undefined}
+              note={data && !data.live && mode === "torneos" ? "Datos de respaldo" : undefined}
               title="CLASIFICACIÓN DE JUGADORES"
               copy="El progreso competitivo de la comunidad, en un solo lugar."
             />
@@ -160,21 +237,25 @@ export default function RankingPage() {
             <Users />
             <div>
               <small>PARTICIPANTES</small>
-              <p><strong>{isLoading ? "—" : String(players.length).padStart(2, "0")}</strong> jugadores en la liga</p>
+              <p><strong>{loading ? "—" : String(rows.length).padStart(2, "0")}</strong> jugadores en la liga</p>
             </div>
           </div>
           <div className="rk-stat">
             <Swords />
             <div>
-              <small>TORNEOS CONTADOS</small>
-              <p><strong>{String(to - from + 1).padStart(2, "0")}</strong> torneos {from}—{to}</p>
+              <small>{mode === "torneos" ? "TORNEOS CONTADOS" : "SETS JUGADOS"}</small>
+              {mode === "torneos" ? (
+                <p><strong>{String(to - from + 1).padStart(2, "0")}</strong> torneos {from}—{to}</p>
+              ) : (
+                <p><strong>{String(mmSets).padStart(2, "0")}</strong> sets /ft confirmados</p>
+              )}
             </div>
           </div>
           <div className="rk-stat leader">
             <Crown />
             <div>
               <small>LÍDER ACTUAL</small>
-              <p><strong>{leader?.gamerTag ?? "—"}</strong> {leader ? `${fmt(leader.points)} puntos` : ""}</p>
+              <p><strong>{leader?.name ?? "—"}</strong> {leader ? `${fmt(leader.points)} puntos` : ""}</p>
             </div>
             <b>#1</b>
           </div>
@@ -183,8 +264,17 @@ export default function RankingPage() {
         <section className="rk-layout">
           <article className="panel rk-table" ref={boardRef}>
             <div className="rk-tabs">
-              <button className="on" type="button">RANKING GENERAL</button>
-              <span>ACUMULADO · TORNEOS {String(from).padStart(2, "0")}—{String(to).padStart(2, "0")}</span>
+              <button type="button" className={mode === "torneos" ? "on" : ""} onClick={() => switchMode("torneos")}>
+                RANKING TORNEOS
+              </button>
+              <button type="button" className={mode === "matchmaking" ? "on" : ""} onClick={() => switchMode("matchmaking")}>
+                RANKING MATCHMAKING
+              </button>
+              <span>
+                {mode === "torneos"
+                  ? `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
+                  : "SETS /FT · LIGA 2XKO"}
+              </span>
             </div>
             <div className="rk-tools">
               <label className="rk-search">
@@ -198,15 +288,17 @@ export default function RankingPage() {
                   placeholder="Buscar jugador o equipo"
                 />
               </label>
-              <button type="button" className={showFilters ? "on" : ""} onClick={() => setShowFilters((v) => !v)}>
-                <SlidersHorizontal /> Filtrar torneos
-              </button>
+              {mode === "torneos" && (
+                <button type="button" className={showFilters ? "on" : ""} onClick={() => setShowFilters((v) => !v)}>
+                  <SlidersHorizontal /> Filtrar torneos
+                </button>
+              )}
               <button type="button" onClick={sync} disabled={isFetching}>
                 <RefreshCw className={isFetching ? "spin" : ""} /> {isFetching ? "Sincronizando" : "Sincronizar"}
               </button>
               <button type="button" onClick={exportPng}><Download /> PNG</button>
             </div>
-            {showFilters && (
+            {showFilters && mode === "torneos" && (
               <div className="rk-filters">
                 <span>TORNEOS</span>
                 <label>
@@ -227,45 +319,52 @@ export default function RankingPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>POS.</th><th>JUGADOR</th><th>EQUIPO</th><th className="accent">PUNTOS ↓</th><th className="r">PERFIL</th>
+                    <th>POS.</th><th>JUGADOR</th><th>{mode === "torneos" ? "EQUIPO" : "RECORD"}</th><th className="accent">PUNTOS ↓</th><th className="r">PERFIL</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoading &&
+                  {loading &&
                     Array.from({ length: 6 }, (_, i) => (
                       <tr key={i}><td colSpan={5}><div className="rk-skeleton" /></td></tr>
                     ))}
-                  {!isLoading && shown.length === 0 && (
+                  {!loading && shown.length === 0 && (
                     <tr><td colSpan={5} className="c">No hay jugadores con ese nombre.</td></tr>
                   )}
-                  {shown.map((p) => {
-                    const top = p.ranking <= 3;
-                    const profileId = p.discordId || (p.id != null ? String(p.id) : "");
+                  {shown.map((r) => {
+                    const top = r.ranking <= 3;
                     return (
-                      <tr key={`${p.ranking}-${p.gamerTag}`} className={p.ranking === 1 ? "first" : ""}>
-                        <td className={`pos ${top ? "top" : ""}`}>{String(p.ranking).padStart(2, "0")}</td>
+                      <tr key={r.key} className={r.ranking === 1 ? "first" : ""}>
+                        <td className={`pos ${top ? "top" : ""}`}>{String(r.ranking).padStart(2, "0")}</td>
                         <td>
                           <div className="who">
-                            {p.avatarUrl ? (
-                              <img className="ini" src={p.avatarUrl} alt="" />
+                            {r.avatar ? (
+                              <img className="ini" src={r.avatar} alt="" />
                             ) : (
-                              <span className={`ini ${top ? "top" : ""}`}>{p.gamerTag[0]}</span>
+                              <span className={`ini ${top ? "top" : ""}`}>{r.name[0]}</span>
                             )}
                             <div>
-                              <strong>{p.gamerTag} {p.sponsor ? <em>#{p.sponsor}</em> : null}</strong>
+                              <strong>{r.name} {r.sponsor ? <em>#{r.sponsor}</em> : null}</strong>
                             </div>
                           </div>
                         </td>
-                        <td><Team value={p.character} /></td>
+                        <td>
+                          {mode === "torneos" ? (
+                            <Team value={r.character} />
+                          ) : (
+                            <span>
+                              <b className="chg up">{r.wins ?? 0}V</b> · <b className="chg down">{r.losses ?? 0}D</b>
+                            </span>
+                          )}
+                        </td>
                         <td>
                           <div className="pts-cell">
-                            <span className={`pts ${top ? "top" : ""}`}>{fmt(p.points)}</span>
-                            <i><b style={{ width: `${Math.max(6, Math.round((p.points / maxPoints) * 100))}%` }} /></i>
+                            <span className={`pts ${top ? "top" : ""}`}>{fmt(r.points)}</span>
+                            <i><b style={{ width: `${Math.max(6, Math.round((r.points / maxPoints) * 100))}%` }} /></i>
                           </div>
                         </td>
                         <td className="r">
-                          {profileId ? (
-                            <Link href={`/perfil/${profileId}`} className="rk-link" aria-label={`Ver perfil de ${p.gamerTag}`}>
+                          {r.profileId ? (
+                            <Link href={`/perfil/${r.profileId}`} className="rk-link" aria-label={`Ver perfil de ${r.name}`}>
                               <ChevronRight />
                             </Link>
                           ) : null}
@@ -296,15 +395,18 @@ export default function RankingPage() {
               <img src={`${A}/6237f.png`} alt="" />
               <span className="tag"><Crown /> JUGADOR DESTACADO</span>
               <div className="info">
-                <small>#1 DE LA LIGA</small>
+                <small>#1 {mode === "torneos" ? "DE LA LIGA" : "DEL MATCHMAKING"}</small>
                 <div className="row">
-                  <h2>{leader?.gamerTag?.toUpperCase() ?? "—"}</h2>
+                  <h2>{leader?.name?.toUpperCase() ?? "—"}</h2>
                   <strong>{leader ? fmt(leader.points) : "—"} <em>PTS</em></strong>
                 </div>
-                <p>{[leader?.character, leader?.sponsor ? `#${leader.sponsor}` : ""].filter(Boolean).join(" · ")}</p>
-                {leader?.discordId ? (
+                <p>
+                  {[leader?.character, leader?.sponsor ? `#${leader.sponsor}` : ""].filter(Boolean).join(" · ") ||
+                    (mode === "matchmaking" && leader ? `${leader.wins ?? 0}V — ${leader.losses ?? 0}D en sets /ft` : "")}
+                </p>
+                {leader?.profileId ? (
                   <div className="meta">
-                    <Link href={`/perfil/${leader.discordId}`}>Ver ficha completa →</Link>
+                    <Link href={`/perfil/${leader.profileId}`}>Ver ficha completa →</Link>
                   </div>
                 ) : null}
               </div>
