@@ -48,6 +48,7 @@ export interface ProfileTournament {
   eventId: number;
   name: string;
   slug: string;
+  image?: string;
   points: number;
   placement: number;
   placementLabel: string;

@@ -253,7 +253,13 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <span>{t.isWinner ? "★" : "◆"}</span>
+                  {t.image ? (
+                    <span className="hc-tournament-icon">
+                      <img src={t.image} alt="" loading="lazy" />
+                    </span>
+                  ) : (
+                    <span>{t.isWinner ? "★" : "◆"}</span>
+                  )}
                   <div>
                     <strong>{t.name}</strong>
                     <p>{t.placementLabel}</p>
