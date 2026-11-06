@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchMe, getToken, loginUrl, type MeResponse } from '@/lib/auth';
-import {
-  PlayerProfile,
+import PlayerProfile, {
   ProfileCanvas,
   ProfileLoading,
   ProfileNotice,

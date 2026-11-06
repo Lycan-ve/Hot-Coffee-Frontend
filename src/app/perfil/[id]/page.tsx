@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { fetchUserProfile, type MeResponse } from '@/lib/auth';
-import {
-  PlayerProfile,
+import PlayerProfile, {
   ProfileCanvas,
   ProfileLoading,
   ProfileNotice,
