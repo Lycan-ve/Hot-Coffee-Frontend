@@ -80,6 +80,24 @@ const DEFAULT_RANGE = 10;
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
+// Normaliza el nombre de un personaje para buscar su arte ("YASUO, ekko" -> "Yasuo").
+const normFighter = (raw?: string): string | undefined => {
+  const n = raw?.split(/[,/]/)[0]?.trim();
+  if (!n) return n;
+  return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
+};
+
+// Arte del jugador destacado: splash art de public/jugadores_destacados
+// (las extensiones están mezcladas: png/jpg/jpeg, se prueban en cadena),
+// luego el sprite del personaje y al final el artwork genérico.
+const featuredArtCandidates = (name: string) => [
+  `/jugadores_destacados/${encodeURIComponent(name)}.png`,
+  `/jugadores_destacados/${encodeURIComponent(name)}.jpg`,
+  `/jugadores_destacados/${encodeURIComponent(name)}.jpeg`,
+  `/fighters/${encodeURIComponent(name)}.png`,
+  `${A}/b5469.png`,
+];
+
 // Fila unificada: sirve tanto para el ranking de torneos como el de matchmaking.
 type Row = {
   key: string;
@@ -225,8 +243,15 @@ export default function RankingPage() {
     staleTime: 120_000,
   });
   const featuredChar = mm
-    ? featuredProf?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam?.point?.id
-    : featured?.character?.split(/[,/]/)[0]?.trim();
+    ? normFighter(featuredProf?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam?.point?.id)
+    : normFighter(featured?.character);
+  // Arte del destacado: candidatos en cadena (extensiones mixtas del arte).
+  const [artIdx, setArtIdx] = useState(0);
+  useEffect(() => {
+    setArtIdx(0);
+  }, [featuredChar]);
+  const artFallback = `${A}/b5469.png`;
+  const artSrc = featuredChar ? featuredArtCandidates(featuredChar)[artIdx] ?? artFallback : artFallback;
   const mmSets = useMemo(() => mmPlayers.reduce((n, p) => n + p.wins, 0), [mmPlayers]);
 
   const switchMode = (m: "torneos" | "matchmaking") => {
@@ -489,11 +514,9 @@ export default function RankingPage() {
             <article className="rk-featured">
               <img
                 key={featuredChar ?? "default"}
-                src={featuredChar ? `/fighters/${encodeURIComponent(featuredChar)}.png` : `${A}/6237f.png`}
-                alt=""
-                onError={(e) => {
-                  if (!e.currentTarget.src.endsWith("6237f.png")) e.currentTarget.src = `${A}/6237f.png`;
-                }}
+                src={artSrc}
+                alt={featuredChar ? `Arte de ${featuredChar}` : ""}
+                onError={() => setArtIdx((i) => Math.min(i + 1, 4))}
               />
               <span className="tag"><Crown /> JUGADOR DESTACADO</span>
               <div className="info">
