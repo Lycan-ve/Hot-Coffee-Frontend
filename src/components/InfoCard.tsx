@@ -1,0 +1,1 @@
+export default function InfoCard({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) { return <section className="info-card"><span className="eyebrow">{eyebrow}</span><h2>{title}</h2>{children}</section> }
