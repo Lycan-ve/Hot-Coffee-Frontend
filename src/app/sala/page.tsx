@@ -422,7 +422,7 @@ export default function SalaPage() {
             <button onClick={() => act(() => reportGame('opponent'))} disabled={!!pending} className="rounded-lg bg-hc-danger px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-danger/80 disabled:opacity-40">
               💀 Ganó mi rival
             </button>
-            <button onClick={() => act(() => correctLastGame())} disabled={!!pending || match.roundHistory.length === 0} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:bg-white/10 disabled:opacity-40">
+            <button onClick={() => act(() => correctLastGame())} disabled={!!pending || !(match.roundHistory?.length > 0)} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:bg-white/10 disabled:opacity-40">
               ↩️ Corregir último
             </button>
             <button onClick={openFinal} disabled={!!pending} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:bg-white/10 disabled:opacity-40">

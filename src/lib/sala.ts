@@ -58,7 +58,8 @@ export interface SalaMatch {
   mySide: 'p1' | 'p2';
   me: SalaPlayer;
   opponent: SalaPlayer;
-  roundHistory: number[];
+  // El backend antiguo puede enviar null si el set aún no tiene games.
+  roundHistory: number[] | null;
   pending: SalaPending | null;
   close: SalaClose | null;
   finished: SalaFinished | null;
