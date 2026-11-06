@@ -45,7 +45,7 @@ export default function SiteHeader() {
             <div className="games-menu-panel">
               <Link
                 href="/#juego"
-                aria-current={pathname === '/' ? 'location' : undefined}
+                aria-current={pathname === '/' ? 'page' : undefined}
                 onClick={(event) => {
                   const menu = event.currentTarget.closest('details');
                   if (menu) menu.open = false;

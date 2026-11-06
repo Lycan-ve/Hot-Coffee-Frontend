@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: "images.start.gg",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.discordapp.com",
+        pathname: "/**",
+      },
     ],
   },
   typescript: {
