@@ -30,6 +30,8 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState(10);
+  const [refresh, setRefresh] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -41,16 +43,27 @@ export default function Home() {
       })
       .catch(() => setPlayers(fallback))
       .finally(() => setLoading(false));
-  }, [from, to]);
+  }, [from, to, refresh]);
 
   const list = useMemo(() => (players.length ? players : fallback), [players]);
   const total = Math.max(1, Math.ceil(list.length / 10));
   const shown = list.slice((page - 1) * 10, page * 10);
   const podium = page === 1 ? shown.slice(0, 3) : [];
   const rows = page === 1 ? shown.slice(3) : shown;
+  const maxPoints = Math.max(...shown.map((p) => p.points), 1);
   const selectRange = (setter: (value: number) => void) => (value: number) => {
     setter(value);
     setPage(1);
+  };
+
+  const handleSync = () => {
+    setSyncing(true);
+    window.setTimeout(() => {
+      setSyncing(false);
+      setRefresh((value) => value + 1);
+      setToast('SINCRONIZACIÓN COMPLETADA · PUNTOS ACTUALIZADOS');
+      window.setTimeout(() => setToast(null), 3000);
+    }, 1200);
   };
 
   return (
@@ -67,7 +80,7 @@ export default function Home() {
             <div className="live-pill" aria-live="polite"><i /> {loading ? 'CARGANDO' : 'EN VIVO'}</div>
           </section>
 
-          <FiltersBar from={from} to={to} onFrom={selectRange(setFrom)} onTo={selectRange(setTo)} syncing={syncing} onSync={() => { setSyncing(true); window.setTimeout(() => setSyncing(false), 1200); }} />
+          <FiltersBar from={from} to={to} onFrom={selectRange(setFrom)} onTo={selectRange(setTo)} syncing={syncing} onSync={handleSync} />
 
           <section className="ranking-board" aria-labelledby="board-title">
             <div className="board-heading">
@@ -77,7 +90,7 @@ export default function Home() {
             <div className="podium-list">{podium.map((player) => <PodiumRow key={player.ranking} player={player} />)}</div>
             <div className="list-heading" aria-hidden="true"><span>POSICIÓN / JUGADOR</span><span>EQUIPO</span><span>PUNTOS</span></div>
             <div className="ranking-list">
-              {loading ? [1, 2, 3, 4].map((item) => <div key={item} className="skeleton-row" aria-label="Cargando jugador" />) : rows.length ? rows.map((player) => <RankingRow key={player.ranking} player={player} />) : <div className="empty-state">NO HAY JUGADORES EN ESTE RANGO.</div>}
+              {loading ? [1, 2, 3, 4].map((item) => <div key={item} className="skeleton-row" aria-label="Cargando jugador" />) : rows.length ? rows.map((player) => <RankingRow key={player.ranking} player={player} maxPoints={maxPoints} />) : <div className="empty-state">NO HAY JUGADORES EN ESTE RANGO.</div>}
             </div>
             <div className="board-footer"><span>10 POR PÁGINA</span><Pagination page={page} total={total} onChange={setPage} /></div>
           </section>
@@ -90,6 +103,7 @@ export default function Home() {
         </aside>
       </main>
       <footer><span>ORGANIZADO POR BANEADO SENSEI / DEV: LYCAN</span><b>HECHO EN COMUNIDAD · JUGADO CON CARÁCTER.</b><span>2XKO · HOT COFFEE</span></footer>
+      {toast && <div className="toast" role="status"><i />{toast}</div>}
     </div>
   );
 }
