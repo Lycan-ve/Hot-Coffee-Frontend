@@ -4,7 +4,7 @@
 .app-shell footer { font-size: 11px; }
 .app-shell footer strong { font-size: 10px; }
 
-/* Enlace exclusivo "On Render" del footer. */
+/* Enlace del footer al Discord de la comunidad. */
 .app-shell footer .footer-link {
   color: var(--cream);
   font-weight: 600;
@@ -15,6 +15,22 @@
   padding-bottom: 1px;
 }
 .app-shell footer .footer-link:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+/* Link "Únete al servidor" junto al botón de iniciar sesión. */
+.hc-join {
+  color: var(--cream);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(208, 202, 83, 0.45);
+  white-space: nowrap;
+}
+.hc-join:hover {
   color: var(--gold);
   border-color: var(--gold);
 }

@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          On Render
+          Únete al Discord
         </a>
       </footer>
     </div>
