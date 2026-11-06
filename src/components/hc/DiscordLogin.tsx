@@ -11,9 +11,20 @@ export function displayName(me: MeResponse) {
 
 export function LoginLink({ label = "Iniciar sesión con Discord", className = "discord" }: { label?: string; className?: string }) {
   return (
-    <a href={loginUrl()} className={className} title="Debes ser miembro del servidor Hot Coffee 2XKO">
-      <img src={`${A}/3508d.svg`} alt="" /> {label}
-    </a>
+    <>
+      <a href={loginUrl()} className={className} title="Inicia sesión con Discord. Debes ser miembro del servidor Hot Coffee 2XKO">
+        <img src={`${A}/3508d.svg`} alt="" /> {label}
+      </a>
+      <a
+        className="hc-join"
+        href="https://discord.gg/8NbFuJcSCH"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="¿Aún no eres miembro? Únete al servidor Hot Coffee 2XKO"
+      >
+        Únete al servidor
+      </a>
+    </>
   );
 }
 
