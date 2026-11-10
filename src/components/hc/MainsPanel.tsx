@@ -218,9 +218,10 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
               </button>
               {notice ? <span className={"team-note " + (ok ? "success" : "danger")}>{notice}</span> : null}
             </div>
-          </div>,
-          document.body,
-        )
+          </div>
+        </div>,
+        document.body,
+      )
         : null}
     </article>
   );
