@@ -1700,7 +1700,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   align-items: center;
   gap: 8px;
   color: var(--blue);
-  font: 600 20px "Inter";
+  font: 600 20px "Barlow Condensed";
   letter-spacing: 1.4px;
 }
 .team-card .panel-heading {
