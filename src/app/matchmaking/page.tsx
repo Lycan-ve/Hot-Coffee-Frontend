@@ -132,11 +132,9 @@ export default function MatchmakingPage() {
                   </div>
                   <div>
                     <small>RÉCORD</small>
-                    <strong className="success">
-                      {me.stats.wins}W                       
-                      <div className="stat-item">
-                        {me.stats.losses}L
-                      </div>
+                    <strong>
+                      <span className="success">{me.stats.wins}W</span>{" "}
+                      <span className="danger">{me.stats.losses}L</span>
                     </strong>
                   </div>
                 </div>
