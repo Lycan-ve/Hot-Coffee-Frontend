@@ -60,8 +60,10 @@ export function DiscordLogin() {
           // (revocar token, cerrar sesión) y no un parpadeo instantáneo.
           setTimeout(() => {
             clearToken();
-            setMe(null);
-            setLoggingOut(false);
+            // Recarga completa hacia la página principal: limpia todo el estado
+            // del cliente (perfil, paneles, cola) y aterriza en la home de
+            // invitado, como un cierre de sesión de verdad.
+            window.location.href = "/";
           }, 900);
         }}
       >

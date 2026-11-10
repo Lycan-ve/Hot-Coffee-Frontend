@@ -1634,6 +1634,10 @@ a.discord, a.search-button, a.secondary-button { text-decoration: none; display:
 .hc-user span { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hc-user button { color: var(--dim); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
 .hc-user button:hover { color: #fff; }
+.hc-user button.busy {
+  color: var(--gold);
+  animation: hc-pulse 1s infinite;
+}
 .hc-notice { max-width: 640px; margin: 40px auto; padding: 40px; text-align: center; display: grid; gap: 14px; justify-items: center; }
 .hc-notice h2 { font: 700 40px/1 "Barlow Condensed", sans-serif; }
 .hc-notice p { color: var(--hc-muted); font-size: 15px; }
