@@ -170,7 +170,7 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
               </button>
             </div>
             <div className="team-modal-body">
-              <span>LA SIGUIENTE SELECCIÓN REEMPLAZA AL POINT</span>
+              <span>LUCHADORES · LA SIGUIENTE SELECCIÓN REEMPLAZA AL POINT</span>
               <div className="fighter-grid">
                 {(roster?.characters ?? []).map((fighter) => (
                   <button
@@ -185,19 +185,22 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
                   </button>
                 ))}
               </div>
+              <span className="fuse-label">FUSIÓN</span>
+              <div className="fuse-grid">
+                {(roster?.fuses ?? []).map((f) => (
+                  <button
+                    className={"fuse-tile" + (fuse === f.id ? " selected" : "")}
+                    key={f.id}
+                    onClick={() => setFuse(f.id)}
+                    type="button"
+                  >
+                    <img alt="" src={fuseIconUrl(f.id)} />
+                    <span>{f.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="team-modal-foot">
-              <label className="fuse-select">
-                FUSIÓN
-                <select onChange={(event) => setFuse(event.target.value)} value={fuse}>
-                  <option value="">—</option>
-                  {(roster?.fuses ?? []).map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
               <button
                 className="team-save"
                 disabled={saving || !char1 || !char2 || !fuse}
