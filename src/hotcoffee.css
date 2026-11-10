@@ -1735,8 +1735,6 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   min-height: 314px;
   padding: 25px;
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
-  gap: 24px;
 }
 .fighter-stack {
   display: flex;
@@ -1783,12 +1781,13 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   text-transform: uppercase;
 }
 .synergy {
-  width: 54px;
+  width: 80px;
+  height: 110px;
   position: absolute;
   top: 50%;
   right: 50%;
   z-index: 2;
-  padding: 8px 5px;
+  padding: 10px 10px;
   text-align: center;
   color: var(--gold);
   border: 1px solid rgba(243, 207, 99, 0.35);
@@ -1797,10 +1796,9 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   box-shadow: 0 8px 25px #080504;
 }
 .synergy img {
-  width: 23px;
-  height: 23px;
+  width: 50px;
+  height: 50px;
   margin: 0 auto 3px;
-  display: block;
   object-fit: contain;
 }
 .synergy span,
@@ -1809,11 +1807,11 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 }
 .synergy span {
   color: #83776f;
-  font: 600 5px "Inter";
+  font: 600 10px "Inter";
   letter-spacing: 0.7px;
 }
 .synergy strong {
-  font: 700 16px "Barlow Condensed";
+  font: 700 15px "Barlow Condensed";
 }
 .team-summary {
   align-self: center;

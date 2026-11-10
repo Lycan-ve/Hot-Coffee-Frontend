@@ -127,21 +127,6 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
             <strong>{fuseChar ? "ON" : "—"}</strong>
           </div>
         </div>
-        {/* <div className="team-summary">
-          <span>FUSIÓN SELECCIONADA</span>
-          <strong>{fuseChar?.name ?? "Sin configurar"}</strong>
-          <p>
-            {complete
-              ? "Equipo sincronizado con el perfil y utilizado como selección rápida para tus próximos sets."
-              : own
-                ? "Pulsa EDITAR EQUIPO para elegir tus dos fighters y su fusión."
-                : "Este jugador todavía no configuró su equipo principal."}
-          </p>
-          <div className="traits">
-            <span>{point?.name ?? "POINT"}</span>
-            <span>{assist?.name ?? "ASSIST"}</span>
-          </div>
-        </div> */}
       </div>
 
       {own && editing
