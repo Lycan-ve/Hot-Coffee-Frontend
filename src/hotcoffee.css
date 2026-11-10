@@ -1,4 +1,4 @@
-:root {
+successfully downloaded text file (SHA: 93c5864deda5117a178f89ed9adce5b20f9e05a5):root {
   color: #fff;
   background: #18100b;
   font-family: "Inter", sans-serif;
@@ -746,9 +746,14 @@
 
 .bottom-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  /* Mismas columnas que .profile-grid: TORNEOS queda alineado con SESIÓN
+     ACTIVA y MATCHMAKING con EQUIPO PRINCIPAL (sin escalones). */
+  grid-template-columns: minmax(340px, 1.55fr) minmax(460px, 0.95fr) minmax(240px, 0.68fr);
   gap: 12px;
   margin-top: 12px;
+}
+.bottom-grid > .zone-matchmaking {
+  grid-column: 2 / -1;
 }
 .history .panel-heading > div span {
   display: block;
@@ -1243,7 +1248,8 @@ footer strong {
   .top-actions > span {
     display: none;
   }
-  .profile-grid {
+  .profile-grid,
+  .bottom-grid {
     grid-template-columns: 1fr 1fr;
   }
   .duo-card {
@@ -1317,6 +1323,9 @@ footer strong {
   .bottom-grid,
   .queue-layout {
     grid-template-columns: 1fr;
+  }
+  .bottom-grid > .zone-matchmaking {
+    grid-column: auto;
   }
   .duo-card {
     grid-column: auto;
