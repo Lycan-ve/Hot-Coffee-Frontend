@@ -214,7 +214,6 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   <strong>RANGO MÁXIMO ALCANZADO</strong>
                 )}
               </p>
-              <p className="identity-tag">@{me.user.username}</p>
             </div>
             <div className="identity-sep" />
             <div className="stats-col">

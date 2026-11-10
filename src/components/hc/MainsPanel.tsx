@@ -127,7 +127,7 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
             <strong>{fuseChar ? "ON" : "—"}</strong>
           </div>
         </div>
-        <div className="team-summary">
+        {/* <div className="team-summary">
           <span>FUSIÓN SELECCIONADA</span>
           <strong>{fuseChar?.name ?? "Sin configurar"}</strong>
           <p>
@@ -141,7 +141,7 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
             <span>{point?.name ?? "POINT"}</span>
             <span>{assist?.name ?? "ASSIST"}</span>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {own && editing

@@ -420,11 +420,10 @@
   letter-spacing: 1.6px;
 }
 .player-name {
-  margin: 6px 0 0;
   max-width: 100%;
   overflow: hidden;
   color: #fff;
-  font: 700 38px/1 "Barlow Condensed";
+  font: 700 40px/1.25 "Barlow Condensed";
   letter-spacing: 1px;
   white-space: nowrap;
   text-overflow: ellipsis;
