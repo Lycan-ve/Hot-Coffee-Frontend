@@ -61,13 +61,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function SectionTitle({ eyebrow, title, copy, note }: { eyebrow: string; title: string; copy: string; note?: string | undefined }) {
+export function SectionTitle({ eyebrow, title, accent, copy, note }: { eyebrow: string; title: string; accent?: string; copy: string; note?: string | undefined }) {
   return (
     <div className="section-title">
       <div className="eyebrow">
         <i /> {eyebrow} {note ? <span>— {note}</span> : null}
       </div>
-      <h1>{title}</h1>
+      <h1>
+        {title} {accent ? <em>{accent}</em> : null}
+      </h1>
       <p>{copy}</p>
     </div>
   );
