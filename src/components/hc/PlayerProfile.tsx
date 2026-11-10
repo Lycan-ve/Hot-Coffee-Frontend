@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
-import { fuseIconUrl, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
+import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
-import { RankBadge, SectionTitle, Stat } from "./shared";
+import { SectionTitle, Stat } from "./shared";
 import { MainsPanel } from "./MainsPanel";
 
 const fmtDate = (iso: string) => {
@@ -137,7 +137,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
         <div className="hero-copy">
           <SectionTitle
             eyebrow="IDENTIDAD COMPETITIVA / 2026"
-            title={own ? "MI PERFIL" : "PERFIL DE JUGADOR"}
+            title={own ? "BUENAS, " + name.toUpperCase() + "." : "PERFIL DE " + name.toUpperCase()}
             copy={own ? "Tu trayectoria, tu rango y cada pelea que te trajo hasta aquí." : `La trayectoria competitiva de ${name}.`}
           />
         </div>
@@ -151,54 +151,79 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
         <article className="player-card cut-panel">
           <div className="player-backdrop" />
           <div className="player-card-top">
-            {own ? (
-              <span className="online">
-                <i /> CONECTADO
-              </span>
-            ) : (
-              <Link href="/" className="icon-button">
-                ← RANKING
-              </Link>
-            )}
+            <span className="online">
+              <i /> {own ? "SESIÓN ACTIVA" : "PERFIL PÚBLICO"}
+            </span>
+            <div className="card-top-right">
+              {!own ? (
+                <Link href="/" className="icon-button">
+                  ← RANKING
+                </Link>
+              ) : null}
+              <span className="live-badge">LIVE</span>
+            </div>
           </div>
           <div className="player-identity" style={{ "--rank-accent": rank.color } as CSSProperties}>
-            <RankBadge rank={rank} />
-            <h2 className="identity-name">{name.toUpperCase()}</h2>
-            <span className="identity-rank">{rank.displayName.toUpperCase()}</span>
-            <p className="identity-tag">
-              @{me.user.username}
-              {stats.rankingPosition > 0 ? " · #" + stats.rankingPosition + " DE LA LIGA" : ""}
-            </p>
-            <span className="identity-sep" />
-            <strong className="identity-lp">
-              {rank.isRp ? String(rank.rp) + " RP" : String(rank.lp) + " LP"}
-            </strong>
-            <div className="identity-wl">
-              <div>
-                <b>{stats.wins}</b>
-                <span>W</span>
-              </div>
-              <div>
-                <b>{stats.losses}</b>
-                <span>L</span>
-              </div>
+            <div className="rank-emblem" aria-label={"Rango " + rank.displayName}>
+              <img
+                alt=""
+                src={rankIconUrl(rank.iconPath)}
+                onError={(event) => {
+                  const fb = rankIconFallbackUrl(rank.iconPath);
+                  if (event.currentTarget.src !== fb) event.currentTarget.src = fb;
+                }}
+              />
             </div>
-            <span className="identity-wr">{games ? "WR " + winRate + "%" : "WR —"}</span>
-            {streak > 0 ? (
-              <span className={"identity-streak " + (streakWin ? "win" : "loss")}>
-                {(streakWin ? "🔥 " : "💀 ") + streak + (streakWin ? " WIN STREAK" : " LOSS STREAK")}
-              </span>
-            ) : null}
-            <div className="meter">
-              <span style={{ width: String(progress) + "%" }} />
+            <div className="rank-copy">
+              <span>RANGO ACTUAL</span>
+              <h2>{rank.displayName.toUpperCase()}</h2>
+              <div className="league-points">
+                <strong>{rank.isRp ? rank.rp : rank.lp}</strong> {rank.isRp ? "RP" : "LP"}
+                {stats.rankingPosition > 0 && (
+                  <>
+                    <i /> #{String(stats.rankingPosition).padStart(2, "0")}
+                  </>
+                )}
+              </div>
+              <div className="progress-head">
+                <small>PROGRESO DE DIVISIÓN</small>
+                <b>{progress}%</b>
+              </div>
+              <div className="progress-bar">
+                <span style={{ width: String(progress) + "%" }} />
+              </div>
+              <p className="rank-next">
+                {rank.next ? (
+                  <>
+                    FALTAN{" "}
+                    <strong>
+                      {rank.lpToNext} {rank.isRp ? "RP" : "LP"}
+                    </strong>{" "}
+                    PARA {rank.next.toUpperCase()}
+                  </>
+                ) : (
+                  <strong>RANGO MÁXIMO ALCANZADO</strong>
+                )}
+              </p>
+              <p className="identity-tag">@{me.user.username}</p>
             </div>
-            <small className="meter-note">
-              {rank.isRp
-                ? rank.next
-                  ? "FALTAN " + rank.lpToNext + " RP PARA " + rank.next.toUpperCase()
-                  : "RANGO MÁXIMO"
-                : "FALTAN " + rank.lpToNext + " LP PARA " + rank.next.toUpperCase()}
-            </small>
+          </div>
+          <div className="rank-stats">
+            <div>
+              <span>VICTORIAS</span>
+              <strong>{String(stats.wins).padStart(2, "0")}</strong>
+              <small>sets confirmados</small>
+            </div>
+            <div>
+              <span>DERROTAS</span>
+              <strong>{String(stats.losses).padStart(2, "0")}</strong>
+              <small>{games} sets jugados</small>
+            </div>
+            <div>
+              <span>WIN RATE</span>
+              <strong className="gold">{winRate}%</strong>
+              <small>rendimiento total</small>
+            </div>
           </div>
         </article>
 
