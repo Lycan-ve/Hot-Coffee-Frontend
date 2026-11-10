@@ -1807,14 +1807,74 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   letter-spacing: 0.7px;
   text-transform: uppercase;
 }
-.fighter-picker {
-  padding: 14px 18px 18px;
-  position: absolute;
-  inset: 64px 0 0;
-  z-index: 5;
-  background: rgba(18, 12, 9, 0.97);
-  backdrop-filter: blur(12px);
+.team-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(8, 5, 4, 0.82);
+  backdrop-filter: blur(6px);
+  animation: hc-fade 160ms ease-out;
+}
+@keyframes hc-fade {
+  from {
+    opacity: 0;
+  }
+}
+.team-modal-panel {
+  width: min(860px, 100%);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  background: #120c09;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
   animation: hc-reveal 180ms ease-out;
+}
+.team-modal-head {
+  min-height: 64px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.team-modal .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cream);
+  font: 600 11px "Inter";
+  letter-spacing: 1.4px;
+}
+.team-modal-head h3 {
+  margin-top: 3px;
+  font: 700 22px/1 "Barlow Condensed";
+  letter-spacing: 0.5px;
+}
+.team-modal-close {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: var(--hc-muted);
+  border: 1px solid var(--line);
+  background: transparent;
+  font: 700 12px "Inter";
+  transition: 180ms ease;
+}
+.team-modal-close:hover {
+  color: #fff;
+  border-color: var(--orange);
+}
+.team-modal-body {
+  min-height: 0;
+  padding: 14px 18px 18px;
+  display: flex;
+  flex-direction: column;
 }
 @keyframes hc-reveal {
   from {
@@ -1822,12 +1882,12 @@ img.mini-avatar, img.avatar { object-fit: cover; }
     transform: translateY(-5px);
   }
 }
-.fighter-picker > span {
+.team-modal-body > span {
   color: var(--gold);
   font: 700 7px "Inter";
   letter-spacing: 1.4px;
 }
-.fighter-picker > div {
+.fighter-grid {
   height: calc(100% - 69px);
   margin-top: 12px;
   display: grid;
@@ -1838,7 +1898,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   scrollbar-color: var(--orange) transparent;
   scrollbar-width: thin;
 }
-.fighter-picker button {
+.fighter-grid button {
   min-width: 0;
   overflow: hidden;
   position: relative;
@@ -1846,11 +1906,11 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   border: 1px solid var(--line);
   background: #0d0907;
 }
-.fighter-picker button.selected {
+.fighter-grid button.selected {
   border-color: var(--gold);
   box-shadow: inset 0 0 0 1px var(--gold);
 }
-.fighter-picker button.selected::after {
+.fighter-grid button.selected::after {
   width: 18px;
   height: 18px;
   display: grid;
@@ -1863,40 +1923,41 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   background: var(--gold);
   font: 800 10px "Inter";
 }
-.fighter-picker button::before {
+.fighter-grid button::before {
   position: absolute;
   inset: 40% 0 0;
   z-index: 1;
   content: "";
   background: linear-gradient(transparent, #080504);
 }
-.fighter-picker img {
+.fighter-grid img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: top;
   opacity: 0.72;
 }
-.fighter-picker strong,
-.fighter-picker small {
+.fighter-grid strong,
+.fighter-grid small {
   position: absolute;
   bottom: 25px;
   left: 10px;
   z-index: 2;
   font: 700 20px "Barlow Condensed";
 }
-.fighter-picker small {
+.fighter-grid small {
   bottom: 12px;
   color: var(--gold);
   font: 700 6px "Inter";
   letter-spacing: 1px;
   text-transform: uppercase;
 }
-.fuse-row {
+.team-modal-foot {
+  padding: 14px 18px 18px;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 9px;
+  border-top: 1px solid var(--line);
 }
 .fuse-select {
   height: 34px;
@@ -1916,6 +1977,24 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   outline: none;
   background: #211711;
   font-size: 9px;
+}
+.team-save {
+  margin-left: auto;
+  height: 32px;
+  padding: 0 16px;
+  color: #1c1209;
+  border: none;
+  background: var(--gold);
+  font: 800 8px "Inter";
+  letter-spacing: 1px;
+  transition: 180ms ease;
+}
+.team-save:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.team-save:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 .team-cancel {
   color: var(--hc-muted);
@@ -1937,10 +2016,17 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   .fighter-stack {
     min-height: 280px;
   }
-  .fighter-picker > div {
+  .fighter-grid {
+    grid-auto-rows: 104px;
     grid-template-columns: 1fr 1fr;
   }
-  .fighter-picker strong {
+  .fighter-grid strong {
     font-size: 16px;
+  }
+  .team-modal {
+    padding: 14px;
+  }
+  .team-modal-foot {
+    flex-wrap: wrap;
   }
 }

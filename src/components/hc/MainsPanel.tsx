@@ -12,7 +12,8 @@ type MainChar = { id: string; name: string };
  * MainsPanel: tarjeta EQUIPO PRINCIPAL con el diseño Figma
  * (fighter cards grandes con POINT/ASSIST, badge de fusión entre ambas y
  * resumen del equipo a la derecha).
- * - Perfil propio: botón EDITAR EQUIPO → picker de fighters + fuse.
+ * - Perfil propio: botón EDITAR EQUIPO → modal con la grilla de fighters
+ *   y la selección de fuse.
  * - Perfil ajeno: vista de solo lectura del equipo configurado.
  */
 export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
@@ -56,6 +57,12 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
     setFuse(saved?.fuse?.id ?? "");
   };
 
+  const cancelEdit = () => {
+    resetToSaved();
+    setNotice(null);
+    setEditing(false);
+  };
+
   const save = async () => {
     if (!char1 || !char2 || !fuse || saving) return;
     setSaving(true);
@@ -72,6 +79,20 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
     setEditing(false);
   };
 
+  useEffect(() => {
+    if (!editing) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !saving) cancelEdit();
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, saving]);
+
   return (
     <article className={"panel team-card" + (editing ? " editing" : "")}>
       <div className="panel-heading">
@@ -84,20 +105,9 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
           </h3>
         </div>
         {own ? (
-          editing ? (
-            <button
-              className="active"
-              disabled={saving || !char1 || !char2 || !fuse}
-              onClick={save}
-              type="button"
-            >
-              {saving ? "GUARDANDO..." : "GUARDAR EQUIPO"}
-            </button>
-          ) : (
-            <button onClick={() => setEditing(true)} type="button">
-              EDITAR EQUIPO
-            </button>
-          )
+          <button onClick={() => setEditing(true)} type="button">
+            EDITAR EQUIPO
+          </button>
         ) : null}
       </div>
 
@@ -134,47 +144,73 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
       </div>
 
       {own && editing ? (
-        <div className="fighter-picker">
-          <span>ELIGE 2 LUCHADORES · LA SIGUIENTE SELECCIÓN REEMPLAZA AL POINT</span>
-          <div>
-            {(roster?.characters ?? []).map((fighter) => (
+        <div
+          aria-label="Editar equipo principal"
+          aria-modal="true"
+          className="team-modal"
+          onClick={() => {
+            if (!saving) cancelEdit();
+          }}
+          role="dialog"
+        >
+          <div className="team-modal-panel" onClick={(event) => event.stopPropagation()}>
+            <div className="team-modal-head">
+              <div>
+                <span className="eyebrow">EDITAR EQUIPO</span>
+                <h3>ELIGE TU DÚO Y SU FUSIÓN</h3>
+              </div>
               <button
-                className={char1 === fighter.id || char2 === fighter.id ? "selected" : ""}
-                key={fighter.id}
-                onClick={() => changeCharacter(fighter.id)}
+                aria-label="Cerrar"
+                className="team-modal-close"
+                disabled={saving}
+                onClick={cancelEdit}
                 type="button"
               >
-                <img alt="" src={fighterArt(fighter.id)} />
-                <strong>{fighter.name}</strong>
-                <small>2XKO</small>
+                ✕
               </button>
-            ))}
-          </div>
-          <div className="fuse-row">
-            <label className="fuse-select">
-              FUSIÓN
-              <select onChange={(event) => setFuse(event.target.value)} value={fuse}>
-                <option value="">—</option>
-                {(roster?.fuses ?? []).map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
+            </div>
+            <div className="team-modal-body">
+              <span>LA SIGUIENTE SELECCIÓN REEMPLAZA AL POINT</span>
+              <div className="fighter-grid">
+                {(roster?.characters ?? []).map((fighter) => (
+                  <button
+                    className={char1 === fighter.id || char2 === fighter.id ? "selected" : ""}
+                    key={fighter.id}
+                    onClick={() => changeCharacter(fighter.id)}
+                    type="button"
+                  >
+                    <img alt="" src={fighterArt(fighter.id)} />
+                    <strong>{fighter.name}</strong>
+                    <small>2XKO</small>
+                  </button>
                 ))}
-              </select>
-            </label>
-            <button
-              className="team-cancel"
-              disabled={saving}
-              onClick={() => {
-                resetToSaved();
-                setNotice(null);
-                setEditing(false);
-              }}
-              type="button"
-            >
-              CANCELAR
-            </button>
-            {notice ? <span className={"team-note " + (ok ? "success" : "danger")}>{notice}</span> : null}
+              </div>
+            </div>
+            <div className="team-modal-foot">
+              <label className="fuse-select">
+                FUSIÓN
+                <select onChange={(event) => setFuse(event.target.value)} value={fuse}>
+                  <option value="">—</option>
+                  {(roster?.fuses ?? []).map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="team-save"
+                disabled={saving || !char1 || !char2 || !fuse}
+                onClick={save}
+                type="button"
+              >
+                {saving ? "GUARDANDO..." : "GUARDAR EQUIPO"}
+              </button>
+              <button className="team-cancel" disabled={saving} onClick={cancelEdit} type="button">
+                CANCELAR
+              </button>
+              {notice ? <span className={"team-note " + (ok ? "success" : "danger")}>{notice}</span> : null}
+            </div>
           </div>
         </div>
       ) : null}
