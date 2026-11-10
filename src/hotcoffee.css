@@ -1186,6 +1186,20 @@
   margin-top: 9px;
   position: relative;
 }
+/* Mensaje de progreso rotativo mientras busca rival (mínimo dramático). */
+.queue-flavor {
+  display: block;
+  margin-top: 2px;
+  color: var(--gold);
+  font: 700 9px "Inter";
+  letter-spacing: 1.2px;
+  animation: hc-pulse 1.4s infinite;
+}
+/* Botón "Salir" mientras se cierra la sesión. */
+.hc-user button.busy {
+  color: var(--gold);
+  pointer-events: none;
+}
 .rule {
   display: flex;
   align-items: center;

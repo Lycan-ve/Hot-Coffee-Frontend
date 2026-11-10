@@ -19,6 +19,16 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 };
 
+// Búsqueda con mínimo dramático: aunque la cola empareje al instante, se
+// muestran al menos MIN_SEARCH_MS de búsqueda con mensajes de progreso.
+const MIN_SEARCH_MS = 3500;
+const SEARCH_FLAVORS = [
+  "ANALIZANDO TU RANGO…",
+  "MIDIENDO EL NIVEL DE LA COLA…",
+  "CONTACTANDO RIVALES CERCANOS…",
+  "PREPARANDO EL ESCENARIO…",
+];
+
 function VsCard({ name, avatar, points, rank, ok }: { name: string; avatar?: string; points: number; rank: RankInfo; ok: boolean }) {
   return (
     <div className={`hc-vs-card ${ok ? "ok" : ""}`}>
@@ -36,6 +46,7 @@ export default function MatchmakingPage() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [state, setState] = useState<QueueState | null>(null);
   const [busy, setBusy] = useState(false);
+  const [searchStart, setSearchStart] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
@@ -82,6 +93,12 @@ export default function MatchmakingPage() {
   const elapsed = state?.queue ? now - new Date(state.queue.since).getTime() : 0;
   const remaining = state?.proposal ? new Date(state.proposal.expiresAt).getTime() - now : 0;
   const searching = status === "searching";
+  const found = status === "found" || status === "confirmed";
+  // Puerta de búsqueda mínima: el rival encontrado no se revela antes de tiempo.
+  const revealFound = found && (!searchStart || now - searchStart >= MIN_SEARCH_MS);
+  const searchingView = searching || (found && !revealFound);
+  const flavorBase = searchStart ?? (state?.queue ? new Date(state.queue.since).getTime() : now);
+  const flavor = SEARCH_FLAVORS[Math.floor(Math.max(0, now - flavorBase) / 1500) % SEARCH_FLAVORS.length];
   const games = me ? me.stats.wins + me.stats.losses : 0;
 
   return (
@@ -157,19 +174,19 @@ export default function MatchmakingPage() {
             )}
           </aside>
 
-          <article className={`queue-console cut-panel ${searching ? "searching" : ""}`}>
+          <article className={`queue-console cut-panel ${searchingView ? "searching" : ""}`}>
             <div className="queue-grid" />
             <span className="queue-kicker">
               {status === "anon" && "INICIA SESIÓN PARA JUGAR"}
               {status === "loading" && "CONECTANDO CON LA COLA…"}
               {status === "idle" && "COLA COMPETITIVA DISPONIBLE"}
-              {searching && "BUSCANDO RIVAL · FT 3"}
-              {(status === "found" || status === "confirmed") && "¡RIVAL ENCONTRADO!"}
+              {searchingView && "BUSCANDO RIVAL · FT 3"}
+              {found && revealFound && "¡RIVAL ENCONTRADO!"}
               {status === "matched" && "SET CREADO"}
               {status === "failed" && "ALGO SALIÓ MAL"}
             </span>
 
-            {(status === "found" || status === "confirmed") && state?.proposal ? (
+            {found && revealFound && state?.proposal ? (
               <>
                 <div className="hc-vs">
                   <VsCard name={state.proposal.me.tag} avatar={state.proposal.me.avatarUrl} points={state.proposal.me.points} rank={state.proposal.me.rank} ok={state.proposal.acceptedByMe} />
@@ -207,7 +224,7 @@ export default function MatchmakingPage() {
                   <img src={`${A}/1985f.svg`} alt="" />
                 </div>
                 <h2>
-                  {status === "matched" ? "¡A PELEAR!" : status === "failed" ? "NO SE PUDO CREAR EL SET" : searching ? "BUSCANDO RIVAL" : "LISTO PARA PELEAR"}
+                  {status === "matched" ? "¡A PELEAR!" : status === "failed" ? "NO SE PUDO CREAR EL SET" : searchingView ? "BUSCANDO RIVAL" : "LISTO PARA PELEAR"}
                 </h2>
                 <p>
                   {status === "anon" && "Inicia sesión con Discord (debes ser miembro de Hot Coffee 2XKO)."}
@@ -220,6 +237,7 @@ export default function MatchmakingPage() {
                       : "El hilo del set ya está en Discord. Arma tu equipo y a jugar.")}
                   {status === "failed" && "Hubo un problema lanzando el set (¿está el bot en línea?)."}
                 </p>
+                {searchingView && <span className="queue-flavor">{flavor}</span>}
                 {searching && (
                   <div className="queue-time">
                     <strong>{clock(elapsed)}</strong>
@@ -230,12 +248,28 @@ export default function MatchmakingPage() {
                 )}
                 {status === "anon" && <LoginLink className="search-button" />}
                 {(status === "idle" || status === "failed") && (
-                  <button className="search-button" disabled={busy} onClick={() => act(() => joinQueue())} type="button">
+                  <button
+                    className="search-button"
+                    disabled={busy}
+                    onClick={() => {
+                      setSearchStart(Date.now());
+                      act(() => joinQueue());
+                    }}
+                    type="button"
+                  >
                     <img src={`${A}/3508d.svg`} alt="" /> {status === "failed" ? "REINTENTAR" : "BUSCAR PARTIDA"}
                   </button>
                 )}
                 {searching && (
-                  <button className="search-button cancel" disabled={busy} onClick={() => act(leaveQueue)} type="button">
+                  <button
+                    className="search-button cancel"
+                    disabled={busy}
+                    onClick={() => {
+                      setSearchStart(null);
+                      act(() => leaveQueue());
+                    }}
+                    type="button"
+                  >
                     CANCELAR BÚSQUEDA
                   </button>
                 )}

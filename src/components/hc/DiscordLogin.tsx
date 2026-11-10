@@ -31,6 +31,7 @@ export function LoginLink({ label = "Iniciar sesión con Discord", className = "
 export function DiscordLogin() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     fetchMe().then((d) => {
@@ -50,12 +51,21 @@ export function DiscordLogin() {
       </Link>
       <button
         type="button"
+        className={loggingOut ? "busy" : undefined}
+        disabled={loggingOut}
         onClick={() => {
-          clearToken();
-          setMe(null);
+          if (loggingOut) return;
+          setLoggingOut(true);
+          // Pausa deliberada: que cerrar sesión se sienta como un proceso
+          // (revocar token, cerrar sesión) y no un parpadeo instantáneo.
+          setTimeout(() => {
+            clearToken();
+            setMe(null);
+            setLoggingOut(false);
+          }, 900);
         }}
       >
-        Salir
+        {loggingOut ? "CERRANDO SESIÓN…" : "Salir"}
       </button>
     </div>
   );
