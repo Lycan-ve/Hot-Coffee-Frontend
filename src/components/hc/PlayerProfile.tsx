@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
 import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
-import { SectionTitle, Stat } from "./shared";
+import { SectionTitle } from "./shared";
 import { MainsPanel } from "./MainsPanel";
 
 const fmtDate = (iso: string) => {
@@ -227,17 +227,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           </div>
         </article>
 
-        <div className="stats-stack">
-          <div className="stats-row">
-            <Stat label="PUNTOS DE LIGA" value={String(stats.points)} note="MATCHMAKING" tone="gold" />
-            <Stat
-              label="POSICIÓN EN LA LIGA"
-              value={stats.rankingPosition > 0 ? `#${String(stats.rankingPosition).padStart(2, "0")}` : "—"}
-              note={stats.rankingPosition > 0 ? "RANKING MATCHMAKING" : "SIN CLASIFICAR AÚN"}
-            />
-          </div>
-          <MainsPanel me={me} own={own} />
-        </div>
+        <MainsPanel me={me} own={own} />
 
         <aside className="duo-card panel">
           <div className="panel-heading">

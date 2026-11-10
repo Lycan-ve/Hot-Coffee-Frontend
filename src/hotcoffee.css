@@ -11,6 +11,7 @@
   --gold: #ffe787;
   --success: #50d484;
   --danger: #f07070;
+  --blue: #7db4ff;
   --line: rgba(255, 255, 255, 0.08);
   --hc-muted: rgba(255, 255, 255, 0.45);
   --dim: rgba(255, 255, 255, 0.25);
@@ -193,7 +194,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--cream);
+  color: var(--gold);
   font:
     600 11px "Inter",
     sans-serif;
@@ -202,7 +203,7 @@
 .eyebrow i {
   width: 6px;
   height: 6px;
-  background: var(--cream);
+  background: var(--gold);
 }
 .eyebrow span {
   color: var(--dim);
@@ -257,7 +258,7 @@
   );
 }
 .panel-heading {
-  min-height: 47px;
+  min-height: 64px;
   padding: 0 18px;
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -266,11 +267,12 @@
   gap: 12px;
 }
 .panel-heading h3 {
+  color: var(--blue);
   font: 600 19px "Barlow Condensed";
   letter-spacing: 0.6px;
 }
 .panel-heading span {
-  color: var(--dim);
+  color: var(--gold);
   font-size: 9px;
   letter-spacing: 1px;
 }
@@ -304,7 +306,7 @@
   opacity: 0.2;
 }
 .player-card-top {
-  height: 48px;
+  height: 64px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -404,11 +406,12 @@
 }
 .rank-copy > span {
   display: block;
-  color: var(--hc-muted);
+  color: var(--gold);
   font: 700 7px "Inter";
   letter-spacing: 1.6px;
 }
 .rank-copy h2 {
+  color: var(--blue);
   margin: 3px 0 0;
   font: 800 clamp(40px, 3.1vw, 54px)/1 "Barlow Condensed";
   letter-spacing: 1px;
@@ -443,7 +446,7 @@
   letter-spacing: 0.8px;
 }
 .progress-head small {
-  color: var(--hc-muted);
+  color: var(--gold);
 }
 .progress-head b {
   color: var(--gold);
@@ -497,7 +500,7 @@
   display: block;
 }
 .rank-stats span {
-  color: var(--hc-muted);
+  color: var(--gold);
   font: 700 7px "Inter";
   letter-spacing: 1.2px;
 }
@@ -507,6 +510,12 @@
 }
 .rank-stats strong.gold {
   color: var(--gold);
+}
+.rank-stats > div:nth-child(1) strong {
+  color: var(--success);
+}
+.rank-stats > div:nth-child(2) strong {
+  color: var(--danger);
 }
 .rank-stats small {
   color: var(--dim);
@@ -520,19 +529,9 @@
 .duo-record small,
 .compact-stats small {
   display: block;
-  color: var(--dim);
+  color: var(--gold);
   font-size: 8px;
   letter-spacing: 1px;
-}
-.stats-stack {
-  display: grid;
-  grid-template-rows: 96px 1fr;
-  gap: 12px;
-}
-.stats-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
 }
 .stat-card {
   background: var(--panel);
@@ -674,15 +673,15 @@
   width: calc(100% - 36px);
   height: 36px;
   margin: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--hc-muted);
+  border: 1px solid rgba(180, 77, 29, 0.45);
+  color: var(--orange);
   font: 600 9px "Inter";
   letter-spacing: 1px;
   transition: 0.2s;
 }
 .secondary-button:hover {
-  color: var(--gold);
-  border-color: var(--orange);
+  color: #fff;
+  background: var(--orange);
 }
 .duo-card {
   display: flex;
@@ -703,7 +702,8 @@
   margin-top: 3px;
 }
 .panel-heading button {
-  color: var(--cream);
+  color: var(--orange);
+  border-color: rgba(180, 77, 29, 0.45);
   font-size: 9px;
   letter-spacing: 1px;
 }
@@ -1264,12 +1264,6 @@ footer strong {
   .queue-layout {
     grid-template-columns: 1fr;
   }
-  .stats-stack {
-    grid-template-rows: auto;
-  }
-  .stats-row {
-    min-height: 96px;
-  }
   .duo-card {
     grid-column: auto;
   }
@@ -1356,9 +1350,6 @@ footer strong {
   }
   .rank-stats small {
     display: none;
-  }
-  .stats-row {
-    grid-template-columns: 1fr;
   }
   .stat-card {
     min-height: 85px;
@@ -1582,11 +1573,9 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   align-items: center;
   gap: 8px;
 }
-.zone-tournaments .panel-heading h3 {
-  color: var(--success);
-}
+.zone-tournaments .panel-heading h3,
 .zone-matchmaking .panel-heading h3 {
-  color: #7db4ff;
+  color: var(--blue);
 }
 .zone-dot {
   width: 8px;
@@ -1616,7 +1605,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 }
 .zone-stats small {
   display: block;
-  color: var(--dim);
+  color: var(--gold);
   font-size: 8px;
   letter-spacing: 1px;
 }
@@ -1627,7 +1616,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 }
 .zone-subheading {
   padding: 13px 18px 5px;
-  color: var(--cream);
+  color: var(--gold);
   font: 600 9px "Inter";
   letter-spacing: 1.4px;
 }
@@ -1638,7 +1627,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   padding: 0 18px 14px;
 }
 .zone-more button {
-  color: var(--cream);
+  color: var(--orange);
   font-size: 9px;
   letter-spacing: 1px;
 }
@@ -1665,7 +1654,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--cream);
+  color: var(--gold);
   font: 600 11px "Inter";
   letter-spacing: 1.4px;
 }
@@ -1681,8 +1670,8 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 .team-card .panel-heading button {
   height: 30px;
   padding: 0 13px;
-  color: #c9bcb4;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  color: var(--orange);
+  border: 1px solid rgba(180, 77, 29, 0.45);
   background: transparent;
   font: 700 7px "Inter";
   letter-spacing: 1px;
@@ -1787,7 +1776,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   min-width: 0;
 }
 .team-summary > span {
-  color: var(--hc-muted);
+  color: var(--gold);
   font: 700 7px "Inter";
   letter-spacing: 1.4px;
 }
@@ -1854,11 +1843,12 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--cream);
+  color: var(--gold);
   font: 600 11px "Inter";
   letter-spacing: 1.4px;
 }
 .team-modal-head h3 {
+  color: var(--blue);
   margin-top: 3px;
   font: 700 22px/1 "Barlow Condensed";
   letter-spacing: 0.5px;
@@ -2009,9 +1999,9 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   margin-left: auto;
   height: 32px;
   padding: 0 16px;
-  color: #1c1209;
+  color: #fff;
   border: none;
-  background: var(--gold);
+  background: var(--orange);
   font: 800 8px "Inter";
   letter-spacing: 1px;
   transition: 180ms ease;
