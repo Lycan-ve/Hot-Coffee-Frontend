@@ -163,45 +163,42 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           </div>
           <div className="player-identity" style={{ "--rank-accent": rank.color } as CSSProperties}>
             <RankBadge rank={rank} />
-            <div className="identity-copy">
-              <h2>{name.toUpperCase()}</h2>
-              <div className="rank-line">
-                <span className="rank-text">{rank.displayName.toUpperCase()}</span>
-                <i className="dot">•</i>
-                <span className="lp-text">
-                  {rank.isRp ? String(rank.rp) + " RP" : String(rank.lp) + " LP"}
-                </span>
-              </div>
-              <div className="meter">
-                <span style={{ width: String(progress) + "%" }} />
-              </div>
-              <small className="meter-note">
-                {rank.isRp
-                  ? rank.next
-                    ? "FALTAN " + rank.lpToNext + " RP PARA " + rank.next.toUpperCase()
-                    : "RANGO MÁXIMO"
-                  : "FALTAN " + rank.lpToNext + " LP PARA " + rank.next.toUpperCase()}
-              </small>
-              <p>
-                @{me.user.username}
-                {stats.rankingPosition > 0 ? " · #" + stats.rankingPosition + " DE LA LIGA" : ""}
-              </p>
-            </div>
+            <h2 className="identity-name">{name.toUpperCase()}</h2>
+            <span className="identity-rank">{rank.displayName.toUpperCase()}</span>
+            <p className="identity-tag">
+              @{me.user.username}
+              {stats.rankingPosition > 0 ? " · #" + stats.rankingPosition + " DE LA LIGA" : ""}
+            </p>
             <span className="identity-sep" />
-            <div className="identity-stats">
+            <strong className="identity-lp">
+              {rank.isRp ? String(rank.rp) + " RP" : String(rank.lp) + " LP"}
+            </strong>
+            <div className="identity-wl">
               <div>
-                <strong>{stats.wins}</strong>
-                <small>WINS</small>
+                <b>{stats.wins}</b>
+                <span>W</span>
               </div>
               <div>
-                <strong>{stats.losses}</strong>
-                <small>LOSSES</small>
-              </div>
-              <div>
-                <strong className="wr">{winRate}%</strong>
-                <small>WINRATE</small>
+                <b>{stats.losses}</b>
+                <span>L</span>
               </div>
             </div>
+            <span className="identity-wr">{games ? "WR " + winRate + "%" : "WR —"}</span>
+            {streak > 0 ? (
+              <span className={"identity-streak " + (streakWin ? "win" : "loss")}>
+                {(streakWin ? "🔥 " : "💀 ") + streak + (streakWin ? " WIN STREAK" : " LOSS STREAK")}
+              </span>
+            ) : null}
+            <div className="meter">
+              <span style={{ width: String(progress) + "%" }} />
+            </div>
+            <small className="meter-note">
+              {rank.isRp
+                ? rank.next
+                  ? "FALTAN " + rank.lpToNext + " RP PARA " + rank.next.toUpperCase()
+                  : "RANGO MÁXIMO"
+                : "FALTAN " + rank.lpToNext + " LP PARA " + rank.next.toUpperCase()}
+            </small>
           </div>
         </article>
 
