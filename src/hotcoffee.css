@@ -368,28 +368,6 @@
   background: rgba(208, 202, 83, 0.18);
   filter: blur(24px);
 }
-.identity-copy {
-  margin-left: 12px;
-}
-.identity-copy > span {
-  color: var(--cream);
-  font-size: 9px;
-  letter-spacing: 1.6px;
-}
-.identity-copy h2 {
-  margin-top: 6px;
-  font: 700 45px/1 "Barlow Condensed";
-}
-.identity-copy h2 em {
-  color: var(--hc-muted);
-  font: 400 11px "Inter";
-  letter-spacing: 1px;
-}
-.identity-copy p {
-  margin-top: 6px;
-  color: var(--hc-muted);
-  font-size: 12px;
-}
 /* ---------- Perfil: tarjeta de rango (diseño Figma) ---------- */
 .player-card-top .card-top-right {
   display: flex;
@@ -534,30 +512,16 @@
   font-size: 7px;
   letter-spacing: 0.6px;
 }
-.player-meta {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  height: 66px;
-  border-top: 1px solid var(--line);
-}
-.player-meta div,
 .duo-record div {
   padding: 14px 18px;
   border-right: 1px solid var(--line);
 }
-.player-meta small,
 .duo-record small,
 .compact-stats small {
   display: block;
   color: var(--dim);
   font-size: 8px;
   letter-spacing: 1px;
-}
-.player-meta strong {
-  display: block;
-  margin-top: 6px;
-  font: 600 14px "Inter";
 }
 .stats-stack {
   display: grid;
