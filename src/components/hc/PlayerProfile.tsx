@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { fuseIconUrl, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
 import { RankBadge, SectionTitle, Stat } from "./shared";
@@ -161,23 +161,45 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
               </Link>
             )}
           </div>
-          <div className="player-identity">
+          <div className="player-identity" style={{ "--rank-accent": rank.color } as CSSProperties}>
             <RankBadge rank={rank} />
             <div className="identity-copy">
-              <span>
-                {rank.displayName.toUpperCase()}
-                {stats.rankingPosition > 0 ? ` · #${stats.rankingPosition} DE LA LIGA` : ""}
-              </span>
-              <h2>
-                {name.toUpperCase()}
-                <em>· {stats.points} PTS</em>
-              </h2>
-              <p>@{me.user.username}</p>
-              <div className="level">
-                <span style={{ width: `${progress}%` }} />
-                <small>
-                  {rank.isRp ? `${rank.rp} RP` : `${rank.lp} LP · faltan ${rank.lpToNext} para ${rank.next}`}
-                </small>
+              <h2>{name.toUpperCase()}</h2>
+              <div className="rank-line">
+                <span className="rank-text">{rank.displayName.toUpperCase()}</span>
+                <i className="dot">•</i>
+                <span className="lp-text">
+                  {rank.isRp ? String(rank.rp) + " RP" : String(rank.lp) + " LP"}
+                </span>
+              </div>
+              <div className="meter">
+                <span style={{ width: String(progress) + "%" }} />
+              </div>
+              <small className="meter-note">
+                {rank.isRp
+                  ? rank.next
+                    ? "FALTAN " + rank.lpToNext + " RP PARA " + rank.next.toUpperCase()
+                    : "RANGO MÁXIMO"
+                  : "FALTAN " + rank.lpToNext + " LP PARA " + rank.next.toUpperCase()}
+              </small>
+              <p>
+                @{me.user.username}
+                {stats.rankingPosition > 0 ? " · #" + stats.rankingPosition + " DE LA LIGA" : ""}
+              </p>
+            </div>
+            <span className="identity-sep" />
+            <div className="identity-stats">
+              <div>
+                <strong>{stats.wins}</strong>
+                <small>WINS</small>
+              </div>
+              <div>
+                <strong>{stats.losses}</strong>
+                <small>LOSSES</small>
+              </div>
+              <div>
+                <strong className="wr">{winRate}%</strong>
+                <small>WINRATE</small>
               </div>
             </div>
           </div>

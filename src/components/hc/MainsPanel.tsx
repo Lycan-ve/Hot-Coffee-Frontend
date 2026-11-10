@@ -6,9 +6,12 @@ import { getRoster, type RosterEntry } from "@/lib/sala";
 
 const fighterIcon = (id: string) => "/fighters/" + encodeURIComponent(id) + ".png";
 
+type MainChar = { id: string; name: string };
+
 /**
- * MainsPanel: equipo principal del jugador (sus 2 personajes y su fusión).
- * - Perfil propio: panel para elegir entre los íconos del roster y guardar.
+ * MainsPanel: equipo principal del jugador (sus 2 personajes y su fusión),
+ * con el estilo de la maqueta 2XKO.
+ * - Perfil propio: vista previa en vivo + selector con los íconos del roster.
  * - Perfil ajeno: vista de solo lectura del equipo configurado.
  */
 export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
@@ -25,31 +28,13 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
     getRoster().then((r) => setRoster(r));
   }, []);
 
-  // Perfil ajeno: solo lectura, sin controles de edición.
-  if (!own) {
-    const complete = !!(saved?.point?.id && saved?.assist?.id && saved?.fuse?.id);
-    return (
-      <article className="panel mains-panel">
-        <div className="panel-heading">
-          <h3>EQUIPO PRINCIPAL</h3>
-          <span>{complete ? "MAINS" : "SIN CONFIGURAR"}</span>
-        </div>
-        {complete ? (
-          <div className="mains-readonly">
-            <img src={fighterIcon(saved!.point.id)} alt={saved!.point.name} title={saved!.point.name} />
-            <img src={fighterIcon(saved!.assist.id)} alt={saved!.assist.name} title={saved!.assist.name} />
-            <img className="fuse" src={fuseIconUrl(saved!.fuse.id)} alt={saved!.fuse.name} title={saved!.fuse.name} />
-            <div>
-              <strong>{saved!.point.name} + {saved!.assist.name}</strong>
-              <span>🔀 {saved!.fuse.name}</span>
-            </div>
-          </div>
-        ) : (
-          <p className="hc-empty">Este jugador todavía no configuró su equipo principal.</p>
-        )}
-      </article>
-    );
-  }
+  const pick = (id: string, fallback?: MainChar, list?: RosterEntry[]): MainChar | undefined =>
+    list?.find((c) => c.id === id) ?? (id ? fallback : undefined);
+
+  const point = pick(char1, saved?.point, roster?.characters);
+  const assist = pick(char2, saved?.assist, roster?.characters);
+  const fuseChar = pick(fuse, saved?.fuse, roster?.fuses);
+  const complete = !!(point && assist && fuseChar);
 
   const save = async () => {
     if (!char1 || !char2 || !fuse || saving) return;
@@ -66,7 +51,7 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
     setNotice("¡Equipo guardado!");
   };
 
-  const characterChips = (selected: string, pick: (id: string) => void) =>
+  const characterChips = (selected: string, choose: (id: string) => void) =>
     roster ? (
       roster.characters.map((c) => (
         <button
@@ -75,7 +60,7 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
           title={c.name}
           aria-label={c.name}
           className={"mains-chip" + (selected === c.id ? " on" : "")}
-          onClick={() => pick(c.id)}
+          onClick={() => choose(c.id)}
         >
           <img src={fighterIcon(c.id)} alt={c.name} />
         </button>
@@ -85,51 +70,88 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
     );
 
   return (
-    <article className="panel mains-panel">
-      <div className="panel-heading">
-        <h3>MIS MAINS</h3>
-        <span>EQUIPO PRINCIPAL</span>
+    <article className={"panel mains-panel" + (own ? "" : " readonly")}>
+      <div className="mains-head">
+        <div className="mains-brand">
+          <strong className="mains-2xko">2XKO</strong>
+          <span className="mains-logo">
+            <img src="/assets/5fb79.svg" alt="Hot Coffee" />
+          </span>
+        </div>
+        <span className="mains-sub">FIGHTER 1 / FIGHTER 2 - FUSES</span>
       </div>
-      <div className="mains-groups">
-        <div className="mains-group">
-          <small>PERSONAJE 1 · POINT</small>
-          <div className="mains-chips">{characterChips(char1, setChar1)}</div>
+
+      <div className="mains-team">
+        <div className="mains-duo">
+          {point ? (
+            <img src={fighterIcon(point.id)} alt={point.name} title={point.name} />
+          ) : (
+            <span className="mains-slot">F1</span>
+          )}
+          {assist ? (
+            <img src={fighterIcon(assist.id)} alt={assist.name} title={assist.name} />
+          ) : (
+            <span className="mains-slot">F2</span>
+          )}
         </div>
-        <div className="mains-group">
-          <small>PERSONAJE 2 · ASSIST</small>
-          <div className="mains-chips">{characterChips(char2, setChar2)}</div>
-        </div>
-        <div className="mains-group">
-          <small>FUSIÓN</small>
-          <div className="mains-chips">
-            {roster ? (
-              roster.fuses.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  title={f.name}
-                  aria-label={f.name}
-                  className={"mains-chip fuse" + (fuse === f.id ? " on" : "")}
-                  onClick={() => setFuse(f.id)}
-                >
-                  <img src={fuseIconUrl(f.id)} alt={f.name} />
-                </button>
-              ))
-            ) : null}
+        {fuseChar ? (
+          <img className="mains-fuse" src={fuseIconUrl(fuseChar.id)} alt={fuseChar.name} title={fuseChar.name} />
+        ) : (
+          <span className="mains-slot fuse">2X</span>
+        )}
+      </div>
+      <p className="mains-team-label">
+        {complete
+          ? (point!.name + " / " + assist!.name + " - " + fuseChar!.name).toUpperCase()
+          : own
+            ? "ELIGE TUS DOS FIGHTERS Y SU FUSE"
+            : "SIN EQUIPO CONFIGURADO"}
+      </p>
+
+      {own ? (
+        <>
+          <div className="mains-groups">
+            <div className="mains-group">
+              <small>FIGHTER 1 · POINT</small>
+              <div className="mains-chips">{characterChips(char1, setChar1)}</div>
+            </div>
+            <div className="mains-group">
+              <small>FIGHTER 2 · ASSIST</small>
+              <div className="mains-chips">{characterChips(char2, setChar2)}</div>
+            </div>
+            <div className="mains-group">
+              <small>FUSE</small>
+              <div className="mains-chips">
+                {roster ? (
+                  roster.fuses.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      title={f.name}
+                      aria-label={f.name}
+                      className={"mains-chip fuse" + (fuse === f.id ? " on" : "")}
+                      onClick={() => setFuse(f.id)}
+                    >
+                      <img src={fuseIconUrl(f.id)} alt={f.name} />
+                    </button>
+                  ))
+                ) : null}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      <div className="mains-actions">
-        <button
-          type="button"
-          className="mains-save"
-          disabled={saving || !char1 || !char2 || !fuse}
-          onClick={save}
-        >
-          {saving ? "GUARDANDO…" : "GUARDAR EQUIPO"}
-        </button>
-        {notice && <span className={"mains-note " + (ok ? "success" : "danger")}>{notice}</span>}
-      </div>
+          <div className="mains-actions">
+            <button
+              type="button"
+              className="mains-save"
+              disabled={saving || !char1 || !char2 || !fuse}
+              onClick={save}
+            >
+              {saving ? "GUARDANDO…" : "GUARDAR EQUIPO"}
+            </button>
+            {notice && <span className={"mains-note " + (ok ? "success" : "danger")}>{notice}</span>}
+          </div>
+        </>
+      ) : null}
     </article>
   );
 }
