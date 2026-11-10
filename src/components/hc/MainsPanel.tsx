@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { fuseIconUrl, saveMains, type MeResponse } from "@/lib/auth";
 import { getRoster, type RosterEntry } from "@/lib/sala";
 
@@ -143,16 +144,19 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
         </div>
       </div>
 
-      {own && editing ? (
-        <div
-          aria-label="Editar equipo principal"
-          aria-modal="true"
-          className="team-modal"
-          onClick={() => {
-            if (!saving) cancelEdit();
-          }}
-          role="dialog"
-        >
+      {own && editing
+        ? createPortal(
+            /* Portal a document.body: escapa del stacking context de .page
+               (z-index 1) para que el topbar (z-index 10) no tape el modal. */
+            <div
+              aria-label="Editar equipo principal"
+              aria-modal="true"
+              className="team-modal"
+              onClick={() => {
+                if (!saving) cancelEdit();
+              }}
+              role="dialog"
+            >
           <div className="team-modal-panel" onClick={(event) => event.stopPropagation()}>
             <div className="team-modal-head">
               <div>
@@ -214,9 +218,10 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
               </button>
               {notice ? <span className={"team-note " + (ok ? "success" : "danger")}>{notice}</span> : null}
             </div>
-          </div>
-        </div>
-      ) : null}
+          </div>,
+          document.body,
+        )
+        : null}
     </article>
   );
 }
