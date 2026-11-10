@@ -69,10 +69,16 @@ export interface MeResponse {
     wins: number;
     losses: number;
     rankingPosition: number;
+    /** Puntos acumulados en el ranking de TORNEOS (lo llena el backend). */
+    tournamentPoints?: number;
+    /** Posición en la tabla de TORNEOS (lo llena el backend). */
+    tournamentPosition?: number;
   };
   rank: RankInfo;
   fights?: ProfileFight[];
   tournaments?: ProfileTournament[];
+  /** Equipo principal (mains) del jugador, si lo configuró en la web. */
+  mains?: ProfileTeam;
 }
 
 /**
@@ -129,6 +135,27 @@ export async function fetchUserProfile(discordId: string): Promise<MeResponse | 
     return (await res.json()) as MeResponse;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Guarda el equipo principal (mains) del jugador autenticado.
+ * POST /api/auth/mains { char1, char2, fuse } → null si OK, mensaje de error si falla.
+ */
+export async function saveMains(char1: string, char2: string, fuse: string): Promise<string | null> {
+  const token = getToken();
+  if (!token) return 'Inicia sesión de nuevo para guardar tu equipo.';
+  try {
+    const res = await fetch(`${API_URL}/api/auth/mains`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ char1, char2, fuse }),
+    });
+    if (res.ok) return null;
+    const data = await res.json().catch(() => null);
+    return data?.message || 'No se pudo guardar tu equipo. Intenta de nuevo.';
+  } catch {
+    return 'No se pudo conectar con el servidor.';
   }
 }
 

@@ -287,7 +287,7 @@
   gap: 12px;
 }
 .player-card {
-  min-height: 300px;
+  min-height: 250px;
   overflow: hidden;
   border-color: rgba(180, 77, 29, 0.45);
   background: var(--panel-2);
@@ -597,7 +597,7 @@
 
 .bottom-grid {
   display: grid;
-  grid-template-columns: 2.25fr 1fr;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   gap: 12px;
   margin-top: 12px;
 }
@@ -1452,3 +1452,194 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 .rk-tourneys .chip .nm { color: #fff; font-size: 10px; font-weight: 600; letter-spacing: .8px; }
 .rk-tourneys .chip.on .nm { color: var(--gold); }
 .rk-tourneys .chip small { color: var(--dim); font-size: 8px; letter-spacing: .8px; }
+
+
+/* ---------- Perfil: zonas TORNEOS (verde) y MATCHMAKING (azul) ---------- */
+.zone {
+  display: flex;
+  flex-direction: column;
+}
+.zone-tournaments {
+  border-top: 2px solid var(--success);
+}
+.zone-matchmaking {
+  border-top: 2px solid #5a9bff;
+}
+.zone .panel-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.zone-tournaments .panel-heading h3 {
+  color: var(--success);
+}
+.zone-matchmaking .panel-heading h3 {
+  color: #7db4ff;
+}
+.zone-dot {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+.zone .panel-heading > div span {
+  display: block;
+  margin-top: 3px;
+}
+.zone-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--line);
+}
+.zone-stats.zone-stats-mm {
+  grid-template-columns: repeat(3, 1fr);
+}
+.zone-stats div {
+  min-width: 0;
+  padding: 13px 16px;
+  border-right: 1px solid var(--line);
+}
+.zone-stats div:last-child {
+  border-right: 0;
+}
+.zone-stats small {
+  display: block;
+  color: var(--dim);
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+.zone-stats strong {
+  display: block;
+  margin-top: 5px;
+  font: 700 26px "Barlow Condensed";
+}
+.zone-subheading {
+  padding: 13px 18px 5px;
+  color: var(--cream);
+  font: 600 9px "Inter";
+  letter-spacing: 1.4px;
+}
+.zone .match-list {
+  flex: 1;
+}
+.zone-more {
+  padding: 0 18px 14px;
+}
+.zone-more button {
+  color: var(--cream);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+@media (max-width: 760px) {
+  .zone-stats,
+  .zone-stats.zone-stats-mm {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .zone-stats div:nth-child(2n) {
+    border-right: 0;
+  }
+  .zone-stats div:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* ---------- Perfil: panel de mains (equipo principal) ---------- */
+.mains-panel {
+  display: flex;
+  flex-direction: column;
+}
+.mains-groups {
+  padding: 14px 18px 2px;
+  display: grid;
+  gap: 13px;
+}
+.mains-group > small {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--dim);
+  font: 600 8px "Inter";
+  letter-spacing: 1.2px;
+}
+.mains-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mains-chip {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--base);
+  transition: 0.15s;
+}
+.mains-chip img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: top;
+}
+.mains-chip.fuse img {
+  object-fit: contain;
+}
+.mains-chip:hover {
+  border-color: var(--orange);
+}
+.mains-chip.on {
+  border-color: var(--cream);
+  box-shadow: 0 0 0 1px rgba(208, 202, 83, 0.55);
+}
+.mains-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-top: auto;
+}
+.mains-save {
+  height: 36px;
+  padding: 0 18px;
+  color: #fff;
+  background: var(--orange);
+  border: 1px solid #d3642f;
+  font: 600 9px "Inter";
+  letter-spacing: 1px;
+  transition: 0.2s;
+}
+.mains-save:hover {
+  background: #ca5722;
+}
+.mains-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.mains-note {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+.mains-readonly {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px;
+}
+.mains-readonly img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  object-position: top;
+  border: 1px solid var(--line);
+}
+.mains-readonly img.fuse {
+  object-fit: contain;
+}
+.mains-readonly strong {
+  display: block;
+  font: 600 14px "Barlow Condensed";
+}
+.mains-readonly span {
+  color: var(--dim);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
