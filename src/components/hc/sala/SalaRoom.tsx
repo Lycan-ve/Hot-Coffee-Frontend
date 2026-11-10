@@ -1,0 +1,1120 @@
+'use client';
+
+/**
+ * Hot Coffee · Sala del set (v2)
+ * Componente de presentación + estado de UI. No hace fetch por su cuenta:
+ * recibe el estado del set y las acciones desde la página, así se puede
+ * usar igual en Next.js (datos reales) o en una demo.
+ */
+import {
+  type ComponentType,
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
+import type { ProfileTeam } from '@/lib/auth';
+import type {
+  RosterEntry,
+  SalaClose,
+  SalaFinished,
+  SalaMatch,
+  SalaMessage,
+  SalaPending,
+  SalaPlayer,
+  SalaTeam,
+} from '@/lib/sala';
+import './sala.css';
+
+// ---------------------------------------------------------------------------
+// Tipos públicos
+// ---------------------------------------------------------------------------
+
+export type Roster = { characters: RosterEntry[]; fuses: RosterEntry[] };
+type ActionResult = Promise<string | null>;
+
+export interface SalaActions {
+  refresh: () => Promise<void>;
+  saveTeam: (char1: string, char2: string, fuse: string) => ActionResult;
+  saveRoom: (room: string) => ActionResult;
+  sendChat: (content: string) => ActionResult;
+  reportGame: (winner: 'me' | 'opponent') => ActionResult;
+  confirmReport: () => ActionResult;
+  rejectReport: () => ActionResult;
+  correctLastGame: () => ActionResult;
+  reportFinal: (myScore: number, oppScore: number) => ActionResult;
+  closeSet: () => ActionResult;
+  respondClose: (accept: boolean) => ActionResult;
+}
+
+export interface SalaAssets {
+  fighterArt: (id: string) => string;
+  fuseIcon: (id: string) => string;
+  rankIcon: (iconPath: string) => string;
+}
+
+export type SalaLink = ComponentType<{ href: string; className?: string; children?: ReactNode }>;
+
+interface Notice {
+  text: string;
+  ok: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Sala en vivo
+// ---------------------------------------------------------------------------
+
+export function SalaRoom(props: {
+  match: SalaMatch;
+  messages: SalaMessage[];
+  roster: Roster | null;
+  mains: ProfileTeam | null;
+  reconnecting: boolean;
+  actions: SalaActions;
+  assets: SalaAssets;
+  Link: SalaLink;
+  backHref?: string;
+}) {
+  const { match, messages, roster, mains, reconnecting, actions, assets, Link } = props;
+  const { me, opponent: opp, ft, pending, close } = match;
+
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [teamModal, setTeamModal] = useState<{ char1: string; char2: string; fuse: string } | null>(null);
+  const [finalOpen, setFinalOpen] = useState(false);
+
+  // Los avisos se ocultan solos.
+  useEffect(() => {
+    if (!notice) return;
+    const id = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(id);
+  }, [notice]);
+
+  /** Ejecuta una acción bloqueando los botones hasta que el servidor responde. */
+  const run = async (fn: () => ActionResult, okText?: string): Promise<boolean> => {
+    if (busy) return false;
+    setBusy(true);
+    const err = await fn();
+    await actions.refresh();
+    setBusy(false);
+    if (err) setNotice({ text: err, ok: false });
+    else if (okText) setNotice({ text: okText, ok: true });
+    return !err;
+  };
+
+  const history = match.roundHistory ?? [];
+  const played = me.score + opp.score;
+  const teamLocked = me.team.complete && played > 0;
+
+  const status = reconnecting
+    ? { label: 'RECONECTANDO', tone: 'warn' }
+    : pending
+      ? { label: 'POR CONFIRMAR', tone: 'warn' }
+      : close
+        ? { label: 'CIERRE PROPUESTO', tone: 'danger' }
+        : { label: 'EN VIVO', tone: 'live' };
+
+  const openTeam = (preset?: ProfileTeam | null) => {
+    if (teamLocked) return;
+    if (preset) {
+      setTeamModal({ char1: preset.point.id, char2: preset.assist.id, fuse: preset.fuse.id });
+      return;
+    }
+    const t = me.team;
+    setTeamModal(t.complete ? { char1: t.char1, char2: t.char2, fuse: t.fuse } : { char1: '', char2: '', fuse: '' });
+  };
+
+  return (
+    <div className="sx">
+      <header className="sx-top">
+        <Link href={props.backHref ?? '/matchmaking'} className="sx-back">
+          ← Volver
+        </Link>
+        <div className="sx-title">
+          <small>SET #{match.id}</small>
+          <h1>Hot Coffee · Sala del set</h1>
+        </div>
+        <div className="sx-meta">
+          <span className={`sx-pill sx-pill--${status.tone}`}>
+            <i /> {status.label}
+          </span>
+          <span className="sx-pill">FT {ft}</span>
+        </div>
+      </header>
+
+      <Scoreboard match={match} history={history} assets={assets} />
+
+      {pending ? (
+        <PendingAlert
+          pending={pending}
+          match={match}
+          busy={busy}
+          onConfirm={() => run(actions.confirmReport, 'Reporte confirmado.')}
+          onReject={() => run(actions.rejectReport, 'Reporte rechazado.')}
+        />
+      ) : null}
+
+      {close ? (
+        <CloseAlert
+          close={close}
+          busy={busy}
+          onAccept={() => run(() => actions.respondClose(true))}
+          onReject={() => run(() => actions.respondClose(false), 'Seguimos jugando.')}
+        />
+      ) : null}
+
+      <div className="sx-grid">
+        <div className="sx-col">
+          <TeamPanel
+            team={me.team}
+            locked={teamLocked}
+            hasProfileTeam={!!(mains?.point && mains?.assist && mains?.fuse)}
+            assets={assets}
+            onEdit={() => openTeam()}
+            onUseProfile={() => openTeam(mains)}
+          />
+          <ReportPanel
+            match={match}
+            busy={busy}
+            hasHistory={history.length > 0}
+            onWin={() => run(() => actions.reportGame('me'))}
+            onLose={() => run(() => actions.reportGame('opponent'))}
+            onCorrect={() => run(actions.correctLastGame)}
+            onFinal={() => setFinalOpen(true)}
+            onClose={() => run(actions.closeSet)}
+          />
+        </div>
+
+        <aside className="sx-col sx-aside">
+          <RoomCodePanel
+            roomCode={match.roomCode}
+            busy={busy}
+            onSave={(code) => run(() => actions.saveRoom(code), 'Código de sala guardado.')}
+          />
+          <ChatPanel
+            messages={messages}
+            opponentTag={opp.tag}
+            onSend={async (text) => {
+              const err = await actions.sendChat(text);
+              await actions.refresh();
+              if (err) setNotice({ text: err, ok: false });
+              return !err;
+            }}
+          />
+        </aside>
+      </div>
+
+      {teamModal ? (
+        <TeamModal
+          initial={teamModal}
+          roster={roster}
+          mains={mains}
+          serverTeam={me.team}
+          assets={assets}
+          onCancel={() => setTeamModal(null)}
+          onSave={async (c1, c2, f) => {
+            const err = await actions.saveTeam(c1, c2, f);
+            if (err) return err;
+            await actions.refresh();
+            setTeamModal(null);
+            setNotice({ text: 'Equipo confirmado.', ok: true });
+            return null;
+          }}
+        />
+      ) : null}
+
+      {finalOpen ? (
+        <FinalModal
+          ft={ft}
+          me={me}
+          opp={opp}
+          onCancel={() => setFinalOpen(false)}
+          onSend={async (mine, theirs) => {
+            setFinalOpen(false);
+            await run(() => actions.reportFinal(mine, theirs));
+          }}
+        />
+      ) : null}
+
+      {notice ? (
+        <div className={`sx-toast${notice.ok ? ' sx-toast--ok' : ''}`} role="status">
+          <span>{notice.text}</span>
+          <button aria-label="Cerrar aviso" onClick={() => setNotice(null)} type="button">
+            ✕
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Marcador
+// ---------------------------------------------------------------------------
+
+function Scoreboard({ match, history, assets }: { match: SalaMatch; history: number[]; assets: SalaAssets }) {
+  const { me, opponent: opp, ft } = match;
+  const mySideNum = match.mySide === 'p1' ? 1 : 2;
+  const slots = Math.max(1, ft * 2 - 1);
+  const played = me.score + opp.score;
+  // Solo marcamos el "siguiente" game si el set se reportó game a game.
+  const nextIndex = history.length === played && played < slots ? played : -1;
+
+  return (
+    <section className="sx-board" aria-label="Marcador del set">
+      <PlayerSide player={me} side="me" ft={ft} assets={assets} />
+
+      <div className="sx-center">
+        <div className="sx-score" aria-label={`${me.score} a ${opp.score}`}>
+          <b className="is-me">
+            <span className="sx-pop" key={'m' + me.score}>
+              {me.score}
+            </span>
+          </b>
+          <i className="sx-score-vs">VS</i>
+          <b className="is-opp">
+            <span className="sx-pop" key={'o' + opp.score}>
+              {opp.score}
+            </span>
+          </b>
+        </div>
+        <span className="sx-ft">PRIMERO A {ft}</span>
+        <span className="sx-stake">+{match.pointsAtStake} PTS EN JUEGO</span>
+      </div>
+
+      <PlayerSide player={opp} side="opp" ft={ft} assets={assets} />
+
+      <div className="sx-timeline">
+        <span>GAMES</span>
+        <ol>
+          {Array.from({ length: slots }, (_, i) => {
+            const w = history[i];
+            const kind = w === undefined ? (i === nextIndex ? 'next' : 'empty') : w === mySideNum ? 'me' : 'opp';
+            const title =
+              kind === 'me' ? 'Game ' + (i + 1) + ': ganaste' : kind === 'opp' ? 'Game ' + (i + 1) + ': ganó ' + opp.tag : 'Game ' + (i + 1);
+            return (
+              <li className={`sx-game sx-game--${kind}`} key={i} title={title}>
+                G{i + 1}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function PlayerSide({ player, side, ft, assets }: { player: SalaPlayer; side: 'me' | 'opp'; ft: number; assets: SalaAssets }) {
+  const art = player.team.complete && player.team.char1 ? assets.fighterArt(player.team.char1) : null;
+  return (
+    <div className={`sx-side sx-side--${side}`}>
+      {art ? <img alt="" aria-hidden="true" className="sx-side-art" src={art} /> : null}
+      <div className="sx-side-body">
+        {player.avatarUrl ? (
+          <img alt={player.tag} className="sx-avatar" src={player.avatarUrl} />
+        ) : (
+          <span className="sx-avatar" aria-hidden="true">
+            ☕
+          </span>
+        )}
+        <div className="sx-side-info">
+          <span className="sx-side-label">{side === 'me' ? 'TÚ' : 'RIVAL'}</span>
+          <strong className="sx-side-name" title={player.tag}>
+            {player.tag}
+          </strong>
+          <span className="sx-side-rank">
+            {player.rank?.iconPath ? (
+              <img
+                alt=""
+                src={assets.rankIcon(player.rank.iconPath)}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : null}
+            {player.rank?.displayName ? <b>{player.rank.displayName}</b> : null}
+            <span>{player.points} pts</span>
+          </span>
+          <TeamChips team={player.team} />
+        </div>
+      </div>
+      <div className="sx-pips" aria-label={`${player.score} de ${ft} games`}>
+        {Array.from({ length: ft }, (_, i) => (
+          <span className={'sx-pip' + (i < player.score ? ' is-on' : '')} key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TeamChips({ team }: { team: SalaTeam }) {
+  if (!team.complete) {
+    return (
+      <div className="sx-chips">
+        <span className="sx-chip sx-chip--empty">Equipo sin confirmar…</span>
+      </div>
+    );
+  }
+  return (
+    <div className="sx-chips">
+      <span className="sx-chip">{team.char1Name}</span>
+      <span className="sx-chip">{team.char2Name}</span>
+      <span className="sx-chip sx-chip--fuse">{team.fuseName}</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Avisos
+// ---------------------------------------------------------------------------
+
+function Waiting() {
+  return (
+    <span className="sx-dots" aria-hidden="true">
+      <i />
+      <i />
+      <i />
+    </span>
+  );
+}
+
+function PendingAlert(props: {
+  pending: SalaPending;
+  match: SalaMatch;
+  busy: boolean;
+  onConfirm: () => void;
+  onReject: () => void;
+}) {
+  const { pending, match, busy } = props;
+  const finalTxt = (pending.finalMine ?? 0) + ' - ' + (pending.finalOpp ?? 0);
+
+  if (pending.byMe) {
+    const what =
+      pending.kind === 'game'
+        ? pending.winnerSide === match.mySide
+          ? 'Reportaste que ganaste el game.'
+          : 'Reportaste que ganó ' + match.opponent.tag + '.'
+        : pending.kind === 'final'
+          ? 'Propusiste el resultado final ' + finalTxt + '.'
+          : 'Propusiste deshacer el último game.';
+    return (
+      <section className="sx-alert" role="status">
+        <div className="sx-alert-text">
+          <span className="sx-alert-icon">⏳</span>
+          <div>
+            <strong>
+              Esperando a {match.opponent.tag}
+              <Waiting />
+            </strong>
+            <p>{what} Tu rival tiene que confirmarlo.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const iWon = pending.winnerSide === match.mySide;
+  const title =
+    pending.kind === 'game'
+      ? iWon
+        ? pending.proposerTag + ' dice que GANASTE el game'
+        : pending.proposerTag + ' dice que ganó el game'
+      : pending.kind === 'final'
+        ? pending.proposerTag + ' propone el resultado final'
+        : pending.proposerTag + ' quiere deshacer el último game';
+  const detail =
+    pending.kind === 'final'
+      ? 'Marcador propuesto: ' + finalTxt + ' (tú - rival). ¿Es correcto?'
+      : pending.kind === 'correct'
+        ? 'El marcador volvería al game anterior. ¿Estás de acuerdo?'
+        : '¿Es correcto? Si confirmas, el marcador se actualiza.';
+
+  return (
+    <section className="sx-alert" role="alert">
+      <div className="sx-alert-text">
+        <span className="sx-alert-icon">{pending.kind === 'game' ? (iWon ? '🏆' : '💀') : pending.kind === 'final' ? '🏁' : '↩️'}</span>
+        <div>
+          <strong>{title}</strong>
+          <p>{detail}</p>
+        </div>
+      </div>
+      <div className="sx-alert-actions">
+        <button className="sx-btn sx-btn--success" disabled={busy} onClick={props.onConfirm} type="button">
+          ✓ Confirmar
+        </button>
+        <button className="sx-btn sx-btn--ghost" disabled={busy} onClick={props.onReject} type="button">
+          ✗ Rechazar
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function CloseAlert(props: { close: SalaClose; busy: boolean; onAccept: () => void; onReject: () => void }) {
+  const { close, busy } = props;
+  const outcome = close.tie ? 'Empate: el set se cancela sin puntos.' : 'Gana ' + close.leader + ' con los puntos completos.';
+
+  if (close.byMe) {
+    return (
+      <section className="sx-alert sx-alert--danger" role="status">
+        <div className="sx-alert-text">
+          <span className="sx-alert-icon">🏳️</span>
+          <div>
+            <strong>
+              Cierre propuesto
+              <Waiting />
+            </strong>
+            <p>Si tu rival no responde en 2 minutos: {outcome}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <section className="sx-alert sx-alert--danger" role="alert">
+      <div className="sx-alert-text">
+        <span className="sx-alert-icon">🏳️</span>
+        <div>
+          <strong>{close.requestedBy} propone cerrar el set</strong>
+          <p>{outcome}</p>
+        </div>
+      </div>
+      <div className="sx-alert-actions">
+        <button className="sx-btn sx-btn--danger" disabled={busy} onClick={props.onAccept} type="button">
+          Aceptar cierre
+        </button>
+        <button className="sx-btn sx-btn--ghost" disabled={busy} onClick={props.onReject} type="button">
+          Seguir jugando
+        </button>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Equipo
+// ---------------------------------------------------------------------------
+
+function TeamPanel(props: {
+  team: SalaTeam;
+  locked: boolean;
+  hasProfileTeam: boolean;
+  assets: SalaAssets;
+  onEdit: () => void;
+  onUseProfile: () => void;
+}) {
+  const { team, locked, assets } = props;
+  const slots = [
+    { role: 'POINT', id: team.char1, name: team.char1Name },
+    { role: 'ASSIST', id: team.char2, name: team.char2Name },
+  ];
+  return (
+    <section className="sx-panel">
+      <div className="sx-panel-head">
+        <h2>
+          Tu equipo
+          {locked ? (
+            <span className="sx-tag sx-tag--lock">🔒 SELLADO</span>
+          ) : team.complete ? (
+            <span className="sx-tag sx-tag--ok">✓ CONFIRMADO</span>
+          ) : (
+            <span className="sx-tag sx-tag--todo">SIN CONFIRMAR</span>
+          )}
+        </h2>
+        {team.complete && !locked ? (
+          <button className="sx-btn sx-btn--sm sx-btn--outline-orange" onClick={props.onEdit} type="button">
+            Cambiar
+          </button>
+        ) : null}
+      </div>
+      <div className="sx-panel-body">
+        <div className="sx-team">
+          {slots.map((s) =>
+            team.complete && s.id ? (
+              <button className="sx-fighter" disabled={locked} key={s.role} onClick={props.onEdit} type="button">
+                <img alt={s.name} src={assets.fighterArt(s.id)} />
+                <span>{s.role}</span>
+                <strong>{s.name}</strong>
+              </button>
+            ) : (
+              <button className="sx-fighter sx-fighter--empty" key={s.role} onClick={props.onEdit} type="button">
+                <b>＋</b>
+                <span>{s.role}</span>
+                <strong>Elegir</strong>
+              </button>
+            ),
+          )}
+          <button className="sx-fuse" disabled={locked} onClick={props.onEdit} type="button">
+            {team.complete && team.fuse ? <img alt="" src={assets.fuseIcon(team.fuse)} /> : null}
+            <span>FUSIÓN</span>
+            <strong>{team.complete ? team.fuseName : '—'}</strong>
+          </button>
+        </div>
+
+        {!team.complete ? (
+          <div className="sx-team-foot">
+            <button className="sx-btn sx-btn--primary" onClick={props.onEdit} type="button">
+              Elegir equipo
+            </button>
+            {props.hasProfileTeam ? (
+              <button className="sx-btn sx-btn--ghost" onClick={props.onUseProfile} type="button">
+                ⟳ Usar el de mi perfil
+              </button>
+            ) : null}
+            <span className="sx-hint">Confírmalo antes del primer game.</span>
+          </div>
+        ) : locked ? (
+          <p className="sx-hint" style={{ marginTop: 12 }}>
+            Ya hay games jugados: el equipo quedó sellado para este set.
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function useModalBehavior(onClose: () => void, disabled = false) {
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !disabled) closeRef.current();
+    };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [disabled]);
+}
+
+function TeamModal(props: {
+  initial: { char1: string; char2: string; fuse: string };
+  roster: Roster | null;
+  mains: ProfileTeam | null;
+  serverTeam: SalaTeam;
+  assets: SalaAssets;
+  onCancel: () => void;
+  onSave: (char1: string, char2: string, fuse: string) => Promise<string | null>;
+}) {
+  const { roster, mains, assets } = props;
+  const [char1, setChar1] = useState(props.initial.char1);
+  const [char2, setChar2] = useState(props.initial.char2);
+  const [fuse, setFuse] = useState(props.initial.fuse);
+  const [saving, setSaving] = useState(false);
+  const [note, setNote] = useState<Notice | null>(null);
+  useModalBehavior(props.onCancel, saving);
+
+  const characters = roster?.characters ?? [];
+  const fuses = roster?.fuses ?? [];
+  const nameOf = (id: string, list: RosterEntry[]) => list.find((c) => c.id === id)?.name ?? id;
+
+  // La selección entra como ASSIST y empuja al anterior a POINT.
+  // Tocar un luchador ya elegido lo quita.
+  const toggleCharacter = (id: string) => {
+    if (id === char1) {
+      setChar1(char2);
+      setChar2('');
+    } else if (id === char2) {
+      setChar2('');
+    } else if (!char1) setChar1(id);
+    else if (!char2) setChar2(id);
+    else {
+      setChar1(char2);
+      setChar2(id);
+    }
+  };
+
+  const useProfile = () => {
+    if (!mains?.point || !mains?.assist || !mains?.fuse) {
+      setNote({ text: 'Primero configura tu equipo principal en tu perfil.', ok: false });
+      return;
+    }
+    setChar1(mains.point.id);
+    setChar2(mains.assist.id);
+    setFuse(mains.fuse.id);
+    setNote({ text: 'Equipo del perfil cargado. Confírmalo para sellarlo.', ok: true });
+  };
+
+  const save = async () => {
+    if (!char1 || !char2 || !fuse || saving) return;
+    setSaving(true);
+    setNote(null);
+    const err = await props.onSave(char1, char2, fuse);
+    setSaving(false);
+    if (err) setNote({ text: err, ok: false });
+  };
+
+  const ready = !!(char1 && char2 && fuse);
+
+  return createPortal(
+    <div aria-label="Elegir equipo del set" aria-modal="true" className="sx-modal" onClick={() => !saving && props.onCancel()} role="dialog">
+      <div className="sx-modal-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="sx-modal-head">
+          <div>
+            <small>TU EQUIPO PARA ESTE SET</small>
+            <h3>Elige tu dúo y su fusión</h3>
+          </div>
+          <button aria-label="Cerrar" className="sx-modal-close" disabled={saving} onClick={props.onCancel} type="button">
+            ✕
+          </button>
+        </div>
+
+        <div className="sx-modal-body">
+          <div className="sx-modal-label">
+            <span>LUCHADORES</span>
+            <em>
+              POINT: {char1 ? nameOf(char1, characters) : '—'} · ASSIST: {char2 ? nameOf(char2, characters) : '—'}
+            </em>
+          </div>
+          {characters.length === 0 ? <p className="sx-hint">Cargando luchadores…</p> : null}
+          <div className="sx-pick">
+            {characters.map((f) => {
+              const role = f.id === char1 ? 'POINT' : f.id === char2 ? 'ASSIST' : null;
+              return (
+                <button className={'sx-pick-item' + (role ? ' is-on' : '')} key={f.id} onClick={() => toggleCharacter(f.id)} type="button">
+                  <img alt="" loading="lazy" src={assets.fighterArt(f.id)} />
+                  {role ? <span className="sx-pick-badge">{role}</span> : null}
+                  <strong>{f.name}</strong>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="sx-modal-label">
+            <span>FUSIÓN</span>
+            <em>{fuse ? nameOf(fuse, fuses) : '—'}</em>
+          </div>
+          <div className="sx-fuses">
+            {fuses.map((f) => (
+              <button className={'sx-fuse-item' + (fuse === f.id ? ' is-on' : '')} key={f.id} onClick={() => setFuse(f.id)} type="button">
+                <img alt="" src={assets.fuseIcon(f.id)} />
+                <span>{f.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="sx-modal-foot">
+          <button className="sx-btn sx-btn--success sx-btn--lg" disabled={saving || !ready} onClick={save} type="button">
+            {saving ? 'Guardando…' : 'Confirmar equipo'}
+          </button>
+          <button className="sx-btn sx-btn--ghost" disabled={saving} onClick={useProfile} type="button">
+            Usar el de mi perfil
+          </button>
+          <span className="sx-spacer" />
+          <button className="sx-btn sx-btn--ghost" disabled={saving} onClick={props.onCancel} type="button">
+            Cancelar
+          </button>
+          {note ? <span className={'sx-modal-note ' + (note.ok ? 'is-ok' : 'is-bad')}>{note.text}</span> : null}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Reporte de games
+// ---------------------------------------------------------------------------
+
+function ReportPanel(props: {
+  match: SalaMatch;
+  busy: boolean;
+  hasHistory: boolean;
+  onWin: () => void;
+  onLose: () => void;
+  onCorrect: () => void;
+  onFinal: () => void;
+  onClose: () => void;
+}) {
+  const { match, busy } = props;
+  const { me, opponent: opp } = match;
+  const blocked = busy || !!match.pending;
+  const gameNo = me.score + opp.score + 1;
+
+  // "Cerrar set" pide un segundo toque para evitar errores.
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const id = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(id);
+  }, [armed]);
+
+  return (
+    <section className="sx-panel">
+      <div className="sx-panel-head">
+        <h2>
+          Reportar game {gameNo}
+          <small>{match.pending ? 'ESPERANDO CONFIRMACIÓN' : '¿QUIÉN GANÓ?'}</small>
+        </h2>
+      </div>
+      <div className="sx-panel-body">
+        <div className="sx-report">
+          <button className="sx-win" disabled={blocked} onClick={props.onWin} type="button">
+            <em>🏆</em>
+            <strong>Gané yo</strong>
+            <small>
+              Tu marcador pasa a {me.score + 1} - {opp.score}
+            </small>
+          </button>
+          <button className="sx-win sx-win--opp" disabled={blocked} onClick={props.onLose} type="button">
+            <em>💀</em>
+            <strong>Ganó {opp.tag}</strong>
+            <small>
+              Tu marcador pasa a {me.score} - {opp.score + 1}
+            </small>
+          </button>
+        </div>
+        <div className="sx-more">
+          <button className="sx-btn sx-btn--sm sx-btn--ghost" disabled={blocked || !props.hasHistory} onClick={props.onCorrect} type="button">
+            ↩ Corregir último
+          </button>
+          <button className="sx-btn sx-btn--sm sx-btn--ghost" disabled={blocked} onClick={props.onFinal} type="button">
+            🏁 Resultado final
+          </button>
+          <span className="sx-spacer" />
+          <button
+            className={'sx-btn sx-btn--sm sx-btn--outline-danger' + (armed ? ' is-armed' : '')}
+            disabled={busy || !!match.close}
+            onClick={() => {
+              if (!armed) {
+                setArmed(true);
+                return;
+              }
+              setArmed(false);
+              props.onClose();
+            }}
+            type="button"
+          >
+            {armed ? '¿Seguro? Toca otra vez' : '🏳 Cerrar set'}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalModal(props: {
+  ft: number;
+  me: SalaPlayer;
+  opp: SalaPlayer;
+  onCancel: () => void;
+  onSend: (mine: number, theirs: number) => void;
+}) {
+  const { ft, me, opp } = props;
+  const [mine, setMine] = useState(me.score);
+  const [theirs, setTheirs] = useState(opp.score);
+  useModalBehavior(props.onCancel);
+
+  // Exactamente uno de los dos llega a FT.
+  const valid = (mine === ft) !== (theirs === ft) && mine <= ft && theirs <= ft;
+  const clamp = (n: number) => Math.min(ft, Math.max(0, n));
+
+  const stepper = (label: string, value: number, set: (n: number) => void, tone: 'me' | 'opp') => (
+    <div className={'sx-stepper' + (tone === 'opp' ? ' sx-stepper--opp' : '')}>
+      <span>{label}</span>
+      <div className="sx-stepper-ctrl">
+        <button aria-label={'Restar a ' + label} disabled={value <= 0} onClick={() => set(clamp(value - 1))} type="button">
+          −
+        </button>
+        <strong>{value}</strong>
+        <button aria-label={'Sumar a ' + label} disabled={value >= ft} onClick={() => set(clamp(value + 1))} type="button">
+          +
+        </button>
+      </div>
+    </div>
+  );
+
+  return createPortal(
+    <div aria-label="Resultado final" aria-modal="true" className="sx-modal" onClick={props.onCancel} role="dialog">
+      <div className="sx-modal-panel sx-modal-panel--sm" onClick={(e) => e.stopPropagation()}>
+        <div className="sx-modal-head">
+          <div>
+            <small>REPORTE DIRECTO · FT {ft}</small>
+            <h3>Resultado final</h3>
+          </div>
+          <button aria-label="Cerrar" className="sx-modal-close" onClick={props.onCancel} type="button">
+            ✕
+          </button>
+        </div>
+        <div className="sx-modal-body">
+          <div className="sx-final">
+            {stepper('Tú', mine, setMine, 'me')}
+            <span>-</span>
+            {stepper(opp.tag, theirs, setTheirs, 'opp')}
+          </div>
+          <p className={'sx-hint' + (valid ? '' : ' is-bad')}>
+            {valid
+              ? 'Tu rival tendrá que confirmar este marcador.'
+              : 'Uno de los dos tiene que llegar exactamente a ' + ft + '.'}
+          </p>
+        </div>
+        <div className="sx-modal-foot">
+          <button className="sx-btn sx-btn--success sx-btn--lg" disabled={!valid} onClick={() => props.onSend(mine, theirs)} type="button">
+            Enviar resultado
+          </button>
+          <span className="sx-spacer" />
+          <button className="sx-btn sx-btn--ghost" onClick={props.onCancel} type="button">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Código de sala
+// ---------------------------------------------------------------------------
+
+function RoomCodePanel(props: { roomCode: string; busy: boolean; onSave: (code: string) => Promise<boolean> }) {
+  const { roomCode, busy } = props;
+  const [editing, setEditing] = useState(!roomCode);
+  const [draft, setDraft] = useState(roomCode);
+  const [copied, setCopied] = useState(false);
+
+  // Si el rival guarda/cambia el código, se refleja aquí.
+  const [prevCode, setPrevCode] = useState(roomCode);
+  if (prevCode !== roomCode) {
+    setPrevCode(roomCode);
+    setDraft(roomCode);
+    setEditing(!roomCode);
+  }
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => setCopied(false), 1800);
+    return () => clearTimeout(id);
+  }, [copied]);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(roomCode);
+      setCopied(true);
+    } catch {
+      /* el navegador bloqueó el portapapeles */
+    }
+  };
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const code = draft.trim();
+    if (!code || code === roomCode) return;
+    const ok = await props.onSave(code);
+    if (ok) setEditing(false);
+  };
+
+  return (
+    <section className="sx-panel">
+      <div className="sx-panel-head">
+        <h2>Código de sala</h2>
+        {roomCode && !editing ? (
+          <button className="sx-btn sx-btn--sm sx-btn--ghost" onClick={() => setEditing(true)} type="button">
+            Editar
+          </button>
+        ) : null}
+      </div>
+      <div className="sx-panel-body" style={{ display: 'grid', gap: 10 }}>
+        {roomCode && !editing ? (
+          <div className="sx-code">
+            <strong>{roomCode}</strong>
+            <button className={'sx-btn sx-btn--sm ' + (copied ? 'sx-btn--success' : 'sx-btn--primary')} onClick={copy} type="button">
+              {copied ? '¡Copiado!' : 'Copiar'}
+            </button>
+          </div>
+        ) : (
+          <form className="sx-row" onSubmit={submit}>
+            <input
+              aria-label="Código de sala de 2XKO"
+              autoComplete="off"
+              className="sx-input"
+              maxLength={32}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Pega el código de 2XKO"
+              value={draft}
+            />
+            <button className="sx-btn sx-btn--primary" disabled={busy || !draft.trim() || draft.trim() === roomCode} type="submit">
+              Guardar
+            </button>
+          </form>
+        )}
+        <p className="sx-hint">
+          {roomCode ? 'Entra a esta sala en 2XKO para jugar el set.' : 'Quien cree la sala en 2XKO pega aquí el código para su rival.'}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Chat
+// ---------------------------------------------------------------------------
+
+function formatTime(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+}
+
+function ChatPanel(props: { messages: SalaMessage[]; opponentTag: string; onSend: (text: string) => Promise<boolean> }) {
+  const { messages } = props;
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const stickRef = useRef(true);
+
+  // Solo baja automáticamente si ya estabas al final (no te mueve si lees arriba).
+  useEffect(() => {
+    const el = listRef.current;
+    if (el && stickRef.current) el.scrollTop = el.scrollHeight;
+  }, [messages.length]);
+
+  const onScroll = () => {
+    const el = listRef.current;
+    if (el) stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  };
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const text = draft.trim();
+    if (!text || sending) return;
+    setSending(true);
+    setDraft('');
+    stickRef.current = true;
+    const ok = await props.onSend(text);
+    if (!ok) setDraft(text); // no se pierde lo escrito si falla
+    setSending(false);
+  };
+
+  return (
+    <section className="sx-panel sx-chat">
+      <div className="sx-panel-head">
+        <h2>
+          Chat del set <small>CON {props.opponentTag.toUpperCase()}</small>
+        </h2>
+      </div>
+      <div className="sx-chat-list" onScroll={onScroll} ref={listRef}>
+        {messages.length === 0 ? (
+          <div className="sx-chat-empty">
+            <span>☕</span>
+            Sin mensajes todavía. Saluda a tu rival.
+          </div>
+        ) : (
+          messages.map((m) => (
+            <div className={'sx-msg ' + (m.mine ? 'sx-msg--mine' : 'sx-msg--theirs')} key={m.id}>
+              <span className="sx-msg-meta">
+                {!m.mine ? <b>{m.senderTag}</b> : null}
+                {formatTime(m.createdAt)}
+              </span>
+              <div className="sx-msg-bubble">{m.content}</div>
+            </div>
+          ))
+        )}
+      </div>
+      <form className="sx-chat-form" onSubmit={submit}>
+        <input
+          aria-label="Mensaje"
+          className="sx-input"
+          maxLength={500}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Escribe un mensaje…"
+          value={draft}
+        />
+        <button className="sx-btn sx-btn--primary" disabled={!draft.trim() || sending} type="submit">
+          Enviar
+        </button>
+      </form>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pantallas fuera de la sala (login, vacío, error, final)
+// ---------------------------------------------------------------------------
+
+export function SalaScreen(props: { icon?: ReactNode; title: ReactNode; titleClass?: string; children?: ReactNode; actions?: ReactNode }) {
+  return (
+    <main className="sx sx-screen">
+      <div className="sx-screen-card">
+        {props.icon ? <div className="sx-screen-icon">{props.icon}</div> : null}
+        <h1 className={props.titleClass}>{props.title}</h1>
+        {props.children}
+        {props.actions ? <div className="sx-screen-actions">{props.actions}</div> : null}
+      </div>
+    </main>
+  );
+}
+
+export function SalaLoading({ label = 'Cargando la sala…' }: { label?: string }) {
+  return (
+    <main className="sx sx-screen">
+      <div className="sx-screen-card">
+        <div className="sx-loader" />
+        <p>{label}</p>
+      </div>
+    </main>
+  );
+}
+
+export function SalaFinishedScreen(props: { finished: SalaFinished; assets: SalaAssets; Link: SalaLink; extra?: ReactNode }) {
+  const { finished: f, assets, Link } = props;
+  if (f.status === 'CANCELLED') {
+    return (
+      <SalaScreen
+        icon="🚫"
+        title="Set cancelado"
+        actions={
+          <>
+            <Link href="/matchmaking" className="sx-btn sx-btn--success sx-btn--lg">
+              Volver al matchmaking
+            </Link>
+            {props.extra}
+          </>
+        }
+      >
+        <p>
+          Marcador al cancelar: {f.myScore} - {f.oppScore}. Nadie suma ni pierde puntos.
+        </p>
+      </SalaScreen>
+    );
+  }
+  const won = !!f.won;
+  const delta = f.delta ?? 0;
+  return (
+    <SalaScreen
+      icon={won ? '🏆' : '💀'}
+      title={won ? '¡Victoria!' : 'Derrota'}
+      titleClass={won ? 'is-win' : 'is-loss'}
+      actions={
+        <>
+          <Link href="/matchmaking" className="sx-btn sx-btn--success sx-btn--lg">
+            Jugar otro set
+          </Link>
+          <Link href="/" className="sx-btn sx-btn--ghost sx-btn--lg">
+            Ver ranking
+          </Link>
+          {props.extra}
+        </>
+      }
+    >
+      <div className="sx-result">
+        {f.myScore} - {f.oppScore}
+      </div>
+      <p>
+        <span className={'sx-delta ' + (delta >= 0 ? 'is-up' : 'is-down')}>
+          {delta >= 0 ? '+' + delta : delta} pts
+        </span>{' '}
+        · ahora tienes {f.myPoints ?? '—'} pts
+      </p>
+      {f.rank ? <img alt={f.rank.displayName} className="sx-screen-rank" src={assets.rankIcon(f.rank.iconPath)} /> : null}
+    </SalaScreen>
+  );
+}
