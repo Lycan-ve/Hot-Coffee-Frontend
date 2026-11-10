@@ -11,12 +11,14 @@ type MainChar = { id: string; name: string };
 /**
  * MainsPanel: equipo principal del jugador (sus 2 personajes y su fusión),
  * con el estilo de la maqueta 2XKO.
- * - Perfil propio: vista previa en vivo + selector con los íconos del roster.
+ * - Perfil propio: muestra el equipo guardado; el botón CAMBIAR EQUIPO
+ *   despliega la selección de fighters y fuse (GUARDAR / CANCELAR).
  * - Perfil ajeno: vista de solo lectura del equipo configurado.
  */
 export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
   const saved = me.mains;
   const [roster, setRoster] = useState<{ characters: RosterEntry[]; fuses: RosterEntry[] } | null>(null);
+  const [editing, setEditing] = useState(false);
   const [char1, setChar1] = useState(saved?.point?.id ?? "");
   const [char2, setChar2] = useState(saved?.assist?.id ?? "");
   const [fuse, setFuse] = useState(saved?.fuse?.id ?? "");
@@ -36,6 +38,12 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
   const fuseChar = pick(fuse, saved?.fuse, roster?.fuses);
   const complete = !!(point && assist && fuseChar);
 
+  const resetToSaved = () => {
+    setChar1(saved?.point?.id ?? "");
+    setChar2(saved?.assist?.id ?? "");
+    setFuse(saved?.fuse?.id ?? "");
+  };
+
   const save = async () => {
     if (!char1 || !char2 || !fuse || saving) return;
     setSaving(true);
@@ -49,6 +57,7 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
     }
     setOk(true);
     setNotice("¡Equipo guardado!");
+    setEditing(false);
   };
 
   const characterChips = (selected: string, choose: (id: string) => void) =>
@@ -104,53 +113,76 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
         {complete
           ? (point!.name + " / " + assist!.name + " - " + fuseChar!.name).toUpperCase()
           : own
-            ? "ELIGE TUS DOS FIGHTERS Y SU FUSE"
+            ? editing
+              ? "ELIGE TUS DOS FIGHTERS Y SU FUSE"
+              : "AÚN NO HAS CONFIGURADO TU EQUIPO"
             : "SIN EQUIPO CONFIGURADO"}
       </p>
 
       {own ? (
-        <>
-          <div className="mains-groups">
-            <div className="mains-group">
-              <small>FIGHTER 1 · POINT</small>
-              <div className="mains-chips">{characterChips(char1, setChar1)}</div>
-            </div>
-            <div className="mains-group">
-              <small>FIGHTER 2 · ASSIST</small>
-              <div className="mains-chips">{characterChips(char2, setChar2)}</div>
-            </div>
-            <div className="mains-group">
-              <small>FUSE</small>
-              <div className="mains-chips">
-                {roster ? (
-                  roster.fuses.map((f) => (
-                    <button
-                      key={f.id}
-                      type="button"
-                      title={f.name}
-                      aria-label={f.name}
-                      className={"mains-chip fuse" + (fuse === f.id ? " on" : "")}
-                      onClick={() => setFuse(f.id)}
-                    >
-                      <img src={fuseIconUrl(f.id)} alt={f.name} />
-                    </button>
-                  ))
-                ) : null}
+        editing ? (
+          <>
+            <div className="mains-groups">
+              <div className="mains-group">
+                <small>FIGHTER 1 · POINT</small>
+                <div className="mains-chips">{characterChips(char1, setChar1)}</div>
+              </div>
+              <div className="mains-group">
+                <small>FIGHTER 2 · ASSIST</small>
+                <div className="mains-chips">{characterChips(char2, setChar2)}</div>
+              </div>
+              <div className="mains-group">
+                <small>FUSE</small>
+                <div className="mains-chips">
+                  {roster ? (
+                    roster.fuses.map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        title={f.name}
+                        aria-label={f.name}
+                        className={"mains-chip fuse" + (fuse === f.id ? " on" : "")}
+                        onClick={() => setFuse(f.id)}
+                      >
+                        <img src={fuseIconUrl(f.id)} alt={f.name} />
+                      </button>
+                    ))
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
+            <div className="mains-actions">
+              <button
+                type="button"
+                className="mains-save"
+                disabled={saving || !char1 || !char2 || !fuse}
+                onClick={save}
+              >
+                {saving ? "GUARDANDO…" : "GUARDAR EQUIPO"}
+              </button>
+              <button
+                type="button"
+                className="mains-cancel"
+                disabled={saving}
+                onClick={() => {
+                  resetToSaved();
+                  setNotice(null);
+                  setEditing(false);
+                }}
+              >
+                CANCELAR
+              </button>
+              {notice && <span className={"mains-note " + (ok ? "success" : "danger")}>{notice}</span>}
+            </div>
+          </>
+        ) : (
           <div className="mains-actions">
-            <button
-              type="button"
-              className="mains-save"
-              disabled={saving || !char1 || !char2 || !fuse}
-              onClick={save}
-            >
-              {saving ? "GUARDANDO…" : "GUARDAR EQUIPO"}
+            <button type="button" className="mains-save" onClick={() => setEditing(true)}>
+              {complete ? "CAMBIAR EQUIPO" : "CONFIGURAR EQUIPO"}
             </button>
             {notice && <span className={"mains-note " + (ok ? "success" : "danger")}>{notice}</span>}
           </div>
-        </>
+        )
       ) : null}
     </article>
   );
