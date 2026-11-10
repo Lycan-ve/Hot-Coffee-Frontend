@@ -196,7 +196,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--gold);
+  color: var(--blue);
   font:
     600 11px "Inter",
     sans-serif;
@@ -1722,16 +1722,6 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   font: 700 7px "Inter";
   letter-spacing: 1px;
   transition: 180ms ease;
-}
-.team-card .panel-heading button:hover,
-.team-card .panel-heading button.active {
-  color: #fff;
-  border-color: var(--orange);
-  background: var(--orange);
-}
-.team-card .panel-heading button:disabled {
-  cursor: wait;
-  opacity: 0.55;
 }
 .team-body {
   min-height: 314px;

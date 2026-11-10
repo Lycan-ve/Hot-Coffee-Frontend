@@ -99,11 +99,6 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
       <div className="panel-heading">
         <div>
           <span className="eyebrow">EQUIPO PRINCIPAL</span>
-          <h3>
-            {complete
-              ? point!.name.toUpperCase() + " / " + assist!.name.toUpperCase()
-              : "SIN EQUIPO"}
-          </h3>
         </div>
         {own ? (
           <button onClick={() => setEditing(true)} type="button">
