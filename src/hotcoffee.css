@@ -196,7 +196,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--blue);
+  color: var(--gold);
   font:
     600 11px "Inter",
     sans-serif;
@@ -277,7 +277,7 @@
   gap: 12px;
 }
 .panel-heading h3 {
-  color: var(--white);
+  color: var(--blue);
   font: 600 19px "Barlow Condensed";
   letter-spacing: 0.6px;
 }
@@ -1699,7 +1699,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--gold);
+  color: var(--blue);
   font: 600 11px "Inter";
   letter-spacing: 1.4px;
 }
