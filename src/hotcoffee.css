@@ -1708,7 +1708,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   padding: 0 18px;
 }
 .team-card .panel-heading h3 {
-  color: #fff;
+  color: var(--white);
   margin-top: 3px;
   font: 600 19px "Barlow Condensed";
   letter-spacing: 0.6px;
@@ -1716,16 +1716,16 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 .team-card .panel-heading button {
   height: 30px;
   padding: 0 13px;
-  color: var(--orange);
-  border: 1px solid rgba(180, 77, 29, 0.45);
-  background: transparent;
+  color: var(--white);
+  border: 1px solid var(--panel);
+  background: var(--orange);
   font: 700 7px "Inter";
   letter-spacing: 1px;
   transition: 180ms ease;
 }
+
 .team-card .panel-heading button:hover {
-  color: var(--panel);
-  border-color: var(--orange);
+  background:  #d3642f;
 }
 .team-body {
   min-height: 314px;
