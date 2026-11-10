@@ -79,6 +79,13 @@ export interface MeResponse {
   tournaments?: ProfileTournament[];
   /** Equipo principal (mains) del jugador, si lo configuró en la web. */
   mains?: ProfileTeam;
+  /** Estado de Discord en vivo (lo escribe el bot vía Gateway). */
+  presence?: {
+    discordId: string;
+    status: "online" | "idle" | "dnd" | "offline";
+    activity?: string;
+    updatedAt?: string;
+  };
 }
 
 /**

@@ -712,6 +712,57 @@
 .online-dot {
   margin-left: auto;
 }
+/* Estado de Discord en vivo (presencia): punto y etiqueta por estado. */
+.online-dot[data-status="idle"] {
+  background: var(--gold);
+  box-shadow: 0 0 9px var(--gold);
+}
+.online-dot[data-status="dnd"] {
+  background: var(--danger);
+  box-shadow: 0 0 9px var(--danger);
+}
+.online-dot[data-status="offline"] {
+  background: var(--dim);
+  box-shadow: none;
+}
+.presence-status {
+  display: block;
+  margin-top: 3px;
+  color: var(--success);
+  font: 700 8px "Inter";
+  letter-spacing: 1.2px;
+}
+.presence-status[data-status="idle"] {
+  color: var(--gold);
+}
+.presence-status[data-status="dnd"] {
+  color: var(--danger);
+}
+.presence-status[data-status="offline"] {
+  color: var(--dim);
+}
+.presence-activity {
+  margin: 0 18px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 231, 135, 0.25);
+  background: rgba(255, 231, 135, 0.06);
+  color: var(--cream);
+  font: 700 9px "Inter";
+  letter-spacing: 1.2px;
+}
+.presence-activity i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+.presence-activity strong {
+  color: var(--gold);
+}
 .duo-record {
   display: grid;
   grid-template-columns: 1fr 1fr;

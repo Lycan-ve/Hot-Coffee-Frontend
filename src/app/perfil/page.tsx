@@ -34,6 +34,16 @@ export default function PerfilPage() {
     });
   }, []);
 
+  // Refresco en vivo del estado de Discord (presencia) cada 30 s.
+  useEffect(() => {
+    if (status !== "ok") return;
+    const id = setInterval(async () => {
+      const d = await fetchMe();
+      if (d) setMe(d);
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [status]);
+
   return (
     <AppShell>
       {status === "ok" && me ? (

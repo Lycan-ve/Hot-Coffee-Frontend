@@ -98,6 +98,14 @@ function TournamentLink({ t, featured }: { t: ProfileTournament; featured?: bool
 export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
   const [showAll, setShowAll] = useState(false);
   const name = displayName(me);
+  // Estado de Discord en vivo: punto de color, etiqueta y JUGANDO X.
+  const presenceStatus = me.presence?.status ?? "offline";
+  const presenceLabel =
+    presenceStatus === "online" ? "EN LÍNEA"
+    : presenceStatus === "idle" ? "INACTIVO"
+    : presenceStatus === "dnd" ? "NO MOLESTAR"
+    : "DESCONECTADO";
+  const activity = presenceStatus === "offline" ? "" : (me.presence?.activity ?? "").trim();
   const { stats, rank } = me;
   const fights = me.fights ?? [];
   const tournaments = me.tournaments ?? [];
@@ -245,9 +253,20 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
             <div>
               <strong>{name}</strong>
               <span>@{me.user.username}</span>
+              <small className="presence-status" data-status={presenceStatus}>
+                {presenceLabel}
+              </small>
             </div>
-            <span className="online-dot" />
+            <span className="online-dot" data-status={presenceStatus} />
           </div>
+          {activity ? (
+            <div className="presence-activity">
+              <i />
+              <span>
+                JUGANDO <strong>{activity.toUpperCase()}</strong>
+              </span>
+            </div>
+          ) : null}
           <div className="duo-record">
             <div>
               <small>SETS</small>
