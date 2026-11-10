@@ -212,6 +212,7 @@
   text-transform: none;
 }
 .section-title h1 {
+  color: var(--blue);
   margin: 13px 0 4px;
   font:
     700 clamp(50px, 4.1vw, 76px)/0.85 "Barlow Condensed",
@@ -290,7 +291,7 @@
   align-items: stretch;
 }
 .player-card {
-  min-height: 510px;
+  min-height: 380px;
   overflow: hidden;
   border-color: rgba(180, 77, 29, 0.33);
   background: var(--panel-2);
@@ -480,48 +481,6 @@
   font-size: 11px;
   letter-spacing: 0.4px;
 }
-.rank-stats {
-  min-height: 150px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--line);
-  background: rgba(10, 7, 5, 0.35);
-}
-.rank-stats > div {
-  padding: 23px 10px 18px 20px;
-  border-right: 1px solid var(--line);
-}
-.rank-stats > div:last-child {
-  border-right: 0;
-}
-.rank-stats span,
-.rank-stats strong,
-.rank-stats small {
-  display: block;
-}
-.rank-stats span {
-  color: var(--gold);
-  font: 700 7px "Inter";
-  letter-spacing: 1.2px;
-}
-.rank-stats strong {
-  margin: 9px 0 7px;
-  font: 700 30px "Barlow Condensed";
-}
-.rank-stats strong.gold {
-  color: var(--gold);
-}
-.rank-stats > div:nth-child(1) strong {
-  color: var(--success);
-}
-.rank-stats > div:nth-child(2) strong {
-  color: var(--danger);
-}
-.rank-stats small {
-  color: var(--dim);
-  font-size: 7px;
-  letter-spacing: 0.6px;
-}
 .duo-record div {
   padding: 14px 18px;
   border-right: 1px solid var(--line);
@@ -550,7 +509,7 @@
 }
 .stat-card small {
   display: block;
-  color: var(--hc-muted);
+  color: var(--gold);
   font-size: 8px;
   letter-spacing: 1px;
 }
@@ -866,7 +825,7 @@
   padding: 16px 18px;
 }
 .roster > small {
-  color: var(--dim);
+  color: var(--gold);
   font-size: 8px;
   letter-spacing: 1px;
 }
@@ -977,6 +936,7 @@
   }
 }
 .queue-console h2 {
+  color: var(--blue);
   font: 700 47px/1 "Barlow Condensed";
   letter-spacing: 0.5px;
   position: relative;
@@ -1093,7 +1053,7 @@
   display: block;
 }
 .rule small {
-  color: var(--dim);
+  color: var(--gold);
   font-size: 8px;
   letter-spacing: 0.8px;
 }
@@ -1344,12 +1304,6 @@ footer strong {
   }
   .rank-copy h2 {
     font-size: 40px;
-  }
-  .rank-stats > div {
-    padding: 14px 8px 12px 11px;
-  }
-  .rank-stats small {
-    display: none;
   }
   .stat-card {
     min-height: 85px;
@@ -1660,12 +1614,12 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 }
 .team-card .panel-heading {
   min-height: 64px;
-  padding: 0 20px;
+  padding: 0 18px;
 }
 .team-card .panel-heading h3 {
   margin-top: 3px;
-  font: 700 22px/1 "Barlow Condensed";
-  letter-spacing: 0.5px;
+  font: 600 19px "Barlow Condensed";
+  letter-spacing: 0.6px;
 }
 .team-card .panel-heading button {
   height: 30px;
@@ -1798,7 +1752,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
 }
 .traits span {
   padding: 5px 7px;
-  color: #9c9089;
+  color: var(--gold);
   border: 1px solid var(--line);
   font: 700 6px "Inter";
   letter-spacing: 0.7px;

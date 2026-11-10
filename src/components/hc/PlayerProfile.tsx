@@ -208,23 +208,6 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
               <p className="identity-tag">@{me.user.username}</p>
             </div>
           </div>
-          <div className="rank-stats">
-            <div>
-              <span>VICTORIAS</span>
-              <strong>{String(stats.wins).padStart(2, "0")}</strong>
-              <small>sets confirmados</small>
-            </div>
-            <div>
-              <span>DERROTAS</span>
-              <strong>{String(stats.losses).padStart(2, "0")}</strong>
-              <small>{games} sets jugados</small>
-            </div>
-            <div>
-              <span>WIN RATE</span>
-              <strong className="gold">{winRate}%</strong>
-              <small>rendimiento total</small>
-            </div>
-          </div>
         </article>
 
         <MainsPanel me={me} own={own} />
