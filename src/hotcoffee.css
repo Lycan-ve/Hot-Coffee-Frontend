@@ -15,6 +15,7 @@
   --line: rgba(255, 255, 255, 0.08);
   --hc-muted: rgba(255, 255, 255, 0.45);
   --dim: rgba(255, 255, 255, 0.25);
+  --brown: #a86f3f;
 }
 
 @layer base {
@@ -223,6 +224,13 @@
   color: var(--hc-muted);
   font-size: 14px;
 }
+.profile-hero .section-title h1 {
+  color: var(--brown);
+}
+.profile-hero .section-title h1 em {
+  color: #fff;
+  font-style: normal;
+}
 .hero-motto {
   text-align: right;
   align-self: center;
@@ -411,28 +419,35 @@
   font: 700 7px "Inter";
   letter-spacing: 1.6px;
 }
-.rank-copy h2 {
-  color: var(--blue);
-  margin: 3px 0 0;
-  font: 800 clamp(40px, 3.1vw, 54px)/1 "Barlow Condensed";
+.player-name {
+  margin: 6px 0 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: #fff;
+  font: 700 38px/1 "Barlow Condensed";
   letter-spacing: 1px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-.league-points {
-  margin-top: 3px;
-  color: #b4a8a0;
-  font: 600 15px "Barlow Condensed";
-  letter-spacing: 0.5px;
+.rank-line {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font: 700 24px/1 "Barlow Condensed";
+  white-space: nowrap;
 }
-.league-points strong {
-  color: var(--gold);
-  font-size: 23px;
-}
-.league-points i {
+.rank-line i {
   width: 4px;
   height: 4px;
-  margin: 0 9px 2px;
-  display: inline-block;
+  border-radius: 50%;
   background: var(--hc-muted);
+}
+.rank-line b {
+  color: var(--hc-muted);
+  font: 600 13px "Barlow Condensed";
+  letter-spacing: 0.5px;
 }
 .progress-head {
   margin-top: 24px;
@@ -453,15 +468,16 @@
   color: var(--gold);
 }
 .progress-bar {
-  height: 5px;
+  height: 7px;
   margin-top: 8px;
+  border-radius: 999px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.12);
 }
 .progress-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #e8aa25, var(--gold));
+  background: linear-gradient(90deg, var(--rank-accent, #ffe787), rgba(255, 255, 255, 0.9));
   box-shadow: 0 0 12px rgba(243, 207, 99, 0.55);
   transition: width 0.25s ease;
 }
@@ -480,6 +496,62 @@
   color: var(--hc-muted);
   font-size: 11px;
   letter-spacing: 0.4px;
+}
+.identity-sep {
+  width: 1px;
+  height: 150px;
+  margin: 0 4px 0 22px;
+  flex: 0 0 auto;
+  background: var(--line);
+}
+.stats-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 0 10px 0 16px;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.stat-item b {
+  font: 700 34px/1 "Barlow Condensed";
+  color: #fff;
+}
+.stat-item:nth-child(1) b {
+  color: var(--success);
+}
+.stat-item:nth-child(2) b {
+  color: var(--danger);
+}
+.stat-item b.wr {
+  color: var(--gold);
+}
+.stat-item small {
+  margin-top: 3px;
+  color: var(--gold);
+  font: 700 8px "Inter";
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.top-chip {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 3px 9px;
+  color: var(--gold);
+  border: 1px solid rgba(255, 231, 135, 0.55);
+  background: rgba(0, 0, 0, 0.75);
+  font: 700 11px "Barlow", sans-serif;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
 }
 .duo-record div {
   padding: 14px 18px;
@@ -1302,8 +1374,26 @@ footer strong {
     width: 98px;
     height: 110px;
   }
-  .rank-copy h2 {
-    font-size: 40px;
+  .player-name {
+    font-size: 30px;
+  }
+  .rank-line {
+    font-size: 19px;
+  }
+  .player-identity {
+    flex-wrap: wrap;
+  }
+  .identity-sep {
+    display: none;
+  }
+  .stats-col {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 14px;
+    margin-top: 14px;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--line);
   }
   .stat-card {
     min-height: 85px;
@@ -1617,6 +1707,7 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   padding: 0 18px;
 }
 .team-card .panel-heading h3 {
+  color: #fff;
   margin-top: 3px;
   font: 600 19px "Barlow Condensed";
   letter-spacing: 0.6px;

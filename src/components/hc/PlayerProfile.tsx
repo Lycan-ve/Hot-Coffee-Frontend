@@ -137,7 +137,8 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
         <div className="hero-copy">
           <SectionTitle
             eyebrow="IDENTIDAD COMPETITIVA / 2026"
-            title={own ? "BUENAS, " + name.toUpperCase() + "." : "PERFIL DE " + name.toUpperCase()}
+            title={own ? "BUENAS," : "PERFIL DE"}
+            accent={name.toUpperCase() + "."}
             copy={own ? "Tu trayectoria, tu rango y cada pelea que te trajo hasta aquí." : `La trayectoria competitiva de ${name}.`}
           />
         </div>
@@ -173,15 +174,23 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   if (event.currentTarget.src !== fb) event.currentTarget.src = fb;
                 }}
               />
+              {rank.isRp && stats.rankingPosition > 0 ? (
+                <span className="top-chip">TOP {String(stats.rankingPosition).padStart(2, "0")}</span>
+              ) : null}
             </div>
             <div className="rank-copy">
               <span>RANGO ACTUAL</span>
-              <h2>{rank.displayName.toUpperCase()}</h2>
-              <div className="league-points">
-                <strong>{rank.isRp ? rank.rp : rank.lp}</strong> {rank.isRp ? "RP" : "LP"}
+              <div className="player-name">{name}</div>
+              <div className="rank-line">
+                <span>{rank.displayName.toUpperCase()}</span>
+                <i />
+                <strong>
+                  {rank.isRp ? rank.rp : rank.lp} {rank.isRp ? "RP" : "LP"}
+                </strong>
                 {stats.rankingPosition > 0 && (
                   <>
-                    <i /> #{String(stats.rankingPosition).padStart(2, "0")}
+                    <i />
+                    <b>#{String(stats.rankingPosition).padStart(2, "0")}</b>
                   </>
                 )}
               </div>
@@ -206,6 +215,21 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                 )}
               </p>
               <p className="identity-tag">@{me.user.username}</p>
+            </div>
+            <div className="identity-sep" />
+            <div className="stats-col">
+              <div className="stat-item">
+                <b>{String(stats.wins).padStart(2, "0")}</b>
+                <small>VICTORIAS</small>
+              </div>
+              <div className="stat-item">
+                <b>{String(stats.losses).padStart(2, "0")}</b>
+                <small>DERROTAS</small>
+              </div>
+              <div className="stat-item">
+                <b className="wr">{winRate}%</b>
+                <small>WIN RATE</small>
+              </div>
             </div>
           </div>
         </article>
