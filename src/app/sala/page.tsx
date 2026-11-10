@@ -352,7 +352,7 @@ export default function SalaPage() {
 
   return (
     <AppShell><main className="page hc-sala min-h-[60vh]  px-4 py-8 text-white">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
         <header className="flex items-center justify-between">
           <Link href="/matchmaking" className="text-sm text-white/40 transition hover:text-white/70">
             ← Volver
@@ -552,6 +552,10 @@ export default function SalaPage() {
             )
           : null}
 
+        {/* Zona horizontal: código + reporte a la izquierda, chat a la derecha */}
+        <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
+          <div className="flex flex-col gap-6">
+
         {/* Código de sala */}
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <h2 className="mb-3 font-condensed text-lg font-bold text-white/85">Código de sala</h2>
@@ -629,10 +633,14 @@ export default function SalaPage() {
             </div>
           )}
         </section>
+          </div>
 
-        {/* Chat del set */}
-        <section className="rounded-2xl border border-white/10 bg-black/30">
-          <div ref={chatScrollRef} className="flex h-72 flex-col gap-2 overflow-y-auto p-3">
+          {/* Chat del set */}
+          <section className="rounded-2xl border border-white/10 bg-black/30 lg:sticky lg:top-4">
+            <div className="px-3 pt-3">
+              <h2 className="font-condensed text-lg font-bold text-white/85">Chat del set</h2>
+            </div>
+            <div ref={chatScrollRef} className="flex h-[420px] flex-col gap-2 overflow-y-auto p-3">
             {state.messages.length === 0 && (
               <p className="text-center text-xs text-white/30">Sin mensajes todavía. Saluda a tu rival ☕</p>
             )}
@@ -658,6 +666,7 @@ export default function SalaPage() {
             </button>
           </form>
         </section>
+        </div>
       </div>
     </main></AppShell>
   );
