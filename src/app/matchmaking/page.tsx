@@ -133,7 +133,10 @@ export default function MatchmakingPage() {
                   <div>
                     <small>RÉCORD</small>
                     <strong className="success">
-                      {me.stats.wins}W {me.stats.losses}L
+                      {me.stats.wins}W                       
+                      <div className="stat-item">
+                        {me.stats.losses}L
+                      </div>
                     </strong>
                   </div>
                 </div>

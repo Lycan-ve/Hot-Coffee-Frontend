@@ -16,6 +16,7 @@
   --hc-muted: rgba(255, 255, 255, 0.45);
   --dim: rgba(255, 255, 255, 0.25);
   --brown: #a86f3f;
+  --white: #fff;
 }
 
 @layer base {
@@ -276,7 +277,7 @@
   gap: 12px;
 }
 .panel-heading h3 {
-  color: var(--blue);
+  color: var(--white);
   font: 600 19px "Barlow Condensed";
   letter-spacing: 0.6px;
 }
@@ -1008,7 +1009,7 @@
   }
 }
 .queue-console h2 {
-  color: var(--blue);
+  color: var(--white);
   font: 700 47px/1 "Barlow Condensed";
   letter-spacing: 0.5px;
   position: relative;
