@@ -1,0 +1,168 @@
+/* ---------- Perfil: panel de mains (diseño maqueta 2XKO) ---------- */
+.mains-panel {
+  --mains-teal: #0e9fbd;
+  --mains-teal-glow: rgba(14, 159, 189, 0.35);
+  --mains-frame: #f2f2f0;
+  --mains-frame-line: #0c0c0c;
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+}
+
+/* Escenario: marcos + nombre del equipo */
+.mains-stage {
+  padding: 22px 22px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.mains-graphic {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.45));
+}
+.mains-frame-fill {
+  fill: var(--mains-frame);
+}
+.mains-frame-line {
+  fill: none;
+  stroke: var(--mains-frame-line);
+  stroke-width: 7;
+  stroke-linejoin: miter;
+}
+.mains-art {
+  animation: mains-in 0.35s ease-out;
+}
+@keyframes mains-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* "FIGHTER 1 / FIGHTER 2 - FUSES" en letras huecas color teal */
+.mains-team-label {
+  width: 100%;
+  margin-top: 18px;
+  text-align: center;
+  text-wrap: balance;
+  font: 800 clamp(16px, 4.9cqi, 36px) / 1.05 "Montserrat", "Inter", sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-text-stroke: 1.6px var(--mains-teal);
+  paint-order: stroke fill;
+  text-shadow: 0 0 22px var(--mains-teal-glow);
+}
+.mains-hint {
+  margin-top: 8px;
+  color: var(--dim);
+  font: 600 9px "Inter";
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+/* Selección (solo visible al pulsar CAMBIAR EQUIPO) */
+.mains-groups {
+  margin: 14px 18px 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 13px;
+  animation: mains-in 0.25s ease-out;
+}
+.mains-group > small {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--dim);
+  font: 600 8px "Inter";
+  letter-spacing: 1.2px;
+}
+.mains-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mains-chip {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--base);
+  transition: 0.15s;
+}
+.mains-chip img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: top;
+}
+.mains-chip.fuse img {
+  object-fit: contain;
+}
+.mains-chip:hover {
+  border-color: var(--orange);
+}
+.mains-chip.on {
+  border-color: var(--cream);
+  box-shadow: 0 0 0 1px rgba(208, 202, 83, 0.55);
+}
+
+/* Botones */
+.mains-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 18px 18px;
+  margin-top: auto;
+}
+.mains-panel.editing .mains-actions {
+  justify-content: flex-start;
+}
+.mains-save {
+  height: 36px;
+  padding: 0 20px;
+  color: #fff;
+  background: var(--orange);
+  border: 1px solid #d3642f;
+  font: 600 9px "Inter";
+  letter-spacing: 1px;
+  transition: 0.2s;
+}
+.mains-save:hover {
+  background: #ca5722;
+}
+.mains-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.mains-cancel {
+  height: 36px;
+  padding: 0 18px;
+  color: var(--hc-muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  font: 600 9px "Inter";
+  letter-spacing: 1px;
+  transition: 0.2s;
+}
+.mains-cancel:hover {
+  color: #fff;
+  border-color: rgba(240, 112, 112, 0.55);
+}
+.mains-note {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+.mains-panel.readonly .mains-stage {
+  padding-bottom: 20px;
+}

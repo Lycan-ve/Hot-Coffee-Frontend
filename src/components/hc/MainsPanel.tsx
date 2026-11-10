@@ -3,14 +3,50 @@
 import { useEffect, useState } from "react";
 import { fuseIconUrl, saveMains, type MeResponse } from "@/lib/auth";
 import { getRoster, type RosterEntry } from "@/lib/sala";
+import "./mains-panel.css";
 
 const fighterIcon = (id: string) => "/fighters/" + encodeURIComponent(id) + ".png";
 
 type MainChar = { id: string; name: string };
 
+/** Marco 2XKO: recuadro blanco con borde negro grueso y la imagen adentro. */
+function Frame({
+  x,
+  y,
+  size,
+  src,
+  meet = false,
+  delay = 0,
+}: {
+  x: number;
+  y: number;
+  size: number;
+  src?: string;
+  meet?: boolean;
+  delay?: number;
+}) {
+  const inset = 8;
+  return (
+    <g className="mains-art" style={delay ? { animationDelay: delay + "s" } : undefined}>
+      <rect className="mains-frame-fill" x={x} y={y} width={size} height={size} />
+      {src ? (
+        <image
+          href={src}
+          x={x + inset}
+          y={y + inset}
+          width={size - inset * 2}
+          height={size - inset * 2}
+          preserveAspectRatio={meet ? "xMidYMid meet" : "xMidYMin slice"}
+        />
+      ) : null}
+      <rect className="mains-frame-line" x={x} y={y} width={size} height={size} />
+    </g>
+  );
+}
+
 /**
- * MainsPanel: equipo principal del jugador (sus 2 personajes y su fusión),
- * con el estilo de la maqueta 2XKO.
+ * MainsPanel: equipo principal del jugador con el diseño de la maqueta 2XKO
+ * (marcos blancos con borde negro, logo del juego y la taza Hot Coffee).
  * - Perfil propio: muestra el equipo guardado; el botón CAMBIAR EQUIPO
  *   despliega la selección de fighters y fuse (GUARDAR / CANCELAR).
  * - Perfil ajeno: vista de solo lectura del equipo configurado.
@@ -78,46 +114,42 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
       <span className="hc-empty">Cargando roster…</span>
     );
 
-  return (
-    <article className={"panel mains-panel" + (own ? "" : " readonly")}>
-      <div className="mains-head">
-        <div className="mains-brand">
-          <strong className="mains-2xko">2XKO</strong>
-          <span className="mains-logo">
-            <img src="/assets/5fb79.svg" alt="Hot Coffee" />
-          </span>
-        </div>
-        <span className="mains-sub">FIGHTER 1 / FIGHTER 2 - FUSES</span>
-      </div>
+  const label = complete
+    ? point!.name + " / " + assist!.name + " - " + fuseChar!.name
+    : "FIGHTER 1 / FIGHTER 2 - FUSES";
 
-      <div className="mains-team">
-        <div className="mains-duo">
-          {point ? (
-            <img src={fighterIcon(point.id)} alt={point.name} title={point.name} />
-          ) : (
-            <span className="mains-slot">F1</span>
-          )}
-          {assist ? (
-            <img src={fighterIcon(assist.id)} alt={assist.name} title={assist.name} />
-          ) : (
-            <span className="mains-slot">F2</span>
-          )}
-        </div>
-        {fuseChar ? (
-          <img className="mains-fuse" src={fuseIconUrl(fuseChar.id)} alt={fuseChar.name} title={fuseChar.name} />
-        ) : (
-          <span className="mains-slot fuse">2X</span>
-        )}
+  const hint = complete
+    ? own
+      ? "EQUIPO PRINCIPAL · VISIBLE EN TU PERFIL PÚBLICO"
+      : "EQUIPO PRINCIPAL DE ESTE JUGADOR"
+    : own
+      ? editing
+        ? "ELIGE TUS DOS FIGHTERS Y SU FUSE"
+        : "PULSA CONFIGURAR EQUIPO PARA ARMAR TU DUO"
+      : "SIN EQUIPO CONFIGURADO";
+
+  return (
+    <article className={"panel mains-panel" + (own ? "" : " readonly") + (editing ? " editing" : "")}>
+      <div className="mains-stage">
+        <svg className="mains-graphic" viewBox="0 0 438 106" role="img" aria-label="Equipo principal 2XKO">
+          <Frame x={4} y={4} size={98} src={point ? fighterIcon(point.id) : undefined} />
+          <Frame x={76} y={4} size={98} src={assist ? fighterIcon(assist.id) : undefined} delay={0.06} />
+          <Frame
+            x={188}
+            y={21}
+            size={64}
+            src={fuseChar ? fuseIconUrl(fuseChar.id) : undefined}
+            meet
+            delay={0.12}
+          />
+          <g className="mains-art" style={{ animationDelay: "0.18s" }}>
+            <image href="/logo.png" x={266} y={27} width={76} height={52} preserveAspectRatio="xMidYMid meet" />
+          </g>
+          <Frame x={352} y={12} size={82} src="/logo-Hot.jpg" delay={0.24} />
+        </svg>
+        <p className="mains-team-label">{label}</p>
+        <p className="mains-hint">{hint}</p>
       </div>
-      <p className="mains-team-label">
-        {complete
-          ? (point!.name + " / " + assist!.name + " - " + fuseChar!.name).toUpperCase()
-          : own
-            ? editing
-              ? "ELIGE TUS DOS FIGHTERS Y SU FUSE"
-              : "AÚN NO HAS CONFIGURADO TU EQUIPO"
-            : "SIN EQUIPO CONFIGURADO"}
-      </p>
 
       {own ? (
         editing ? (
