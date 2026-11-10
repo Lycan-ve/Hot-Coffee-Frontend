@@ -106,7 +106,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
   // placement real se ordenan por los puntos equivalentes; los puestos
   // desconocidos van al final. Desempates: puntos y evento más reciente.
   const orderedTournaments = useMemo(() => {
-    return [...tournaments].sort((a, b) => {    return [...tournaments].sort((a, b) => {
+    return [...tournaments].sort((a, b) => {
       const ra = rankOf(a);
       const rb = rankOf(b);
       if (ra !== rb) return ra - rb;
