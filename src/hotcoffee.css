@@ -213,7 +213,7 @@
   text-transform: none;
 }
 .section-title h1 {
-  color: var(--blue);
+  color: var(--brown);
   margin: 13px 0 4px;
   font:
     700 clamp(50px, 4.1vw, 76px)/0.85 "Barlow Condensed",
