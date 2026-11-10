@@ -399,10 +399,31 @@
   margin-right: 22px;
   flex: 0 0 auto;
   position: relative;
-  display: grid;
+  display: inline-block;
   place-items: center;
   filter: drop-shadow(0 18px 23px rgba(0, 0, 0, 0.55));
+  will-change: transform, filter;
+  animation: trophy-foat 3.5s ease-in-out infinite, trophy-glow 2.5s ease-in-out infinite alternate;
 }
+
+@keyframes trophy-foat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes trophy-glow {
+  0% {
+    filter: drop-shadow(0 4px 6px rgba(255, 215, 0, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 10px 18px rgba(255, 215, 0, 0.8));
+  }
+}
+
 .rank-emblem img {
   width: 126px;
   height: 142px;
@@ -706,14 +727,14 @@
   height: 36px;
   margin: 16px 18px;
   border: 1px solid rgba(180, 77, 29, 0.45);
-  color: var(--orange);
+  background: var(--orange);
   font: 600 9px "Inter";
   letter-spacing: 1px;
   transition: 0.2s;
 }
 .secondary-button:hover {
   color: #fff;
-  background: var(--orange);
+  background: #d3642f;
 }
 .duo-card {
   display: flex;
