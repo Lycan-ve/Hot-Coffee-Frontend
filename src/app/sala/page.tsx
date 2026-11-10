@@ -1,10 +1,11 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from "next/link";
 import { AppShell } from '@/components/hc/shared';
 import { LoginLink } from '@/components/hc/DiscordLogin';
-import { getToken, rankIconUrl } from '@/lib/auth';
+import { fetchMe, fuseIconUrl, getToken, rankIconUrl, type ProfileTeam } from '@/lib/auth';
 import {
   RosterEntry,
   SalaState,
@@ -73,6 +74,10 @@ export default function SalaPage() {
   const matchIdRef = useRef(0);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const seenTeamRef = useRef(false);
+  const [editingTeam, setEditingTeam] = useState(false);
+  const [savingTeam, setSavingTeam] = useState(false);
+  const [mains, setMains] = useState<ProfileTeam | null>(null);
+  const [teamNotice, setTeamNotice] = useState<{ text: string; ok: boolean } | null>(null);
 
   const refresh = useCallback(async () => {
     const s = await getSalaState(lastIdRef.current);
@@ -98,6 +103,12 @@ export default function SalaPage() {
     getRoster().then((r) => setRoster(r));
   }, []);
 
+  // Equipo principal del perfil (para "usar mi equipo del perfil").
+  useEffect(() => {
+    if (authed !== true) return;
+    fetchMe().then((d) => setMains(d?.mains ?? null));
+  }, [authed]);
+
   useEffect(() => {
     if (authed !== true) return;
     refresh();
@@ -107,7 +118,7 @@ export default function SalaPage() {
 
   const match = state && state.match ? state.match : null;
 
-  // Prefilla los selects con el equipo ya guardado en el servidor.
+  // Prefilla la selección con el equipo ya confirmado en el servidor.
   useEffect(() => {
     const t = match ? match.me.team : null;
     if (!t || seenTeamRef.current || !t.complete) return;
@@ -116,6 +127,81 @@ export default function SalaPage() {
     setChar2(t.char2);
     setFuse(t.fuse);
   }, [match]);
+
+  // ---------- Selección de equipo (mismo diseño que el perfil) ----------
+  const serverTeam = match ? match.me.team : null;
+  const fighterArt = (id: string) => '/fighters/' + encodeURIComponent(id) + '.png';
+  const pickRoster = (id: string, list?: RosterEntry[]) => list?.find((c) => c.id === id);
+  const point =
+    pickRoster(char1, roster?.characters) ??
+    (serverTeam?.complete && char1 ? { id: char1, name: serverTeam.char1Name } : undefined);
+  const assist =
+    pickRoster(char2, roster?.characters) ??
+    (serverTeam?.complete && char2 ? { id: char2, name: serverTeam.char2Name } : undefined);
+  const fuseChar =
+    pickRoster(fuse, roster?.fuses) ??
+    (serverTeam?.complete && fuse ? { id: fuse, name: serverTeam.fuseName } : undefined);
+
+  // Igual que en el perfil: la selección entra como ASSIST y empuja al anterior a POINT.
+  const changeCharacter = (id: string) => {
+    if (id === char1 || id === char2) return;
+    if (!char1) setChar1(id);
+    else if (!char2) setChar2(id);
+    else {
+      setChar1(char2);
+      setChar2(id);
+    }
+  };
+
+  const useProfileTeam = () => {
+    if (!mains?.point || !mains?.assist || !mains?.fuse) {
+      setTeamNotice({ text: 'Primero configura tu equipo principal en tu perfil.', ok: false });
+      return;
+    }
+    setChar1(mains.point.id);
+    setChar2(mains.assist.id);
+    setFuse(mains.fuse.id);
+    setTeamNotice({ text: 'Equipo del perfil cargado. Confírmalo para sellarlo.', ok: true });
+  };
+
+  const cancelSalaEdit = () => {
+    const t = match ? match.me.team : null;
+    setChar1(t && t.complete ? t.char1 : '');
+    setChar2(t && t.complete ? t.char2 : '');
+    setFuse(t && t.complete ? t.fuse : '');
+    setTeamNotice(null);
+    setEditingTeam(false);
+  };
+
+  const saveSalaTeam = async () => {
+    if (!char1 || !char2 || !fuse || savingTeam) return;
+    setSavingTeam(true);
+    setTeamNotice(null);
+    const err = await saveTeam(char1, char2, fuse);
+    setSavingTeam(false);
+    if (err) {
+      setTeamNotice({ text: err, ok: false });
+      return;
+    }
+    setTeamNotice(null);
+    setEditingTeam(false);
+    await refresh();
+  };
+
+  // ESC y scroll lock mientras el modal de equipo está abierto.
+  useEffect(() => {
+    if (!editingTeam) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !savingTeam) cancelSalaEdit();
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingTeam, savingTeam]);
 
   // Mantiene el input de código de sala sincronizado con el servidor.
   const roomCode = match ? match.roomCode : '';
@@ -253,6 +339,7 @@ export default function SalaPage() {
   // ---------- Sala en vivo ----------
   const scoresTotal = match.me.score + match.opponent.score;
   const teamLocked = match.me.team.complete && scoresTotal > 0;
+  const myTeam = match.me.team;
   const scoreOptions = Array.from({ length: match.ft + 1 }, (_, i) => i);
   const pending = match.pending;
   const closeInfo = match.close;
@@ -265,7 +352,7 @@ export default function SalaPage() {
 
   return (
     <AppShell><main className="page hc-sala min-h-[60vh]  px-4 py-8 text-white">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <header className="flex items-center justify-between">
           <Link href="/matchmaking" className="text-sm text-white/40 transition hover:text-white/70">
             ← Volver
@@ -351,40 +438,119 @@ export default function SalaPage() {
           </section>
         )}
 
-        {/* Armado de equipo */}
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <h2 className="mb-3 font-condensed text-lg font-bold text-white/85">Tu equipo</h2>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <select value={char1} onChange={(e) => setChar1(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-hc-success/60 disabled:opacity-50">
-              <option value="">Personaje 1</option>
-              {roster && roster.characters.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <select value={char2} onChange={(e) => setChar2(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-hc-success/60 disabled:opacity-50">
-              <option value="">Personaje 2</option>
-              {roster && roster.characters.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <select value={fuse} onChange={(e) => setFuse(e.target.value)} disabled={teamLocked} className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white/85 outline-none focus:border-primary/60 disabled:opacity-50">
-              <option value="">Fusión</option>
-              {roster && roster.fuses.map((f) => (
-                <option key={f.id} value={f.id}>{f.name}</option>
-              ))}
-            </select>
+        {/* Armado de equipo (horizontal, mismo diseño que el perfil) */}
+        <section className="panel hc-sala-team">
+          <div className="panel-heading">
+            <h3>TU EQUIPO</h3>
+            {myTeam.complete && !teamLocked ? (
+              <button onClick={() => setEditingTeam(true)} type="button">CAMBIAR</button>
+            ) : null}
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => act(() => saveTeam(char1, char2, fuse))}
-              disabled={teamLocked || !char1 || !char2 || !fuse}
-              className="rounded-lg bg-hc-success px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-success/80 disabled:opacity-40"
-            >
-              Guardar equipo
+
+          <div className="sala-team-row">
+            {[point, assist].map((fighter, index) => (
+              <button
+                className="sala-fighter"
+                key={(fighter?.id ?? 'vacio') + '-' + index}
+                onClick={() => { if (!myTeam.complete) setEditingTeam(true); }}
+                type="button"
+              >
+                {fighter ? <img alt={fighter.name} src={fighterArt(fighter.id)} /> : <span className="sala-fighter-empty">＋</span>}
+                <span>{index === 0 ? 'POINT' : 'ASSIST'}</span>
+                <strong>{fighter?.name ?? 'ELEGIR'}</strong>
+              </button>
+            ))}
+            <button className="sala-fuse" onClick={() => { if (!myTeam.complete) setEditingTeam(true); }} type="button">
+              {fuseChar ? <img alt="" src={fuseIconUrl(fuseChar.id)} /> : null}
+              <span>FUSIÓN</span>
+              <strong>{fuseChar ? 'ON' : '—'}</strong>
             </button>
-            {teamLocked && <span className="text-xs text-white/40">Ya hay games jugados: el equipo quedó sellado.</span>}
           </div>
+
+          {!myTeam.complete ? (
+            <div className="sala-team-actions">
+              <button
+                onClick={useProfileTeam}
+                type="button"
+                className="rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:bg-white/10"
+              >
+                ⟳ Usar mi equipo del perfil
+              </button>
+              <button
+                onClick={saveSalaTeam}
+                disabled={!char1 || !char2 || !fuse || savingTeam}
+                type="button"
+                className="rounded-lg bg-hc-success px-4 py-2 text-sm font-bold text-hc-ink transition hover:bg-hc-success/80 disabled:opacity-40"
+              >
+                {savingTeam ? 'GUARDANDO…' : 'Confirmar equipo'}
+              </button>
+              <span className="text-xs text-white/40">Toca una carta o la fusión para elegir.</span>
+            </div>
+          ) : (
+            <p className="sala-team-note">
+              EQUIPO CONFIRMADO ✓{teamLocked ? ' · YA HAY GAMES JUGADOS: QUEDÓ SELLADO.' : ''}
+            </p>
+          )}
         </section>
+
+        {editingTeam
+          ? createPortal(
+              /* Portal a document.body: mismo truco que el modal del perfil
+                 para escapar del stacking context y del topbar. */
+              <div aria-label="Elegir equipo del set" aria-modal="true" className="team-modal" onClick={cancelSalaEdit} role="dialog">
+                <div className="team-modal-panel" onClick={(event) => event.stopPropagation()}>
+                  <div className="team-modal-head">
+                    <div>
+                      <span className="eyebrow">TU EQUIPO</span>
+                      <h3>ELIGE TU DÚO Y SU FUSIÓN</h3>
+                    </div>
+                    <button aria-label="Cerrar" className="team-modal-close" disabled={savingTeam} onClick={cancelSalaEdit} type="button">
+                      ✕
+                    </button>
+                  </div>
+                  <div className="team-modal-body">
+                    <span>LUCHADORES · LA SIGUIENTE SELECCIÓN REEMPLAZA AL POINT</span>
+                    <div className="fighter-grid">
+                      {(roster?.characters ?? []).map((fighter) => (
+                        <button
+                          className={char1 === fighter.id || char2 === fighter.id ? 'selected' : ''}
+                          key={fighter.id}
+                          onClick={() => changeCharacter(fighter.id)}
+                          type="button"
+                        >
+                          <img alt="" src={fighterArt(fighter.id)} />
+                          <strong>{fighter.name}</strong>
+                          <small>2XKO</small>
+                        </button>
+                      ))}
+                    </div>
+                    <span className="fuse-label">FUSIÓN</span>
+                    <div className="fuse-grid">
+                      {(roster?.fuses ?? []).map((f) => (
+                        <button className={'fuse-tile' + (fuse === f.id ? ' selected' : '')} key={f.id} onClick={() => setFuse(f.id)} type="button">
+                          <img alt="" src={fuseIconUrl(f.id)} />
+                          <span>{f.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="team-modal-foot">
+                    <button className="team-save" disabled={savingTeam || !char1 || !char2 || !fuse} onClick={saveSalaTeam} type="button">
+                      {savingTeam ? 'GUARDANDO...' : 'CONFIRMAR EQUIPO'}
+                    </button>
+                    <button className="team-cancel" disabled={savingTeam} onClick={useProfileTeam} type="button">
+                      USAR EL DEL PERFIL
+                    </button>
+                    <button className="team-cancel" disabled={savingTeam} onClick={cancelSalaEdit} type="button">
+                      CANCELAR
+                    </button>
+                    {teamNotice ? <span className={'team-note ' + (teamNotice.ok ? 'success' : 'danger')}>{teamNotice.text}</span> : null}
+                  </div>
+                </div>
+              </div>,
+              document.body,
+            )
+          : null}
 
         {/* Código de sala */}
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
