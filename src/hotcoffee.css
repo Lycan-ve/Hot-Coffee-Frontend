@@ -286,7 +286,7 @@
 
 .profile-grid {
   display: grid;
-  grid-template-columns: minmax(340px, 0.95fr) minmax(460px, 1.55fr) minmax(240px, 0.68fr);
+  grid-template-columns: minmax(340px, 1.55fr) minmax(460px, 0.95fr) minmax(240px, 0.68fr);
   gap: 12px;
   align-items: stretch;
 }
