@@ -1,4 +1,4 @@
-:root {
+successfully downloaded text file (SHA: f0e7112ca861a8c0809ad58ea7a6ed47e3c664fe):root {
   color: #fff;
   background: #18100b;
   font-family: "Inter", sans-serif;
@@ -1722,6 +1722,11 @@ img.mini-avatar, img.avatar { object-fit: cover; }
   font: 700 7px "Inter";
   letter-spacing: 1px;
   transition: 180ms ease;
+}
+.team-card .panel-heading button:hover {
+  color: #fff;
+  background: var(--orange);
+  border-color: #d3642f;
 }
 .team-body {
   min-height: 314px;
