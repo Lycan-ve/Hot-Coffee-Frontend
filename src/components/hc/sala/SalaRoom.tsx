@@ -1794,17 +1794,18 @@ export function SalaFinishedScreen(props: { finished: SalaFinished; assets: Sala
 }
 
 // ---------------------------------------------------------------------------
-// Efectos de sonido (Web Audio API, sin archivos de audio): todo se
-// sintetiza al vuelo, así no hay que subir ningún .mp3/.ogg al repo.
-// El navegador solo deja sonar el audio después de un gesto del usuario
-// (clic/tecla): como la sala siempre empieza con clics, ya cumple.
-// Se silencia con el botón 🔊 de la ceremonia; se recuerda en localStorage.
+// Efectos de sonido estilo JUEGO DE PELEA / LoL (Web Audio API, sin archivos):
+// golpes orquestales con distorsión, tambores taiko, risers, sub-bass,
+// crash con reverb y fanfarria de brass. Todo sintetizado al vuelo.
+// Se silencia con el botón 🔊 de la ceremonia (se recuerda en localStorage).
 // ---------------------------------------------------------------------------
 
 const SFX_PREF = 'hc-sala-sfx';
 
 let sfxEnabled = true;
 let audioCtx: AudioContext | null = null;
+let sfxMaster: GainNode | null = null;
+let sfxReverb: ConvolverNode | null = null;
 
 if (typeof window !== 'undefined') {
   try {
@@ -1829,100 +1830,339 @@ function audio(): AudioContext | null {
     if (!Ctor) return null;
     if (!audioCtx) audioCtx = new Ctor();
     if (audioCtx.state === 'suspended') void audioCtx.resume();
-    return audioCtx.state === 'running' ? audioCtx : null;
+    if (audioCtx.state !== 'running') return null;
+    if (!sfxMaster) {
+      // Cadena maestra: todo pasa por compresor (pegada tipo trailer) y
+      // un envío de reverb (sala grande) para el aire "épico".
+      const comp = audioCtx.createDynamicsCompressor();
+      comp.threshold.value = -16;
+      comp.knee.value = 20;
+      comp.ratio.value = 6;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.25;
+      sfxMaster = audioCtx.createGain();
+      sfxMaster.gain.value = 0.9;
+      sfxMaster.connect(comp).connect(audioCtx.destination);
+      sfxReverb = audioCtx.createConvolver();
+      sfxReverb.buffer = impulseResponse(audioCtx, 2.4, 2.6);
+      const wet = audioCtx.createGain();
+      wet.gain.value = 0.4;
+      sfxReverb.connect(wet).connect(sfxMaster);
+    }
+    return audioCtx;
   } catch {
     return null;
   }
 }
 
-/** Nota simple con envolvente y deslizamiento opcional de frecuencia. */
-function tone(opts: { freq: number; to?: number; type?: OscillatorType; dur: number; gain?: number; delay?: number }) {
-  const ac = audio();
-  if (!ac) return;
-  const t0 = ac.currentTime + (opts.delay ?? 0);
-  const osc = ac.createOscillator();
-  const g = ac.createGain();
-  osc.type = opts.type ?? 'triangle';
-  osc.frequency.setValueAtTime(Math.max(1, opts.freq), t0);
-  if (opts.to) osc.frequency.exponentialRampToValueAtTime(Math.max(1, opts.to), t0 + opts.dur);
-  const peak = opts.gain ?? 0.12;
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(peak, t0 + Math.min(0.04, opts.dur * 0.2));
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + opts.dur);
-  osc.connect(g).connect(ac.destination);
-  osc.start(t0);
-  osc.stop(t0 + opts.dur + 0.05);
+/** Impulso de reverb sintético (sala de piedra grande). */
+function impulseResponse(ac: AudioContext, seconds: number, decay: number) {
+  const len = Math.max(1, Math.floor(ac.sampleRate * seconds));
+  const buf = ac.createBuffer(2, len, ac.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+  }
+  return buf;
 }
 
-/** Ruido filtrado (explosiones, brillos, vientos). */
-function noise(opts: { dur: number; gain?: number; from?: number; to?: number; type?: BiquadFilterType; delay?: number }) {
-  const ac = audio();
-  if (!ac) return;
-  const t0 = ac.currentTime + (opts.delay ?? 0);
-  const len = Math.max(1, Math.floor(ac.sampleRate * opts.dur));
+function send(ac: AudioContext, src: AudioNode, gainDry: number, gainVerb: number) {
+  const dry = ac.createGain();
+  dry.gain.value = gainDry;
+  src.connect(dry).connect(sfxMaster!);
+  if (sfxReverb) {
+    const wet = ac.createGain();
+    wet.gain.value = gainVerb;
+    src.connect(wet).connect(sfxReverb);
+  }
+}
+
+/** Distorsión suave (tanh) para que el brass "muerda". */
+function shaper(ac: AudioContext, amount = 3) {
+  const ws = ac.createWaveShaper();
+  const n = 256;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    curve[i] = Math.tanh(x * amount) / Math.tanh(amount);
+  }
+  ws.curve = curve;
+  ws.oversample = '2x';
+  return ws;
+}
+
+/**
+ * Golpe orquestal "de pelea": 3 sierras desafinadas + distorsión + lowpass
+ * que cierra. Es el sonido "DUN" de los anuncios de K.O. / select screen.
+ */
+function brassHit(ac: AudioContext, t0: number, freq: number, dur: number, gain: number, verb = 0.35) {
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(gain, t0 + 0.015);
+  g.gain.setValueAtTime(gain, t0 + dur * 0.55);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(2600, t0);
+  lp.frequency.exponentialRampToValueAtTime(500, t0 + dur);
+  lp.Q.value = 1;
+  const dist = shaper(ac, 2.5);
+  g.connect(dist).connect(lp);
+  send(ac, lp, 1, verb);
+  [-7, 0, 7].forEach((cents) => {
+    const osc = ac.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq * Math.pow(2, cents / 1200);
+    osc.connect(g);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.05);
+  });
+  // Sub-octava para cuerpo.
+  const sub = ac.createOscillator();
+  sub.type = 'square';
+  sub.frequency.value = freq / 2;
+  const subG = ac.createGain();
+  subG.gain.value = 0.5;
+  sub.connect(subG).connect(g);
+  sub.start(t0);
+  sub.stop(t0 + dur + 0.05);
+}
+
+/** Pad coral (el "aah" épico de los trailers de LoL): triángulos desafinados. */
+function choirPad(ac: AudioContext, t0: number, freq: number, dur: number, gain: number) {
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(gain, t0 + Math.min(0.4, dur * 0.3));
+  g.gain.setValueAtTime(gain, t0 + dur * 0.7);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 900;
+  g.connect(lp);
+  send(ac, lp, 0.6, 0.9);
+  [-9, -4, 4, 9].forEach((cents) => {
+    const osc = ac.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = freq * Math.pow(2, cents / 1200);
+    osc.connect(g);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.1);
+  });
+}
+
+/** Tambor taiko: sine con caída de tono + click de ataque. */
+function taiko(ac: AudioContext, t0: number, gain = 0.5, freq = 140) {
+  const osc = ac.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, t0);
+  osc.frequency.exponentialRampToValueAtTime(42, t0 + 0.22);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(gain, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+  send(ac, g, 1, 0.25);
+  osc.connect(g);
+  osc.start(t0);
+  osc.stop(t0 + 0.35);
+  // Click del palo.
+  const len = Math.floor(ac.sampleRate * 0.03);
   const buf = ac.createBuffer(1, len, ac.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
   const src = ac.createBufferSource();
   src.buffer = buf;
-  const filter = ac.createBiquadFilter();
-  filter.type = opts.type ?? 'lowpass';
-  filter.frequency.setValueAtTime(opts.from ?? 800, t0);
-  if (opts.to) filter.frequency.exponentialRampToValueAtTime(Math.max(20, opts.to), t0 + opts.dur);
-  const g = ac.createGain();
-  const peak = opts.gain ?? 0.18;
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(peak, t0 + Math.min(0.03, opts.dur * 0.25));
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + opts.dur);
-  src.connect(filter).connect(g).connect(ac.destination);
+  const hp = ac.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 1800;
+  const cg = ac.createGain();
+  cg.gain.value = gain * 0.5;
+  src.connect(hp).connect(cg).connect(sfxMaster!);
   src.start(t0);
-  src.stop(t0 + opts.dur + 0.05);
 }
 
-/** Fase 1 · carga: zumbido grave que sube junto con la energía. */
+/** Crash de platillo: ruido agudo con cola de reverb. */
+function crash(ac: AudioContext, t0: number, dur = 1.4, gain = 0.22) {
+  const len = Math.floor(ac.sampleRate * dur);
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.6);
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const hp = ac.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 3800;
+  const g = ac.createGain();
+  g.gain.value = gain;
+  src.connect(hp).connect(g);
+  send(ac, g, 0.7, 0.8);
+  src.start(t0);
+}
+
+/** Riser: ruido + sierra que suben y aceleran (tensión antes del estallido). */
+function riser(ac: AudioContext, t0: number, dur: number, gain = 0.1) {
+  const len = Math.floor(ac.sampleRate * dur);
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const bp = ac.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(300, t0);
+  bp.frequency.exponentialRampToValueAtTime(6500, t0 + dur);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(gain, t0 + dur * 0.9);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(bp).connect(g);
+  send(ac, g, 0.8, 0.5);
+  src.start(t0);
+  src.stop(t0 + dur);
+  // Drone que sube en quintas.
+  const osc = ac.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(110, t0);
+  osc.frequency.exponentialRampToValueAtTime(440, t0 + dur);
+  const trem = ac.createGain();
+  const lfo = ac.createOscillator();
+  lfo.frequency.setValueAtTime(4, t0);
+  lfo.frequency.exponentialRampToValueAtTime(14, t0 + dur);
+  const lfoG = ac.createGain();
+  lfoG.gain.value = 0.5;
+  lfo.connect(lfoG).connect(trem.gain);
+  const og = ac.createGain();
+  og.gain.setValueAtTime(0.0001, t0);
+  og.gain.exponentialRampToValueAtTime(gain * 0.5, t0 + dur * 0.9);
+  og.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(trem).connect(og);
+  send(ac, og, 0.7, 0.4);
+  osc.start(t0);
+  osc.stop(t0 + dur);
+  lfo.start(t0);
+  lfo.stop(t0 + dur);
+}
+
+/** Sub-bass drop (el "BWOOM" de los trailers). */
+function subDrop(ac: AudioContext, t0: number, f0 = 90, f1 = 28, dur = 0.9, gain = 0.55) {
+  const osc = ac.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(f0, t0);
+  osc.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(gain, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  send(ac, g, 1, 0.15);
+  osc.connect(g);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.05);
+}
+
+// --------------------------- Sonidos de la sala ---------------------------
+
+/** Fase 1 · carga: redoble de taikos que acelera + riser final. */
 function sfxCharge(ms: number) {
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02;
   const dur = ms / 1000;
-  tone({ freq: 55, to: 180, type: 'sawtooth', dur, gain: 0.06 });
-  tone({ freq: 110, to: 330, type: 'triangle', dur, gain: 0.045, delay: 0.08 });
-  noise({ dur, gain: 0.04, from: 200, to: 2400 });
+  // Redoble: los golpes se van juntando (tensión de "ROUND 1… FIGHT!").
+  let t = 0;
+  let gap = 0.34;
+  while (t < dur - 0.6) {
+    taiko(ac, t0 + t, t / dur < 0.5 ? 0.3 : 0.42);
+    t += gap;
+    gap = Math.max(0.09, gap * 0.82);
+  }
+  // Riser de los últimos ~60%.
+  riser(ac, t0 + dur * 0.4, dur * 0.6, 0.09);
 }
 
-/** Fase 2 · estallido: golpe grave + ráfaga de ruido, más fuerte con el nivel. */
+/** Fase 2 · estallido: impacto orquestal + sub-drop + crash. */
 function sfxBurst(lvl: number) {
-  noise({ dur: 0.5 + lvl * 0.04, gain: 0.28, from: 3200, to: 120 });
-  tone({ freq: 150, to: 38, type: 'sine', dur: 0.55, gain: 0.32 });
-  tone({ freq: 90, to: 30, type: 'sine', dur: 0.7, gain: 0.22, delay: 0.05 });
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02;
+  subDrop(ac, t0, 95, 26, 0.9 + lvl * 0.03, 0.6);
+  // Acorde de impacto (root + quinta): el "DUN" del K.O.
+  const root = 130.81 * Math.pow(2, (lvl - 1) / 12);
+  brassHit(ac, t0, root, 0.7 + lvl * 0.05, 0.5);
+  brassHit(ac, t0 + 0.02, root * 1.5, 0.6 + lvl * 0.04, 0.32);
+  crash(ac, t0, 1.2 + lvl * 0.08, 0.2 + lvl * 0.015);
 }
 
-/** Fase 3 · revelación: arpegio pentatónico; a más rango, más notas y brillo. */
+/** Fase 3 · revelación: fanfarria heroica de brass + coro; más rango, más épica. */
 function sfxReveal(lvl: number) {
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02;
   const root = 261.63 * Math.pow(2, (lvl - 1) / 12);
-  const steps = [0, 4, 7, 12, 16, 19, 24];
-  const n = Math.min(steps.length, 3 + Math.floor(lvl / 2));
-  steps.slice(0, n).forEach((s, i) => {
-    tone({ freq: root * Math.pow(2, s / 12), type: 'triangle', dur: 0.5 + i * 0.06, gain: 0.1, delay: i * 0.07 });
+  // Motivo "dun-dun-dun-DUUUUN" (I – I – V7 – I) con power chords.
+  const seq = [
+    { f: root, d: 0.28, at: 0 },
+    { f: root, d: 0.28, at: 0.32 },
+    { f: root * 1.5, d: 0.34, at: 0.64 },
+    { f: root * 2, d: 1.4 + lvl * 0.08, at: 1.05 },
+  ];
+  seq.forEach(({ f, d, at }) => {
+    brassHit(ac, t0 + at, f, d, 0.42);
+    brassHit(ac, t0 + at, f * 1.5, d, 0.2, 0.5);
   });
-  if (lvl >= 5) noise({ dur: 1.4, gain: 0.04, from: 5000, to: 9000, type: 'highpass', delay: 0.1 });
-  if (lvl >= 8) tone({ freq: root / 2, type: 'sine', dur: 1.2, gain: 0.1 });
+  // Coro debajo del acorde final.
+  choirPad(ac, t0 + 1.05, root / 2, 2.2 + lvl * 0.1, 0.16);
+  choirPad(ac, t0 + 1.05, root * 1.5 / 2, 2.2 + lvl * 0.1, 0.11);
+  // Niveles altos: crash doble + taiko final + brillo.
+  crash(ac, t0 + 1.05, 1.8, 0.18 + lvl * 0.012);
+  if (lvl >= 5) taiko(ac, t0 + 1.05, 0.5, 150);
+  if (lvl >= 7) {
+    crash(ac, t0 + 1.35, 1.6, 0.14);
+    choirPad(ac, t0 + 1.05, root, 2.4, 0.09);
+  }
+  if (lvl >= 9) {
+    taiko(ac, t0 + 1.32, 0.55, 160);
+    subDrop(ac, t0 + 1.05, 80, 24, 1.4, 0.5);
+  }
 }
 
-/** Campanita al cruzar una división en la barra de LP (sube o baja). */
+/** Golpe rápido al cruzar una división en la barra de LP (sube o baja). */
 function sfxFlash(up: boolean) {
-  const base = up ? 523.25 : 392;
-  tone({ freq: base, type: 'triangle', dur: 0.16, gain: 0.1 });
-  tone({ freq: up ? base * 1.5 : base * 0.75, type: 'triangle', dur: 0.28, gain: 0.1, delay: 0.12 });
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02;
+  if (up) {
+    brassHit(ac, t0, 523.25, 0.16, 0.3, 0.3);
+    brassHit(ac, t0 + 0.13, 784, 0.45, 0.34, 0.4);
+    taiko(ac, t0 + 0.13, 0.3, 150);
+  } else {
+    brassHit(ac, t0, 392, 0.18, 0.28, 0.3);
+    brassHit(ac, t0 + 0.15, 261.63, 0.5, 0.3, 0.4);
+    subDrop(ac, t0 + 0.15, 70, 30, 0.6, 0.35);
+  }
 }
 
-/** Sting de victoria (fanfarria) o derrota (descenso) en la pantalla final. */
+/** Sting de VICTORIA (fanfarria completa) o DERROTA (brass grave que cae). */
 function sfxSting(won: boolean) {
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02;
   if (won) {
-    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
-      tone({ freq: f, type: 'triangle', dur: 0.45, gain: 0.1, delay: i * 0.12 }),
-    );
+    // Fanfarria "VICTORY": C-E-G-C con power chords, coro y crash.
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((f, i) => {
+      const at = i * 0.17;
+      brassHit(ac, t0 + at, f, i === 3 ? 1.6 : 0.3, 0.4);
+      if (i % 2 === 0) taiko(ac, t0 + at, 0.35, 150);
+    });
+    choirPad(ac, t0 + 0.52, 261.63, 2.4, 0.14);
+    choirPad(ac, t0 + 0.52, 392, 2.4, 0.1);
+    crash(ac, t0 + 0.52, 2, 0.2);
+    subDrop(ac, t0 + 0.52, 85, 30, 1.2, 0.4);
   } else {
-    [392, 311.13, 233.08].forEach((f, i) =>
-      tone({ freq: f, type: 'sawtooth', dur: 0.5, gain: 0.07, delay: i * 0.16 }),
-    );
+    // Derrota: dos golpes graves descendentes con cola larga.
+    brassHit(ac, t0, 311.13, 0.5, 0.34, 0.5);
+    brassHit(ac, t0 + 0.45, 233.08, 0.55, 0.34, 0.5);
+    brassHit(ac, t0 + 0.95, 155.56, 1.6, 0.4, 0.6);
+    subDrop(ac, t0 + 0.95, 65, 24, 1.5, 0.45);
+    choirPad(ac, t0 + 0.95, 77.78, 2.2, 0.12);
   }
 }
 
@@ -1937,7 +2177,10 @@ function useSfxEnabled(): [boolean, (on: boolean) => void] {
     } catch {
       /* almacenamiento bloqueado */
     }
-    if (next) tone({ freq: 880, type: 'square', dur: 0.06, gain: 0.05 });
+    if (next) {
+      const ac = audio();
+      if (ac) taiko(ac, ac.currentTime + 0.02, 0.4, 160);
+    }
   };
   return [on, toggle];
 }
