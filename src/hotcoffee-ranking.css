@@ -173,13 +173,15 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-left: 10px;
   color: var(--hc-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
-.rk-scope::before { content: ""; align-self: center; flex: 0 0 auto; width: 22px; height: 2px; background: var(--orange); }
+/* .rk-scope::before { content: ""; align-self: center; flex: 0 0 auto; width: 22px; height: 2px; background: var(--orange); } */
 .rk-scope h1.rk-title {
   margin: 0;
   color: var(--gold);
