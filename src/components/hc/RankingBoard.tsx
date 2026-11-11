@@ -282,18 +282,36 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
   const leader = rows[0];
   const mmSets = useMemo(() => mmPlayers.reduce((n, p) => n + p.wins, 0), [mmPlayers]);
 
-  // Ranking calculado SOLO con el último torneo: da el campeón vigente.
-  const { data: lastTourney } = useQuery({
-    queryKey: ["last-tournament", tournamentCount],
-    queryFn: () => fetchRanking(tournamentCount, tournamentCount),
-    enabled: mode === "torneos" && tournamentCount > 0,
-    staleTime: 60_000,
+  // ---------- Campeones recientes (alimentan el carrusel en modo torneos) ----------
+  // El ranking torneo por torneo da el campeón de cada evento: pedimos los
+  // últimos 3 para tener un carrusel con historia, no solo al vigente.
+  const champTotal = mode === "torneos" ? fetchedCount ?? 0 : 0;
+  const champNs = useMemo(
+    () => [0, 1, 2].map((off) => champTotal - off).filter((n) => n >= 1),
+    [champTotal],
+  );
+  const champQs = useQueries({
+    queries: champNs.map((n) => ({
+      queryKey: ["tourney-champ", n],
+      queryFn: () => fetchRanking(n, n),
+      staleTime: 300_000,
+    })),
   });
+  // champQs cambia de identidad en cada render: la identidad estable es la
+  // lista de dataUpdatedAt, por eso se usa como dependencia del memo.
+  const champions = useMemo(
+    () =>
+      champQs
+        .map((q, i) => ({ n: champNs[i], data: q.data }))
+        .filter((c) => c.data?.live && (c.data?.players.length ?? 0) > 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [champQs.map((q) => q.dataUpdatedAt).join(","), champNs.join(",")],
+  );
 
   // ---------- Carrusel de destacados ----------
   // El sistema elige a los jugadores destacados según el modo:
-  //  · TORNEOS: campeón del último torneo + podio de la temporada.
-  //  · MATCHMAKING: líder de la liga, más victorias, mejor winrate y más activo.
+  //  · TORNEOS: campeones de los últimos 3 torneos + podio de la temporada.
+  //  · MATCHMAKING: podio de la liga, más victorias, mejor winrate y más activo.
   const slides: FeaturedSlide[] = useMemo(() => {
     const out: FeaturedSlide[] = [];
     if (mm) {
@@ -313,6 +331,8 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         });
       };
       push("LÍDER DE LA LIGA", mmPlayers[0]);
+      push("N°2 DE LA LIGA", mmPlayers[1]);
+      push("N°3 DE LA LIGA", mmPlayers[2]);
       const byWins = [...mmPlayers].sort((a, b) => b.wins - a.wins)[0];
       push("MÁS VICTORIAS", byWins, byWins ? `${byWins.wins} sets /ft ganados` : undefined);
       const rated = mmPlayers.filter((p) => p.wins + p.losses >= 5);
@@ -342,14 +362,22 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         sub: sub ?? ([p.character, p.sponsor ? `#${p.sponsor}` : ""].filter(Boolean).join(" · ") || "Top de la temporada de torneos"),
       });
     };
-    const champ = lastTourney?.live ? lastTourney.players[0] : undefined;
-    if (champ) push("CAMPEÓN DEL ÚLTIMO TORNEO", champ, `Ganó el torneo #${tournamentCount} con ${fmt(champ.points)} pts`);
+    // Campeones de los últimos 3 torneos, del más reciente al más antiguo.
+    for (const c of champions) {
+      const champ = c.data?.players[0];
+      if (!champ) continue;
+      push(
+        `CAMPEÓN DEL TORNEO #${String(c.n).padStart(2, "0")}`,
+        champ,
+        `Ganó el torneo #${c.n} con ${fmt(champ.points)} pts`,
+      );
+    }
     push("LÍDER DE LA TEMPORADA", players[0]);
     push("N°2 DE LA TEMPORADA", players[1]);
     push("N°3 DE LA TEMPORADA", players[2]);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mm, mmPlayers, players, lastTourney, tournamentCount]);
+  }, [mm, mmPlayers, players, champions, tournamentCount]);
 
   const [slideIdx, setSlideIdx] = useState(0);
   // Pausa el giro automático mientras el cursor está sobre la tarjeta.
@@ -440,7 +468,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
             <SectionTitle
               eyebrow={mm ? "LIGA DE MATCHMAKING / 2026" : "TEMPORADA DE TORNEOS / 2026"}
               note={data && !data.live && mode === "torneos" ? "Datos de respaldo" : undefined}
-              title="CLASIFICACIÓN DE JUGADORES"
+              title={mm ? "RANKING DE MATCHMAKING" : "RANKING DE TORNEOS"}
               copy="El progreso competitivo de la comunidad, en un solo lugar."
             />
           </div>
@@ -528,10 +556,10 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
           )}
 
           <article className="panel rk-table" ref={boardRef}>
-            {/* Título del ranking (el switch vive en la Topbar) + alcance actual. */}
+            {/* El título h1 vive en el hero (RANKING DE TORNEOS / RANKING DE
+                MATCHMAKING); aquí queda solo el alcance actual de la tabla. */}
             <div className="rk-scope">
               <b>{mm ? "MATCHMAKING" : "TORNEOS"}</b>
-              <span className="kind">{mm ? "RANKING DE MATCHMAKING" : "RANKING DE TORNEOS"}</span>
               <em>·</em>
               <span>
                 {mode === "torneos"
