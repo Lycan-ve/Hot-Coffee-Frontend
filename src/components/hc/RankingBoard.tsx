@@ -556,10 +556,11 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
           )}
 
           <article className="panel rk-table" ref={boardRef}>
-            {/* El título h1 vive en el hero (RANKING DE TORNEOS / RANKING DE
-                MATCHMAKING); aquí queda solo el alcance actual de la tabla. */}
+            {/* Título H1 del ranking activo: cada página lleva el suyo
+                (RANKING DE TORNEOS / RANKING DE MATCHMAKING); el cambio entre
+                rankings vive en la Topbar y aquí solo queda el alcance actual. */}
             <div className="rk-scope">
-              <b>{mm ? "MATCHMAKING" : "TORNEOS"}</b>
+              <h1 className="rk-title">{mm ? "RANKING DE MATCHMAKING" : "RANKING DE TORNEOS"}</h1>
               <em>·</em>
               <span>
                 {mode === "torneos"
@@ -786,6 +787,30 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                   {cur?.sub ||
                     (mm ? "Gana sets /ft para aparecer aquí." : "Gana el próximo torneo para aparecer aquí.")}
                 </p>
+                {/* Más datos del destacado: récord, winrate y últimos sets en
+                    matchmaking; equipo de personajes en torneos. */}
+                {mm && cur && (
+                  <div className="rk-feat-stats">
+                    <span>
+                      <b>{cur.wins ?? 0}V</b> — <b>{cur.losses ?? 0}D</b>
+                    </span>
+                    {(cur.wins ?? 0) + (cur.losses ?? 0) > 0 && (
+                      <span>
+                        {Math.round((100 * (cur.wins ?? 0)) / ((cur.wins ?? 0) + (cur.losses ?? 0)))}% WINRATE
+                      </span>
+                    )}
+                    {curProf?.fights?.length ? (
+                      <span className="rk-sets">
+                        {curProf.fights.slice(0, 5).map((f) => (
+                          <b key={f.id} className={f.result === "WIN" ? "w" : "l"} title={`${f.scoreFor}-${f.scoreAgainst} vs ${f.opponentTag}`}>
+                            {f.result === "WIN" ? "V" : "D"}
+                          </b>
+                        ))}
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+                {!mm && cur?.character ? <Team value={cur.character} /> : null}
                 {cur?.profileId ? (
                   <div className="meta">
                     <Link href={`/perfil/${String(cur.profileId)}`}>Ver ficha completa →</Link>
@@ -793,6 +818,31 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                 ) : null}
               </div>
             </article>
+
+            {/* Miniaturas del carrusel: todos los jugadores que el sistema
+                considera destacados en esta página; clic para saltar a
+                cualquiera sin esperar el giro automático. */}
+            {nSlides > 1 && (
+              <div className="panel rk-feat-strip" role="tablist" aria-label="Jugadores destacados">
+                {slides.map((s, i) => (
+                  <button
+                    type="button"
+                    key={s.key}
+                    className={i === Math.min(slideIdx, nSlides - 1) ? "on" : ""}
+                    onClick={() => setSlideIdx(i)}
+                    title={`${s.label} — ${s.name}`}
+                    aria-label={`Ver a ${s.name} (${s.label})`}
+                  >
+                    {s.avatar ? (
+                      <img src={s.avatar} alt="" />
+                    ) : (
+                      <span>{s.name.charAt(0).toUpperCase()}</span>
+                    )}
+                    <b>{i + 1}</b>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <article className="panel rk-points">
               <div className="head"><h3>¿CÓMO SE SUMA?</h3><Info /></div>
@@ -831,3 +881,4 @@ function Team({ value }: { value?: string | undefined }) {
     </div>
   );
 }
+

@@ -90,11 +90,84 @@
 .rk-featured .info .row { align-items: center; }
 .rk-featured .info .row .rank-badge.small { width: 34px; height: 34px; flex: 0 0 auto; }
 
+/* Stats extra dentro del destacado: récord V-D, winrate y últimos sets (MM),
+   o el equipo de personajes (torneos). */
+.rk-featured .rk-feat-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 8px;
+  color: var(--hc-muted);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+.rk-featured .rk-feat-stats b { color: #fff; }
+.rk-featured .rk-feat-stats .rk-sets b { width: 17px; height: 17px; font-size: 10px; }
+
+/* ---------- Miniaturas del carrusel (panel bajo el destacado) ---------- */
+
+/* Un chip por jugador destacado: avatar (o inicial) con su número del
+   carrusel. El activo se resalta; clic para saltar sin esperar el giro. */
+.rk-feat-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  overflow-x: auto;
+}
+.rk-feat-strip button {
+  position: relative;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: var(--panel-2);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.rk-feat-strip button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.rk-feat-strip button > span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--gold);
+  font: 700 18px "Barlow Condensed", sans-serif;
+}
+.rk-feat-strip button b {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--orange);
+  color: #fff;
+  font: 700 10px/17px "Inter", sans-serif;
+  text-align: center;
+}
+.rk-feat-strip button:hover { border-color: rgba(255, 255, 255, 0.45); }
+.rk-feat-strip button.on {
+  border-color: var(--orange);
+  box-shadow: 0 0 12px rgba(180, 77, 29, 0.55);
+  transform: translateY(-2px);
+}
+.rk-feat-strip button.on b { background: var(--gold); color: #18100b; }
+
 /* ---------- Título del ranking (sustituye a las pestañas rk-tabs) ---------- */
 
 /* El cambio entre Ranking Torneos y Ranking MM vive en la Topbar; dentro de
-   la tabla queda el título con su alcance: TORNEOS (RANKING DE TORNEOS) ·
-   ACUMULADO · TORNEOS 01—29 / MATCHMAKING (RANKING DE MATCHMAKING) · SETS /FT. */
+   la tabla queda el título H1 con su alcance: RANKING DE TORNEOS · ACUMULADO ·
+   TORNEOS 01—29 / RANKING DE MATCHMAKING · SETS /FT. */
 .rk-scope {
   display: flex;
   align-items: baseline;
@@ -107,9 +180,10 @@
   letter-spacing: 0.08em;
 }
 .rk-scope::before { content: ""; align-self: center; flex: 0 0 auto; width: 22px; height: 2px; background: var(--orange); }
-.rk-scope b {
+.rk-scope h1.rk-title {
+  margin: 0;
   color: var(--gold);
-  font-size: 17px;
+  font: 700 26px/1.1 "Barlow Condensed", sans-serif;
   letter-spacing: 0.12em;
   text-shadow: 0 0 18px rgba(240, 200, 120, 0.25);
 }
