@@ -12,13 +12,18 @@
 .rk-sets b.l { color: #f87171; border-color: #f87171; }
 .rk-rank .rank-glow { display: none; }
 
-/* ---------- Layout de 3 columnas: torneos | tabla | sidebar ---------- */
+/* ---------- Pestañas-enlace entre las dos páginas de ranking ---------- */
+.rk-tabs a { display: flex; align-items: center; color: var(--hc-muted); font-size: 13px; border-bottom: 2px solid transparent; text-decoration: none; }
+.rk-tabs a.on { color: #fff; font: 600 24px "Barlow Condensed", sans-serif; letter-spacing: 0.5px; border-color: var(--orange); }
 
-/* Con torneos visibles (modo torneos y con series cargadas), la columna de
-   torneos se antepone a la tabla: 280px | flexible | 336px. La tabla nunca
-   se aplasta: minmax(0, 1fr) + el scroll horizontal de .rk-scroll solo
-   aparece en pantallas medianas. */
-.rk-layout.with-tourneys { grid-template-columns: 280px minmax(0, 1fr) 336px; }
+/* ---------- Layout de 3 columnas SIMÉTRICO: torneos | tabla | sidebar ---------- */
+
+/* Con torneos visibles (modo torneos y con series cargadas), las dos columnas
+   laterales miden lo mismo (336px, igual que la sidebar original) y la tabla
+   se lleva el ancho sobrante. La tabla compacta su ancho mínimo para caber
+   sin scroll horizontal en desktop. */
+.rk-layout.with-tourneys { grid-template-columns: 336px minmax(0, 1fr) 336px; }
+.rk-layout.with-tourneys .rk-table table { min-width: 620px; }
 
 /* La columna de torneos acompaña el scroll sin robarte la vista de la tabla. */
 .rk-layout .rk-tourneys {
@@ -42,11 +47,36 @@
 }
 .rk-tourneys .chip-all.on .nm { color: var(--gold); }
 
+/* ---------- Carrusel de jugadores destacados ---------- */
+.rk-featured .feat-nav {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 18px;
+  background: rgba(24, 16, 11, 0.72);
+  border: 1px solid var(--line);
+  opacity: 0;
+  transition: 0.2s;
+}
+.rk-featured:hover .feat-nav { opacity: 1; }
+.rk-featured .feat-nav.prev { left: 10px; }
+.rk-featured .feat-nav.next { right: 10px; }
+.rk-featured .feat-nav:hover { border-color: var(--orange); background: rgba(180, 77, 29, 0.55); }
+.rk-feat-dots { display: flex; align-items: center; gap: 6px; }
+.rk-feat-dots button { width: 8px; height: 8px; padding: 0; border-radius: 50%; background: var(--dim); transition: 0.2s; }
+.rk-feat-dots button.on { background: var(--gold); box-shadow: 0 0 8px rgba(255, 231, 135, 0.55); }
+
 /* ---------- Ajustes por ancho de pantalla ---------- */
 @media (max-width: 1360px) {
-  /* Columna central más justa: la tabla compacta en vez de hacer scroll. */
-  .rk-layout.with-tourneys { grid-template-columns: 240px minmax(0, 1fr) 336px; }
-  .rk-layout.with-tourneys .rk-table table { min-width: 640px; }
+  /* Laterales más justos para que la tabla respire. */
+  .rk-layout.with-tourneys { grid-template-columns: 280px minmax(0, 1fr) 280px; }
+  .rk-layout.with-tourneys .rk-table table { min-width: 580px; }
 }
 
 @media (max-width: 1100px) {
