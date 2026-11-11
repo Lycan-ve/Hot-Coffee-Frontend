@@ -1194,7 +1194,10 @@ function useLpTimeline(from: number, to: number) {
         await wait(0);
         if (cancelled) return;
         setValue(to);
-        if (ladderRank(from).index !== ladderRank(to).index) setFlash(to > from ? 'up' : 'down');
+        if (ladderRank(from).index !== ladderRank(to).index) {
+          setFlash(to > from ? 'up' : 'down');
+          sfxFlash(to > from);
+        }
         setTierUp(tierUpsBetween(from, to).at(-1) ?? null);
         setDone(true);
         return;
@@ -1217,6 +1220,7 @@ function useLpTimeline(from: number, to: number) {
           }
           setValue(step.to);
           setFlash(to > from ? 'up' : 'down');
+          sfxFlash(to > from);
           await wait(650);
         } else {
           await tween(cur, step.to);
@@ -1241,41 +1245,190 @@ function useLpTimeline(from: number, to: number) {
 }
 
 // ---------------------------------------------------------------------------
-// Ceremonia de ascenso de rango (Gold → Platinum): carga, estallido y revelación
+// Ceremonia de ascenso de rango: carga, estallido y revelación.
+// Cada rango tiene su propia animación y es más potente que la anterior
+// (Bronze = nivel 1 … Challenger = nivel 9): más tiempo de carga, más
+// partículas, más temblor y efectos propios de cada rango.
 // ---------------------------------------------------------------------------
+
+type TierFx =
+  | 'fountain' // Bronze: chispas de forja que saltan y caen
+  | 'slash' // Silver: dos cortes de espada en X
+  | 'sheen' // destello metálico que recorre el ícono
+  | 'coins' // Gold: lluvia de monedas
+  | 'frost' // Platinum: púas de cristal y hexágonos de escarcha
+  | 'vortex' // Emerald: remolino de energía que orbita el ícono
+  | 'pillar' // columna de luz vertical
+  | 'prism' // Diamond: rayos de arcoíris y chispas en forma de faceta
+  | 'beams' // reflectores que barren la pantalla
+  | 'runes' // Master: círculo mágico girando
+  | 'bolts' // rayos eléctricos
+  | 'cracks' // Grandmaster: la pantalla se agrieta
+  | 'flames' // Grandmaster: llamas desde abajo
+  | 'blackout' // Challenger: apagón y latidos antes del estallido
+  | 'strike' // Challenger: rayo que cae del cielo
+  | 'stars' // Challenger: cielo estrellado y estrellas fugaces
+  | 'crown'; // Challenger: corona que cae sobre el ícono
+
+interface TierStyle {
+  /** 1 (Bronze) … 9 (Challenger): controla tiempos, partículas y temblor. */
+  lvl: number;
+  kicker: string;
+  motto: string;
+  fx: TierFx[];
+}
+
+export const TIER_FX: Record<string, TierStyle> = {
+  Bronze: { lvl: 1, kicker: '▲ ¡Nuevo rango!', motto: 'Forjado en combate', fx: ['fountain'] },
+  Silver: { lvl: 2, kicker: '▲ ¡Nuevo rango!', motto: 'Filo de acero', fx: ['slash', 'sheen'] },
+  Gold: { lvl: 3, kicker: '▲▲ ¡Nuevo rango!', motto: 'Ahora brillas como el oro', fx: ['coins', 'sheen', 'fountain'] },
+  Platinum: { lvl: 4, kicker: '▲▲ ¡Nuevo rango!', motto: 'Frío, preciso, imparable', fx: ['frost', 'sheen', 'slash'] },
+  Emerald: { lvl: 5, kicker: '▲▲▲ ¡Nuevo rango!', motto: 'Energía pura', fx: ['vortex', 'pillar', 'sheen'] },
+  Diamond: { lvl: 6, kicker: '▲▲▲ ¡Nuevo rango!', motto: 'Irrompible', fx: ['prism', 'beams', 'sheen', 'frost'] },
+  Master: { lvl: 7, kicker: '◆ ¡Maestría alcanzada! ◆', motto: 'Dominas el arte del combate', fx: ['runes', 'bolts', 'pillar', 'vortex'] },
+  Grandmaster: { lvl: 8, kicker: '◆◆ ¡Gran Maestro! ◆◆', motto: 'Leyenda en llamas', fx: ['cracks', 'flames', 'bolts', 'pillar', 'runes'] },
+  Challenger: {
+    lvl: 9,
+    kicker: '★ ¡La cima de Hot Coffee! ★',
+    motto: 'Solo los mejores llegan aquí',
+    fx: ['blackout', 'strike', 'stars', 'crown', 'runes', 'cracks', 'bolts', 'beams', 'prism', 'pillar', 'coins', 'sheen'],
+  },
+};
+const DEFAULT_FX: TierStyle = { lvl: 1, kicker: '▲ ¡Nuevo rango!', motto: '', fx: [] };
+
+/** Tiempos de cada fase según el nivel (ms). */
+export function tuTiming(lvl: number) {
+  return {
+    charge: lvl >= 9 ? 3200 : 1000 + lvl * 170,
+    burst: 450 + lvl * 55,
+    close: 8000 + lvl * 500,
+  };
+}
 
 const px = (n: number) => Math.round(n) + 'px';
 const polar = (deg: number, r: number) => ({ x: Math.cos((deg * Math.PI) / 180) * r, y: Math.sin((deg * Math.PI) / 180) * r });
+const pct = (n: number) => ((n % 100) + 100) % 100 + '%';
 
 // Valores fijos (no aleatorios) para que la animación sea igual siempre.
-const SHARDS = Array.from({ length: 7 }, (_, i) => {
-  const a0 = (i * 360) / 7 - 90;
-  const a1 = ((i + 1) * 360) / 7 - 90;
-  const mid = (a0 + a1) / 2;
-  const pt = (deg: number) => {
-    const p = polar(deg, 80);
-    return (50 + p.x).toFixed(1) + '% ' + (50 + p.y).toFixed(1) + '%';
-  };
-  const out = polar(mid, 240 + (i % 3) * 50);
-  return {
-    clip: 'polygon(50% 50%, ' + pt(a0) + ', ' + pt(mid) + ', ' + pt(a1) + ')',
-    style: { '--dx': px(out.x), '--dy': px(out.y), '--rot': (i % 2 ? 1 : -1) * (35 + i * 17) + 'deg' } as CSSProperties,
-  };
-});
-const SPARKS = Array.from({ length: 30 }, (_, i) => {
-  const p = polar(i * 137.5, 150 + ((i * 53) % 170));
-  return { '--dx': px(p.x), '--dy': px(p.y), '--sz': 3 + (i % 4) * 2 + 'px', '--dl': (i % 6) * 35 + 'ms' } as CSSProperties;
-});
-const MOTES = Array.from({ length: 14 }, (_, i) => {
-  const p = polar(i * 25.7 + 8, 170 + (i % 3) * 40);
-  return { '--dx': px(p.x), '--dy': px(p.y), '--dl': i * 90 + 'ms' } as CSSProperties;
-});
-const EMBERS = Array.from({ length: 18 }, (_, i) => ({
-  '--x': ((i * 61) % 100) + '%', '--dl': ((i * 370) % 3000) + 'ms', '--du': 3200 + ((i * 410) % 2400) + 'ms', '--sz': 2 + (i % 3) * 2 + 'px',
-}) as CSSProperties);
+function makeShards(n: number, reach: number) {
+  return Array.from({ length: n }, (_, i) => {
+    const a0 = (i * 360) / n - 90;
+    const a1 = ((i + 1) * 360) / n - 90;
+    const mid = (a0 + a1) / 2;
+    const pt = (deg: number) => {
+      const p = polar(deg, 80);
+      return (50 + p.x).toFixed(1) + '% ' + (50 + p.y).toFixed(1) + '%';
+    };
+    const out = polar(mid, reach + (i % 3) * 50);
+    return {
+      clip: 'polygon(50% 50%, ' + pt(a0) + ', ' + pt(mid) + ', ' + pt(a1) + ')',
+      style: { '--dx': px(out.x), '--dy': px(out.y), '--rot': (i % 2 ? 1 : -1) * (35 + i * 17) + 'deg' } as CSSProperties,
+    };
+  });
+}
 
-function TierUpCeremony(props: { from: LadderRank; to: LadderRank; fromIcon: string; toIcon: string; onDone: () => void }) {
+function buildFx(lvl: number) {
+  const reach = 130 + lvl * 26;
+  return {
+    shards: makeShards(4 + lvl, 200 + lvl * 15),
+    sparks: Array.from({ length: 8 + lvl * 6 }, (_, i) => {
+      const p = polar(i * 137.5, reach * (0.5 + ((i * 53) % 100) / 160));
+      return { '--dx': px(p.x), '--dy': px(p.y), '--sz': 3 + (i % 4) * 2 + 'px', '--dl': (i % 6) * 35 + 'ms' } as CSSProperties;
+    }),
+    motes: Array.from({ length: 8 + lvl * 2 }, (_, i) => {
+      const p = polar(i * 25.7 + 8, 170 + (i % 3) * 40 + lvl * 6);
+      return { '--dx': px(p.x), '--dy': px(p.y), '--dl': ((i * 90) % 700) + 'ms' } as CSSProperties;
+    }),
+    rings: Math.min(6, 1 + Math.ceil(lvl / 2)),
+    embers: Array.from({ length: 6 + lvl * 4 }, (_, i) => ({
+      '--x': pct(i * 61), '--dl': ((i * 370) % 3000) + 'ms', '--du': 3200 + ((i * 410) % 2400) + 'ms', '--sz': 2 + (i % 3) * 2 + 'px',
+    }) as CSSProperties),
+  };
+}
+
+const FOUNTAIN = Array.from({ length: 18 }, (_, i) => ({
+  '--dx': px(((i * 47) % 260) - 130), '--dy': px(-110 - ((i * 71) % 170)), '--sz': 3 + (i % 3) * 2 + 'px', '--dl': (i % 5) * 40 + 'ms',
+}) as CSSProperties);
+const COINS = Array.from({ length: 26 }, (_, i) => ({
+  '--x': pct(i * 37 + 5), '--dl': ((i * 290) % 2600) + 'ms', '--du': 1800 + ((i * 330) % 1600) + 'ms', '--sz': 10 + (i % 4) * 4 + 'px', '--sp': 500 + (i % 4) * 180 + 'ms',
+}) as CSSProperties);
+const SPIKES = Array.from({ length: 12 }, (_, i) => ({ '--a': i * 30 + 'deg', '--h': 0.32 + (i % 3) * 0.1, '--dl': (i % 4) * 40 + 'ms' }) as CSSProperties);
+const ORBS = Array.from({ length: 22 }, (_, i) => ({
+  '--a': i * 47 + 'deg', '--r': px(95 + ((i * 29) % 80)), '--du': 1600 + ((i * 230) % 1400) + 'ms', '--sz': 4 + (i % 3) * 3 + 'px', '--dl': -((i * 170) % 1500) + 'ms',
+}) as CSSProperties);
+const BEAMS = [12, 30, 70, 88].map((x, i) => ({ '--x': x + '%', '--dl': i * -900 + 'ms', '--dir': i % 2 ? 1 : -1 }) as CSSProperties);
+const FLAMES = Array.from({ length: 18 }, (_, i) => ({
+  '--x': pct(i * 5.9 - 3), '--w': 70 + ((i * 37) % 90) + 'px', '--h': 120 + ((i * 53) % 200) + 'px', '--du': 700 + ((i * 130) % 600) + 'ms', '--dl': -((i * 210) % 900) + 'ms',
+}) as CSSProperties);
+const STARS = Array.from({ length: 46 }, (_, i) => ({
+  '--x': pct(i * 23.3 + 3), '--y': pct(i * 41.7 + 7), '--sz': 1 + (i % 3) + 'px', '--dl': -((i * 310) % 2400) + 'ms',
+}) as CSSProperties);
+const COMETS = [0, 1, 2].map((i) => ({ '--y': 8 + i * 14 + '%', '--dl': 600 + i * 1300 + 'ms' }) as CSSProperties);
+
+/** Rayo zigzag desde el centro (coordenadas del viewBox -200…200). */
+function boltPath(angle: number, len: number, seed: number) {
+  const segs = 7;
+  const perp = angle + 90;
+  let d = '';
+  for (let i = 0; i <= segs; i++) {
+    const t = i / segs;
+    const base = polar(angle, 40 + len * t);
+    const j = i === 0 ? 0 : (((seed * 31 + i * 17) % 21) - 10) * (len / 110);
+    const off = polar(perp, j);
+    d += (i === 0 ? 'M' : 'L') + (base.x + off.x).toFixed(1) + ' ' + (base.y + off.y).toFixed(1) + ' ';
+  }
+  return d.trim();
+}
+const BOLTS = Array.from({ length: 7 }, (_, i) => ({ d: boltPath(i * 51.4 - 80, 130 + (i % 3) * 25, i + 3), dl: (i % 4) * 90 }));
+
+/** Grietas que salen del centro de la pantalla (viewBox -500…500). */
+const CRACKS = Array.from({ length: 11 }, (_, i) => {
+  const a = i * 32.7 + 10;
+  let d = 'M0 0';
+  let r = 0;
+  let ang = a;
+  for (let k = 0; k < 6; k++) {
+    r += 70 + ((i * 13 + k * 29) % 60);
+    ang += (((i * 7 + k * 11) % 9) - 4) * 3;
+    const p = polar(ang, r);
+    d += ' L' + p.x.toFixed(0) + ' ' + p.y.toFixed(0);
+  }
+  return { d, dl: (i % 4) * 60 };
+});
+
+function RuneCircle() {
+  const ticks = Array.from({ length: 24 }, (_, i) => i * 15);
+  const tri = (rot: number) =>
+    [0, 120, 240]
+      .map((d) => {
+        const p = polar(d + rot - 90, 120);
+        return p.x.toFixed(1) + ',' + p.y.toFixed(1);
+      })
+      .join(' ');
+  return (
+    <svg className="sx-tu-runes" viewBox="-200 -200 400 400" aria-hidden="true">
+      <circle r="190" className="sx-tu-rune-line" />
+      <circle r="172" className="sx-tu-rune-line is-dash" />
+      <circle r="128" className="sx-tu-rune-line" />
+      <polygon points={tri(0)} className="sx-tu-rune-line" />
+      <polygon points={tri(180)} className="sx-tu-rune-line" />
+      {ticks.map((deg, i) => (
+        <g key={deg} transform={'rotate(' + deg + ') translate(0 -181)'}>
+          {i % 2 ? <rect x="-3" y="-6" width="6" height="12" className="sx-tu-rune-glyph" /> : <polygon points="0,-8 6,6 -6,6" className="sx-tu-rune-glyph" />}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export function TierUpCeremony(props: { from: LadderRank; to: LadderRank; fromIcon: string; toIcon: string; onDone: () => void }) {
   const { from, to, fromIcon, toIcon } = props;
+  const look = TIER_FX[to.tier] ?? DEFAULT_FX;
+  const { lvl } = look;
+  const fx = new Set(look.fx);
+  const timing = tuTiming(lvl);
+  const [parts] = useState(() => buildFx(lvl));
+  const [sound, setSound] = useSfxEnabled();
   const [phase, setPhase] = useState<'charge' | 'burst' | 'reveal'>(() =>
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'reveal' : 'charge',
   );
@@ -1287,11 +1440,19 @@ function TierUpCeremony(props: { from: LadderRank; to: LadderRank; fromIcon: str
   });
 
   useEffect(() => {
-    const timers = [
-      setTimeout(() => setPhase((p) => (p === 'charge' ? 'burst' : p)), 1500),
-      setTimeout(() => setPhase('reveal'), 2050),
-      setTimeout(() => onDone.current(), 9000),
+    const t = tuTiming(lvl);
+    const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const timers: ReturnType<typeof setTimeout>[] = [
+      setTimeout(() => setPhase((p) => (p === 'charge' ? 'burst' : p)), t.charge),
+      setTimeout(() => setPhase('reveal'), t.charge + t.burst),
+      setTimeout(() => onDone.current(), t.close),
     ];
+    // Sonido: carga → estallido → fanfarria (sin carga si hay movimiento reducido).
+    if (!reduce) {
+      sfxCharge(t.charge);
+      timers.push(setTimeout(() => sfxBurst(lvl), t.charge));
+    }
+    timers.push(setTimeout(() => sfxReveal(lvl), reduce ? 0 : t.charge + t.burst));
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' || e.key === 'Enter') onDone.current();
     };
@@ -1300,7 +1461,7 @@ function TierUpCeremony(props: { from: LadderRank; to: LadderRank; fromIcon: str
       timers.forEach(clearTimeout);
       window.removeEventListener('keydown', onKey);
     };
-  }, []);
+  }, [lvl]);
 
   useEffect(() => {
     if (phase === 'reveal') btnRef.current?.focus({ preventScroll: true });
@@ -1310,11 +1471,29 @@ function TierUpCeremony(props: { from: LadderRank; to: LadderRank; fromIcon: str
   const style = {
     '--sx-tier': TIER_COLOR[to.tier] ?? 'var(--gold)',
     '--sx-tier-old': TIER_COLOR[from.tier] ?? 'var(--orange)',
+    '--lvl': lvl,
+    '--amp': (0.35 + lvl * 0.17).toFixed(2),
+    '--charge': timing.charge + 'ms',
+    '--burst': timing.burst + 'ms',
   } as CSSProperties;
+  const cls = [
+    'sx-tierup',
+    'is-' + phase,
+    'tu-' + to.tier.toLowerCase(),
+    lvl >= 3 ? 'has-rays' : '',
+    lvl >= 6 ? 'has-rays2' : '',
+    lvl >= 5 ? 'is-big' : '',
+    lvl >= 7 ? 'is-epic' : '',
+    lvl >= 9 ? 'is-apex' : '',
+    ...look.fx.map((f) => 'fx-' + f),
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const iconMask = { maskImage: 'url("' + toIcon + '")', WebkitMaskImage: 'url("' + toIcon + '")' } as CSSProperties;
 
   return createPortal(
     <div
-      className={'sx-tierup is-' + phase}
+      className={cls}
       style={style}
       role="dialog"
       aria-modal="true"
@@ -1322,36 +1501,128 @@ function TierUpCeremony(props: { from: LadderRank; to: LadderRank; fromIcon: str
       onClick={() => phase === 'reveal' && onDone.current()}
     >
       <div className="sx-tu-bg" />
+      <button
+        aria-label={sound ? 'Silenciar efectos de sonido' : 'Activar efectos de sonido'}
+        className="sx-tu-sound"
+        onClick={(e) => {
+          e.stopPropagation();
+          setSound(!sound);
+        }}
+        title={sound ? 'Silenciar' : 'Activar sonido'}
+        type="button"
+      >
+        {sound ? '🔊' : '🔇'}
+      </button>
+      {fx.has('stars') ? (
+        <div className="sx-tu-stars" aria-hidden="true">
+          {STARS.map((st, i) => (
+            <span key={'st' + i} style={st} />
+          ))}
+          {COMETS.map((st, i) => (
+            <i key={'co' + i} style={st} />
+          ))}
+        </div>
+      ) : null}
       <div className="sx-tu-rays" />
+      {lvl >= 6 ? <div className="sx-tu-rays is-rev" /> : null}
+      {fx.has('prism') ? <div className="sx-tu-prism" /> : null}
+      {fx.has('beams') ? (
+        <div className="sx-tu-beams" aria-hidden="true">
+          {BEAMS.map((st, i) => (
+            <span key={'b' + i} style={st} />
+          ))}
+        </div>
+      ) : null}
+      {fx.has('pillar') ? <div className="sx-tu-pillar" aria-hidden="true" /> : null}
+      {fx.has('cracks') ? (
+        <svg className="sx-tu-cracks" viewBox="-500 -500 1000 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          {CRACKS.map((c, i) => (
+            <path key={'c' + i} d={c.d} pathLength={1} style={{ '--dl': c.dl + 'ms' } as CSSProperties} />
+          ))}
+        </svg>
+      ) : null}
+      {fx.has('flames') ? (
+        <div className="sx-tu-flames" aria-hidden="true">
+          {FLAMES.map((st, i) => (
+            <span key={'f' + i} style={st} />
+          ))}
+        </div>
+      ) : null}
+      {fx.has('strike') ? (
+        <svg className="sx-tu-strike" viewBox="0 0 100 400" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M52 0 L44 70 L58 120 L40 190 L60 250 L46 320 L50 400" />
+          <path d="M44 70 L28 110 M40 190 L22 230 M60 250 L76 290" className="is-branch" />
+        </svg>
+      ) : null}
       <div className="sx-tu-flash" />
+      {lvl >= 7 ? <div className="sx-tu-flash is-second" /> : null}
       <div className="sx-tu-shake">
         <div className="sx-tu-stage">
+          {fx.has('runes') ? <RuneCircle /> : null}
           <span className="sx-tu-halo" />
           <span className="sx-tu-gather" />
-          {MOTES.map((st, i) => (
+          {parts.motes.map((st, i) => (
             <span key={'m' + i} className="sx-tu-mote" style={st} />
           ))}
+          {fx.has('vortex')
+            ? ORBS.map((st, i) => <span key={'o' + i} className="sx-tu-orb" style={st} />)
+            : null}
+          {fx.has('frost') ? (
+            <>
+              {SPIKES.map((st, i) => (
+                <span key={'sp' + i} className="sx-tu-spike" style={st} />
+              ))}
+              {[0, 1].map((i) => (
+                <svg key={'hx' + i} className="sx-tu-hex" viewBox="-100 -100 200 200" style={{ '--dl': i * 180 + 'ms' } as CSSProperties} aria-hidden="true">
+                  <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" />
+                </svg>
+              ))}
+            </>
+          ) : null}
           <img alt="" className="sx-tu-old" src={fromIcon} />
-          {SHARDS.map((sh, i) => (
+          {parts.shards.map((sh, i) => (
             <img key={'s' + i} alt="" className="sx-tu-shard" src={fromIcon} style={{ ...sh.style, clipPath: sh.clip }} />
           ))}
-          {[0, 1, 2].map((i) => (
+          {Array.from({ length: parts.rings }, (_, i) => (
             <span key={'r' + i} className="sx-tu-ring" style={{ '--dl': i * 140 + 'ms' } as CSSProperties} />
           ))}
-          {SPARKS.map((st, i) => (
+          {fx.has('slash')
+            ? [0, 1].map((i) => <span key={'sl' + i} className="sx-tu-slash" style={{ '--a': (i ? 32 : -32) + 'deg', '--dl': i * 110 + 'ms' } as CSSProperties} />)
+            : null}
+          {fx.has('bolts') ? (
+            <svg className="sx-tu-bolts" viewBox="-200 -200 400 400" aria-hidden="true">
+              {BOLTS.map((b, i) => (
+                <path key={'bo' + i} d={b.d} style={{ '--dl': b.dl + 'ms' } as CSSProperties} />
+              ))}
+            </svg>
+          ) : null}
+          {parts.sparks.map((st, i) => (
             <span key={'k' + i} className={'sx-tu-spark' + (i % 3 === 0 ? ' is-hot' : '')} style={st} />
           ))}
+          {fx.has('fountain')
+            ? FOUNTAIN.map((st, i) => <span key={'fo' + i} className="sx-tu-fount" style={st} />)
+            : null}
           <img alt="" className="sx-tu-new" src={toIcon} />
+          {fx.has('sheen') ? <span className="sx-tu-sheen" style={iconMask} /> : null}
+          {fx.has('crown') ? (
+            <svg className="sx-tu-crown" viewBox="0 0 100 64" aria-hidden="true">
+              <path d="M6 58 L12 16 L32 38 L50 4 L68 38 L88 16 L94 58 Z" />
+              <circle cx="50" cy="44" r="5" />
+              <circle cx="28" cy="48" r="3.5" />
+              <circle cx="72" cy="48" r="3.5" />
+            </svg>
+          ) : null}
         </div>
         <div className="sx-tu-text">
-          <span className="sx-tu-kicker">▲ ¡Nuevo rango!</span>
-          <h2 className="sx-tu-name" aria-label={to.tier}>
+          <span className="sx-tu-kicker">{look.kicker}</span>
+          <h2 className="sx-tu-name" aria-label={to.tier} style={{ '--len': to.tier.length } as CSSProperties}>
             {to.tier.split('').map((ch, i) => (
               <span key={i} aria-hidden="true" style={{ '--i': i } as CSSProperties}>
                 {ch}
               </span>
             ))}
           </h2>
+          {look.motto ? <p className="sx-tu-motto">{look.motto}</p> : null}
           <p className="sx-tu-sub">
             {from.displayName} <span aria-hidden="true">➜</span> <b>{to.displayName}</b>
           </p>
@@ -1361,10 +1632,17 @@ function TierUpCeremony(props: { from: LadderRank; to: LadderRank; fromIcon: str
         </div>
       </div>
       <div className="sx-tu-embers" aria-hidden="true">
-        {EMBERS.map((st, i) => (
+        {parts.embers.map((st, i) => (
           <span key={'e' + i} style={st} />
         ))}
       </div>
+      {fx.has('coins') ? (
+        <div className="sx-tu-coins" aria-hidden="true">
+          {COINS.map((st, i) => (
+            <span key={'cn' + i} style={st} />
+          ))}
+        </div>
+      ) : null}
     </div>,
     document.body,
   );
@@ -1453,6 +1731,13 @@ function LpProgress(props: { after: number; delta: number; won: boolean; rank?: 
 
 export function SalaFinishedScreen(props: { finished: SalaFinished; assets: SalaAssets; Link: SalaLink; extra?: ReactNode }) {
   const { finished: f, assets, Link } = props;
+  // Sting de victoria/derrota: una sola vez por pantalla final.
+  const stung = useRef(false);
+  useEffect(() => {
+    if (stung.current) return;
+    stung.current = true;
+    if (f.status === 'FINISHED') sfxSting(!!f.won);
+  }, [f]);
   if (f.status === 'CANCELLED') {
     return (
       <SalaScreen
@@ -1506,4 +1791,153 @@ export function SalaFinishedScreen(props: { finished: SalaFinished; assets: Sala
       )}
     </SalaScreen>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Efectos de sonido (Web Audio API, sin archivos de audio): todo se
+// sintetiza al vuelo, así no hay que subir ningún .mp3/.ogg al repo.
+// El navegador solo deja sonar el audio después de un gesto del usuario
+// (clic/tecla): como la sala siempre empieza con clics, ya cumple.
+// Se silencia con el botón 🔊 de la ceremonia; se recuerda en localStorage.
+// ---------------------------------------------------------------------------
+
+const SFX_PREF = 'hc-sala-sfx';
+
+let sfxEnabled = true;
+let audioCtx: AudioContext | null = null;
+
+if (typeof window !== 'undefined') {
+  try {
+    sfxEnabled = window.localStorage.getItem(SFX_PREF) !== 'off';
+  } catch {
+    /* almacenamiento bloqueado: queda activado */
+  }
+  // Si el contexto quedó suspendido, el primer clic/tecla lo reanuda.
+  const wake = () => {
+    if (audioCtx && audioCtx.state === 'suspended') void audioCtx.resume();
+  };
+  window.addEventListener('pointerdown', wake);
+  window.addEventListener('keydown', wake);
+}
+
+function audio(): AudioContext | null {
+  if (typeof window === 'undefined' || !sfxEnabled) return null;
+  try {
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) return null;
+    if (!audioCtx) audioCtx = new Ctor();
+    if (audioCtx.state === 'suspended') void audioCtx.resume();
+    return audioCtx.state === 'running' ? audioCtx : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Nota simple con envolvente y deslizamiento opcional de frecuencia. */
+function tone(opts: { freq: number; to?: number; type?: OscillatorType; dur: number; gain?: number; delay?: number }) {
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + (opts.delay ?? 0);
+  const osc = ac.createOscillator();
+  const g = ac.createGain();
+  osc.type = opts.type ?? 'triangle';
+  osc.frequency.setValueAtTime(Math.max(1, opts.freq), t0);
+  if (opts.to) osc.frequency.exponentialRampToValueAtTime(Math.max(1, opts.to), t0 + opts.dur);
+  const peak = opts.gain ?? 0.12;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak, t0 + Math.min(0.04, opts.dur * 0.2));
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + opts.dur);
+  osc.connect(g).connect(ac.destination);
+  osc.start(t0);
+  osc.stop(t0 + opts.dur + 0.05);
+}
+
+/** Ruido filtrado (explosiones, brillos, vientos). */
+function noise(opts: { dur: number; gain?: number; from?: number; to?: number; type?: BiquadFilterType; delay?: number }) {
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + (opts.delay ?? 0);
+  const len = Math.max(1, Math.floor(ac.sampleRate * opts.dur));
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const filter = ac.createBiquadFilter();
+  filter.type = opts.type ?? 'lowpass';
+  filter.frequency.setValueAtTime(opts.from ?? 800, t0);
+  if (opts.to) filter.frequency.exponentialRampToValueAtTime(Math.max(20, opts.to), t0 + opts.dur);
+  const g = ac.createGain();
+  const peak = opts.gain ?? 0.18;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak, t0 + Math.min(0.03, opts.dur * 0.25));
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + opts.dur);
+  src.connect(filter).connect(g).connect(ac.destination);
+  src.start(t0);
+  src.stop(t0 + opts.dur + 0.05);
+}
+
+/** Fase 1 · carga: zumbido grave que sube junto con la energía. */
+function sfxCharge(ms: number) {
+  const dur = ms / 1000;
+  tone({ freq: 55, to: 180, type: 'sawtooth', dur, gain: 0.06 });
+  tone({ freq: 110, to: 330, type: 'triangle', dur, gain: 0.045, delay: 0.08 });
+  noise({ dur, gain: 0.04, from: 200, to: 2400 });
+}
+
+/** Fase 2 · estallido: golpe grave + ráfaga de ruido, más fuerte con el nivel. */
+function sfxBurst(lvl: number) {
+  noise({ dur: 0.5 + lvl * 0.04, gain: 0.28, from: 3200, to: 120 });
+  tone({ freq: 150, to: 38, type: 'sine', dur: 0.55, gain: 0.32 });
+  tone({ freq: 90, to: 30, type: 'sine', dur: 0.7, gain: 0.22, delay: 0.05 });
+}
+
+/** Fase 3 · revelación: arpegio pentatónico; a más rango, más notas y brillo. */
+function sfxReveal(lvl: number) {
+  const root = 261.63 * Math.pow(2, (lvl - 1) / 12);
+  const steps = [0, 4, 7, 12, 16, 19, 24];
+  const n = Math.min(steps.length, 3 + Math.floor(lvl / 2));
+  steps.slice(0, n).forEach((s, i) => {
+    tone({ freq: root * Math.pow(2, s / 12), type: 'triangle', dur: 0.5 + i * 0.06, gain: 0.1, delay: i * 0.07 });
+  });
+  if (lvl >= 5) noise({ dur: 1.4, gain: 0.04, from: 5000, to: 9000, type: 'highpass', delay: 0.1 });
+  if (lvl >= 8) tone({ freq: root / 2, type: 'sine', dur: 1.2, gain: 0.1 });
+}
+
+/** Campanita al cruzar una división en la barra de LP (sube o baja). */
+function sfxFlash(up: boolean) {
+  const base = up ? 523.25 : 392;
+  tone({ freq: base, type: 'triangle', dur: 0.16, gain: 0.1 });
+  tone({ freq: up ? base * 1.5 : base * 0.75, type: 'triangle', dur: 0.28, gain: 0.1, delay: 0.12 });
+}
+
+/** Sting de victoria (fanfarria) o derrota (descenso) en la pantalla final. */
+function sfxSting(won: boolean) {
+  if (won) {
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
+      tone({ freq: f, type: 'triangle', dur: 0.45, gain: 0.1, delay: i * 0.12 }),
+    );
+  } else {
+    [392, 311.13, 233.08].forEach((f, i) =>
+      tone({ freq: f, type: 'sawtooth', dur: 0.5, gain: 0.07, delay: i * 0.16 }),
+    );
+  }
+}
+
+/** ¿Sonido activado? + interruptor que se recuerda en localStorage. */
+function useSfxEnabled(): [boolean, (on: boolean) => void] {
+  const [on, setOn] = useState(sfxEnabled);
+  const toggle = (next: boolean) => {
+    sfxEnabled = next;
+    setOn(next);
+    try {
+      if (typeof window !== 'undefined') window.localStorage.setItem(SFX_PREF, next ? 'on' : 'off');
+    } catch {
+      /* almacenamiento bloqueado */
+    }
+    if (next) tone({ freq: 880, type: 'square', dur: 0.06, gain: 0.05 });
+  };
+  return [on, toggle];
 }

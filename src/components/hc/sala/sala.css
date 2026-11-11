@@ -1376,13 +1376,19 @@
   100% { box-shadow: inset 0 0 0 1px var(--sx-line), 0 0 0 10px transparent; filter: none; }
 }
 
-/* ---------- Ceremonia de ascenso de rango (Gold → Platinum) ----------
+/* ---------- Ceremonia de ascenso de rango (una por rango) ----------
    Fases (clase en .sx-tierup): is-charge → is-burst → is-reveal.
    --sx-tier = color del rango nuevo, --sx-tier-old = color del anterior.
+   --lvl 1 (Bronze) … 9 (Challenger) escala el temblor (--amp), los tiempos
+   (--charge / --burst) y el tamaño. Cada rango suma efectos propios con
+   clases fx-* (fx-fountain, fx-coins, fx-runes…).
    Los estilos base son el estado final, así con "reducir movimiento"
    se ve directo el rango nuevo sin animaciones. */
 .sx-tierup {
-  --sx-tu-size: min(260px, 52vw, 34vh);
+  --sx-tu-size: min(calc(220px + var(--lvl, 1) * 8px), 52vw, 34vh);
+  --charge: 1500ms;
+  --burst: 550ms;
+  --amp: 1;
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -1398,9 +1404,9 @@
 .sx-tu-bg {
   position: absolute;
   inset: 0;
-  z-index: -2;
+  z-index: -3;
   background:
-    radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--sx-tier) 30%, transparent), transparent 55%),
+    radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--sx-tier) calc(18% + var(--lvl, 1) * 3%), transparent), transparent calc(45% + var(--lvl, 1) * 2%)),
     color-mix(in oklab, var(--base) 93%, transparent);
   backdrop-filter: blur(8px);
   animation: sx-fade 0.35s ease-out both;
@@ -1413,18 +1419,33 @@
 .sx-tu-rays {
   position: absolute;
   inset: -50%;
-  z-index: -1;
+  z-index: -2;
+  display: none;
+  opacity: calc(0.35 + var(--lvl, 1) * 0.07);
   background: repeating-conic-gradient(
     from 0deg at 50% 50%,
     color-mix(in oklab, var(--sx-tier) 26%, transparent) 0deg 5deg,
     transparent 5deg 15deg
   );
-  mask-image: radial-gradient(circle at 50% 50%, black 0, transparent 42%);
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 0, transparent 42%);
+  mask-image: radial-gradient(circle at 50% 50%, black 0, transparent calc(30% + var(--lvl, 1) * 2.5%));
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 0, transparent calc(30% + var(--lvl, 1) * 2.5%));
   translate: 0 -10%;
 }
+.sx-tierup.has-rays .sx-tu-rays {
+  display: block;
+}
+.sx-tu-rays.is-rev {
+  background: repeating-conic-gradient(
+    from 7deg at 50% 50%,
+    color-mix(in oklab, var(--sx-fg) 12%, transparent) 0deg 2deg,
+    transparent 2deg 24deg
+  );
+}
 .sx-tierup:not(.is-charge) .sx-tu-rays {
-  animation: sx-tu-raysin 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) both, sx-spin 40s linear infinite;
+  animation: sx-tu-raysin 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) both, sx-spin calc(46s - var(--lvl, 1) * 3s) linear infinite;
+}
+.sx-tierup:not(.is-charge) .sx-tu-rays.is-rev {
+  animation: sx-tu-raysin 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) both, sx-spin 24s linear infinite reverse;
 }
 .sx-tierup.is-charge .sx-tu-rays {
   opacity: 0;
@@ -1438,7 +1459,11 @@
   opacity: 0;
 }
 .sx-tierup:not(.is-charge) .sx-tu-flash {
-  animation: sx-tu-flash 0.75s ease-out both;
+  animation: sx-tu-flash calc(0.55s + var(--lvl, 1) * 0.05s) ease-out both;
+}
+.sx-tierup:not(.is-charge) .sx-tu-flash.is-second {
+  background: var(--sx-fg);
+  animation: sx-tu-flash 0.5s ease-out 0.28s both;
 }
 .sx-tu-shake {
   display: grid;
@@ -1448,7 +1473,10 @@
   text-align: center;
 }
 .sx-tierup:not(.is-charge) .sx-tu-shake {
-  animation: sx-tu-shake 0.5s linear both;
+  animation: sx-tu-shake calc(0.35s + var(--lvl, 1) * 0.08s) linear both;
+}
+.sx-tierup.is-big.is-charge .sx-tu-shake {
+  animation: sx-tu-rumble 0.11s linear infinite;
 }
 
 /* Escenario del ícono */
@@ -1457,6 +1485,9 @@
   width: var(--sx-tu-size);
   height: var(--sx-tu-size);
   display: grid;
+  /* Pista fija: las capas más grandes que el ícono (halo, runas, rayos)
+     se desbordan centradas sin empujar el texto hacia abajo. */
+  grid-template: 100% / 100%;
   place-items: center;
 }
 .sx-tu-stage > * {
@@ -1470,17 +1501,17 @@
   user-select: none;
 }
 .sx-tu-halo {
-  width: 120%;
-  height: 120%;
+  width: calc(110% + var(--lvl, 1) * 6%);
+  height: calc(110% + var(--lvl, 1) * 6%);
   border-radius: 50%;
   background: conic-gradient(from 0deg, var(--sx-tier), transparent 25%, var(--sx-tier) 50%, transparent 75%, var(--sx-tier));
-  filter: blur(28px);
-  opacity: 0.55;
-  animation: sx-spin 6s linear infinite;
+  filter: blur(calc(20px + var(--lvl, 1) * 3px));
+  opacity: calc(0.4 + var(--lvl, 1) * 0.05);
+  animation: sx-spin calc(7s - var(--lvl, 1) * 0.5s) linear infinite;
 }
 .sx-tierup.is-charge .sx-tu-halo {
   background: radial-gradient(circle, var(--sx-tier-old), transparent 65%);
-  animation: sx-tu-charge-halo 1.5s ease-in both;
+  animation: sx-tu-charge-halo var(--charge) ease-in both;
 }
 .sx-tu-gather {
   width: 100%;
@@ -1491,7 +1522,10 @@
   opacity: 0;
 }
 .sx-tierup.is-charge .sx-tu-gather {
-  animation: sx-tu-gather 0.75s ease-in 2 both;
+  animation: sx-tu-gather calc(var(--charge) / 2) ease-in 2 both;
+}
+.sx-tierup.is-epic.is-charge .sx-tu-gather {
+  animation: sx-tu-gather calc(var(--charge) / 4) ease-in 4 both;
 }
 .sx-tu-mote {
   width: 6px;
@@ -1509,13 +1543,13 @@
 }
 .sx-tierup.is-charge .sx-tu-old {
   opacity: 1;
-  animation: sx-tu-charge 1.5s cubic-bezier(0.5, 0, 0.9, 0.6) both;
+  animation: sx-tu-charge var(--charge) cubic-bezier(0.5, 0, 0.9, 0.6) both;
 }
 .sx-tu-shard {
   opacity: 0;
 }
 .sx-tierup:not(.is-charge) .sx-tu-shard {
-  animation: sx-tu-shard 1s cubic-bezier(0.1, 0.7, 0.3, 1) both;
+  animation: sx-tu-shard calc(0.8s + var(--lvl, 1) * 0.06s) cubic-bezier(0.1, 0.7, 0.3, 1) both;
 }
 .sx-tu-ring {
   width: 100%;
@@ -1526,7 +1560,7 @@
   opacity: 0;
 }
 .sx-tierup:not(.is-charge) .sx-tu-ring {
-  animation: sx-tu-ring 1.1s cubic-bezier(0.1, 0.6, 0.3, 1) var(--dl) both;
+  animation: sx-tu-ring calc(0.9s + var(--lvl, 1) * 0.06s) cubic-bezier(0.1, 0.6, 0.3, 1) var(--dl) both;
 }
 .sx-tu-spark {
   width: var(--sz);
@@ -1541,10 +1575,10 @@
   box-shadow: 0 0 14px var(--gold), 0 0 4px var(--sx-tier);
 }
 .sx-tierup:not(.is-charge) .sx-tu-spark {
-  animation: sx-tu-spark 1.2s cubic-bezier(0.05, 0.7, 0.3, 1) var(--dl) both;
+  animation: sx-tu-spark calc(1s + var(--lvl, 1) * 0.06s) cubic-bezier(0.05, 0.7, 0.3, 1) var(--dl) both;
 }
 .sx-tu-new {
-  filter: drop-shadow(0 0 22px color-mix(in oklab, var(--sx-tier) 70%, transparent));
+  filter: drop-shadow(0 0 calc(14px + var(--lvl, 1) * 3px) color-mix(in oklab, var(--sx-tier) 70%, transparent));
 }
 .sx-tierup.is-charge .sx-tu-new {
   opacity: 0;
@@ -1577,7 +1611,12 @@
 .sx-tierup .sx-tu-name {
   margin: 0;
   display: flex;
-  font: 900 clamp(52px, 12vw, 128px)/0.9 "Barlow Condensed", sans-serif;
+  font: 900 64px/0.9 "Barlow Condensed", sans-serif;
+  /* Crece con el nivel, pero nunca más ancho que la pantalla (--len = letras). */
+  font-size: min(
+    clamp(calc(40px + var(--lvl, 1) * 3px), calc(9vw + var(--lvl, 1) * 0.4vw), calc(100px + var(--lvl, 1) * 5px)),
+    calc((100vw - 40px) / (var(--len, 8) * 0.6))
+  );
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -1591,6 +1630,15 @@
   animation:
     sx-tu-letter 0.6s cubic-bezier(0.2, 1.3, 0.4, 1) calc(0.12s + var(--i) * 55ms) both,
     sx-tu-glint 2.6s ease-in-out calc(1s + var(--i) * 60ms) infinite;
+}
+.sx-tierup .sx-tu-motto {
+  margin: 0;
+  color: var(--sx-tier);
+  font: italic 700 clamp(15px, 2.4vw, 20px)/1.1 "Barlow Condensed", sans-serif;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 0 14px color-mix(in oklab, var(--sx-tier) 60%, transparent);
+  animation: sx-rise 0.5s ease-out 0.45s both;
 }
 .sx-tierup .sx-tu-sub {
   margin: 0;
@@ -1619,7 +1667,8 @@
 }
 
 /* Brasas que suben */
-.sx-tu-embers {
+.sx-tu-embers,
+.sx-tu-coins {
   position: absolute;
   inset: 0;
   z-index: -1;
@@ -1640,9 +1689,436 @@
   animation: sx-tu-ember var(--du) linear var(--dl) infinite;
 }
 
+/* ===== Efectos por rango ===== */
+
+/* Bronze · chispas de forja: saltan del ícono y caen como en un yunque */
+.sx-tu-fount {
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 50%;
+  background: var(--sx-fg);
+  box-shadow: 0 0 10px var(--sx-tier), 0 0 3px var(--gold);
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-fount {
+  animation: sx-tu-fount 1.3s cubic-bezier(0.2, 0.6, 0.6, 1) var(--dl) both;
+}
+.sx-tierup.fx-fountain:not(.has-rays) .sx-tu-ring {
+  transform: scaleY(0.38) translateY(70%);
+}
+
+/* Silver · cortes de espada en X */
+.sx-tu-slash {
+  width: 340%;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, transparent, var(--sx-fg) 45%, var(--sx-tier) 55%, transparent);
+  box-shadow: 0 0 18px var(--sx-tier);
+  rotate: var(--a);
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-slash {
+  animation: sx-tu-slash 0.7s cubic-bezier(0.1, 0.9, 0.2, 1) var(--dl) both;
+}
+
+/* Destello metálico que recorre el ícono nuevo (enmascarado con el ícono) */
+.sx-tu-sheen {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, color-mix(in oklab, var(--sx-fg) 85%, transparent) 48%, transparent 60%);
+  background-size: 300% 100%;
+  background-position: 120% 0;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mix-blend-mode: overlay;
+  opacity: 0;
+}
+.sx-tierup.is-reveal .sx-tu-sheen {
+  opacity: 1;
+  animation: sx-tu-sheen 2.4s ease-in-out 0.4s infinite, sx-tu-float 3.4s ease-in-out 1.15s infinite;
+}
+
+/* Gold · lluvia de monedas */
+.sx-tu-coins {
+  z-index: 4;
+}
+.sx-tu-coins span {
+  position: absolute;
+  top: -30px;
+  left: var(--x);
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--sx-fg), var(--sx-tier) 45%, color-mix(in oklab, var(--sx-tier) 55%, var(--base)));
+  box-shadow: 0 0 10px color-mix(in oklab, var(--sx-tier) 70%, transparent);
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-coins span {
+  animation: sx-tu-coin var(--du) cubic-bezier(0.4, 0, 0.9, 0.6) var(--dl) infinite, sx-tu-coinflip var(--sp) linear infinite;
+}
+
+/* Platinum · púas de cristal y hexágonos de escarcha */
+.sx-tu-spike {
+  width: 12px;
+  height: calc(var(--sx-tu-size) * var(--h));
+  background: linear-gradient(to top, transparent, color-mix(in oklab, var(--sx-tier) 80%, transparent) 40%, var(--sx-fg));
+  clip-path: polygon(50% 0, 100% 70%, 50% 100%, 0 70%);
+  transform-origin: 50% 100%;
+  transform: rotate(var(--a)) translateY(calc(var(--sx-tu-size) * -0.42 - 50%));
+  filter: drop-shadow(0 0 6px var(--sx-tier));
+  opacity: 0.4;
+}
+.sx-tierup.is-charge .sx-tu-spike {
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-spike {
+  animation: sx-tu-spike 0.8s cubic-bezier(0.2, 1.4, 0.4, 1) var(--dl) both;
+}
+.sx-tu-hex {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 0;
+}
+.sx-tu-hex polygon {
+  fill: none;
+  stroke: var(--sx-tier);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px var(--sx-tier));
+}
+.sx-tierup:not(.is-charge) .sx-tu-hex {
+  animation: sx-tu-hex 1.2s cubic-bezier(0.1, 0.6, 0.3, 1) var(--dl) both;
+}
+
+/* Emerald · remolino de energía */
+.sx-tu-orb {
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 50%;
+  background: var(--sx-tier);
+  box-shadow: 0 0 12px var(--sx-tier), 0 0 3px var(--sx-fg);
+  transform: rotate(var(--a)) translateX(var(--r));
+  opacity: 0.8;
+}
+.sx-tierup.is-charge .sx-tu-orb {
+  background: var(--sx-tier-old);
+  box-shadow: 0 0 12px var(--sx-tier-old);
+  animation: sx-tu-spiral var(--charge) cubic-bezier(0.6, 0, 0.9, 0.7) both;
+}
+.sx-tierup:not(.is-charge) .sx-tu-orb {
+  animation: sx-tu-orbit var(--du) linear var(--dl) infinite;
+}
+
+/* Columna de luz */
+.sx-tu-pillar {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 50%;
+  z-index: -1;
+  width: calc(var(--sx-tu-size) * 0.9);
+  translate: -50% 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--sx-tier) 45%, transparent) 30%, color-mix(in oklab, var(--sx-fg) 70%, transparent) 50%, color-mix(in oklab, var(--sx-tier) 45%, transparent) 70%, transparent);
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  opacity: 0.45;
+}
+.sx-tierup.is-charge .sx-tu-pillar {
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-pillar {
+  animation: sx-tu-pillar 1.1s cubic-bezier(0.1, 0.8, 0.3, 1) both, sx-tu-pulse 2.2s ease-in-out 1.1s infinite;
+}
+
+/* Diamond · arcoíris prismático y facetas */
+.sx-tu-prism {
+  position: absolute;
+  inset: -50%;
+  z-index: -2;
+  translate: 0 -10%;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    oklch(0.8 0.15 25 / 0.35) 0deg 4deg,
+    transparent 4deg 10deg,
+    oklch(0.85 0.15 110 / 0.35) 10deg 14deg,
+    transparent 14deg 20deg,
+    oklch(0.8 0.13 200 / 0.35) 20deg 24deg,
+    transparent 24deg 30deg,
+    oklch(0.75 0.15 300 / 0.35) 30deg 34deg,
+    transparent 34deg 40deg
+  );
+  mask-image: radial-gradient(circle at 50% 50%, black 0, transparent 40%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 0, transparent 40%);
+  mix-blend-mode: screen;
+}
+.sx-tierup.is-charge .sx-tu-prism {
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-prism {
+  animation: sx-tu-raysin 1s cubic-bezier(0.2, 0.9, 0.3, 1) both, sx-spin 30s linear infinite reverse;
+}
+.sx-tierup.fx-prism .sx-tu-spark {
+  border-radius: 1px;
+  rotate: 45deg;
+}
+
+/* Reflectores que barren la pantalla */
+.sx-tu-beams {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.sx-tu-beams span {
+  position: absolute;
+  bottom: -5%;
+  left: var(--x);
+  width: 22vmin;
+  height: 150vh;
+  translate: -50% 0;
+  transform-origin: 50% 100%;
+  background: linear-gradient(to top, color-mix(in oklab, var(--sx-tier) 55%, transparent), transparent 75%);
+  clip-path: polygon(46% 100%, 54% 100%, 100% 0, 0 0);
+  mix-blend-mode: screen;
+  opacity: 0.4;
+  rotate: calc(var(--dir) * 18deg);
+}
+.sx-tierup.is-charge .sx-tu-beams {
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-beams span {
+  animation: sx-tu-sweep 3.6s ease-in-out var(--dl) infinite alternate;
+}
+
+/* Master · círculo mágico */
+.sx-tu-runes {
+  width: 175%;
+  height: 175%;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0.75;
+  filter: drop-shadow(0 0 8px var(--sx-tier));
+  animation: sx-spin 24s linear infinite;
+}
+.sx-tu-rune-line {
+  fill: none;
+  stroke: var(--sx-tier);
+  stroke-width: 2;
+}
+.sx-tu-rune-line.is-dash {
+  stroke-dasharray: 3 9;
+  stroke-width: 4;
+}
+.sx-tu-rune-glyph {
+  fill: var(--sx-tier);
+}
+.sx-tierup.is-charge .sx-tu-runes {
+  --sx-tier: var(--sx-tier-old);
+  animation: sx-tu-runecharge var(--charge) cubic-bezier(0.5, 0, 0.9, 0.6) both;
+}
+.sx-tierup.is-burst .sx-tu-runes {
+  animation: sx-tu-runeburst var(--burst) cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+
+/* Rayos eléctricos */
+.sx-tu-bolts {
+  width: 260%;
+  height: 260%;
+  overflow: visible;
+  pointer-events: none;
+}
+.sx-tu-bolts path {
+  fill: none;
+  stroke: var(--sx-fg);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px var(--sx-tier)) drop-shadow(0 0 14px var(--sx-tier));
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-bolts path {
+  animation: sx-tu-bolt 2.6s steps(1) var(--dl) infinite;
+}
+.sx-tierup.is-burst .sx-tu-bolts path {
+  animation: sx-tu-boltburst var(--burst) steps(1) both;
+}
+
+/* Grandmaster · la pantalla se agrieta */
+.sx-tu-cracks {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  translate: 0 -8%;
+  pointer-events: none;
+}
+.sx-tu-cracks path {
+  fill: none;
+  stroke: var(--sx-tier);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 6px var(--sx-tier));
+  opacity: 0.55;
+}
+.sx-tierup.is-charge .sx-tu-cracks {
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-cracks path {
+  animation: sx-tu-crack 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) var(--dl) both, sx-tu-pulse 1.8s ease-in-out 1s infinite;
+}
+
+/* Llamas desde abajo */
+.sx-tu-flames {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: -1;
+  height: 55vh;
+  pointer-events: none;
+  background: linear-gradient(to top, color-mix(in oklab, var(--sx-tier) 40%, transparent), transparent);
+  mask-image: linear-gradient(to top, black 30%, transparent);
+  -webkit-mask-image: linear-gradient(to top, black 30%, transparent);
+}
+.sx-tu-flames span {
+  position: absolute;
+  bottom: -40px;
+  left: var(--x);
+  width: var(--w);
+  height: var(--h);
+  translate: -50% 0;
+  transform-origin: 50% 100%;
+  border-radius: 50% 50% 45% 45% / 70% 70% 30% 30%;
+  background: radial-gradient(ellipse at 50% 85%, var(--sx-fg) 0, var(--gold) 18%, var(--sx-tier) 45%, transparent 72%);
+  filter: blur(7px);
+  mix-blend-mode: screen;
+}
+.sx-tierup.is-charge .sx-tu-flames {
+  opacity: 0;
+}
+.sx-tierup:not(.is-charge) .sx-tu-flames {
+  animation: sx-tu-flamesin 0.8s ease-out both;
+}
+.sx-tierup:not(.is-charge) .sx-tu-flames span {
+  animation: sx-tu-flame var(--du) ease-in-out var(--dl) infinite alternate;
+}
+
+/* Challenger · rayo del cielo, estrellas y corona */
+.sx-tu-strike {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 4;
+  width: 140px;
+  height: 44vh;
+  translate: -50% 0;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+}
+.sx-tu-strike path {
+  fill: none;
+  stroke: var(--sx-fg);
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px var(--sx-tier)) drop-shadow(0 0 22px var(--sx-tier));
+}
+.sx-tu-strike path.is-branch {
+  stroke-width: 2;
+}
+.sx-tierup:not(.is-charge) .sx-tu-strike {
+  animation: sx-tu-strike 0.9s steps(1) both;
+}
+.sx-tu-stars {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+.sx-tu-stars span {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--sz);
+  height: var(--sz);
+  border-radius: 50%;
+  background: var(--sx-fg);
+  box-shadow: 0 0 6px var(--sx-tier);
+}
+.sx-tu-stars span {
+  animation: sx-tu-twinkle 2.4s ease-in-out var(--dl) infinite;
+}
+.sx-tu-stars i {
+  position: absolute;
+  top: var(--y);
+  left: -20%;
+  width: 180px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sx-fg));
+  rotate: 18deg;
+  opacity: 0;
+}
+.sx-tierup.is-reveal .sx-tu-stars i {
+  animation: sx-tu-comet 4.2s ease-in var(--dl) infinite;
+}
+.sx-tu-crown {
+  width: 52%;
+  align-self: start;
+  translate: 0 -78%;
+  overflow: visible;
+  filter: drop-shadow(0 0 14px var(--sx-tier)) drop-shadow(0 4px 0 color-mix(in oklab, var(--sx-tier) 35%, var(--base)));
+}
+.sx-tu-crown path {
+  fill: var(--sx-tier);
+  stroke: var(--sx-fg);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.sx-tu-crown circle {
+  fill: var(--danger);
+  stroke: var(--sx-fg);
+  stroke-width: 1.5;
+}
+.sx-tierup:not(.is-reveal) .sx-tu-crown {
+  opacity: 0;
+}
+.sx-tierup.is-reveal .sx-tu-crown {
+  animation: sx-tu-crown 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) 0.55s both, sx-tu-float 3.4s ease-in-out 1.45s infinite;
+}
+
+/* Challenger: apagón total y latidos durante la carga */
+.sx-tierup.fx-blackout.is-charge .sx-tu-bg {
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--sx-tier-old) 16%, transparent), transparent 30%),
+    color-mix(in oklab, var(--base) 25%, black);
+  animation: sx-tu-blackout var(--charge) ease-in both;
+}
+.sx-tierup.fx-blackout.is-charge .sx-tu-old {
+  animation: sx-tu-heart 0.8s ease-in-out infinite, sx-tu-charge var(--charge) cubic-bezier(0.5, 0, 0.9, 0.6) both;
+}
+.sx-tierup.is-apex .sx-tu-name span {
+  background: linear-gradient(100deg, var(--sx-fg) 10%, var(--sx-tier) 30%, var(--gold) 45%, var(--sx-fg) 50%, var(--sx-tier) 60%, color-mix(in oklab, var(--sx-tier) 55%, var(--base)) 90%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation:
+    sx-tu-letter 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) calc(0.12s + var(--i) * 70ms) both,
+    sx-tu-gold 2.2s linear 1s infinite;
+}
+.sx-tierup.is-apex .sx-tu-kicker {
+  font-size: 15px;
+  animation: sx-tu-kicker 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both, sx-tu-kickglow 1.4s ease-in-out 0.6s infinite;
+}
+
 @keyframes sx-tu-raysin {
   from { opacity: 0; scale: 0.3; }
-  to { opacity: 1; scale: 1; }
 }
 @keyframes sx-tu-flash {
   0% { opacity: 0; }
@@ -1651,12 +2127,18 @@
 }
 @keyframes sx-tu-shake {
   0%, 100% { transform: none; }
-  10% { transform: translate(-9px, 5px) rotate(-1deg); }
-  20% { transform: translate(8px, -6px) rotate(1deg); }
-  35% { transform: translate(-6px, -3px); }
-  50% { transform: translate(5px, 4px); }
-  70% { transform: translate(-3px, 2px); }
-  85% { transform: translate(2px, -1px); }
+  10% { transform: translate(calc(var(--amp) * -9px), calc(var(--amp) * 5px)) rotate(calc(var(--amp) * -1deg)); }
+  20% { transform: translate(calc(var(--amp) * 8px), calc(var(--amp) * -6px)) rotate(calc(var(--amp) * 1deg)); }
+  35% { transform: translate(calc(var(--amp) * -6px), calc(var(--amp) * -3px)); }
+  50% { transform: translate(calc(var(--amp) * 5px), calc(var(--amp) * 4px)); }
+  70% { transform: translate(calc(var(--amp) * -3px), calc(var(--amp) * 2px)); }
+  85% { transform: translate(calc(var(--amp) * 2px), calc(var(--amp) * -1px)); }
+}
+@keyframes sx-tu-rumble {
+  0%, 100% { transform: none; }
+  25% { transform: translate(calc(var(--amp) * -1.2px), calc(var(--amp) * 0.8px)); }
+  50% { transform: translate(calc(var(--amp) * 1px), calc(var(--amp) * -1px)); }
+  75% { transform: translate(calc(var(--amp) * -0.6px), calc(var(--amp) * -0.8px)); }
 }
 @keyframes sx-tu-charge-halo {
   from { opacity: 0.1; scale: 0.6; }
@@ -1689,7 +2171,7 @@
 }
 @keyframes sx-tu-ring {
   0% { opacity: 1; scale: 0.3; }
-  100% { opacity: 0; scale: 3.4; border-width: 1px; }
+  100% { opacity: 0; scale: calc(2.6 + var(--lvl, 1) * 0.3); border-width: 1px; }
 }
 @keyframes sx-tu-spark {
   0% { opacity: 1; transform: translate(0, 0) scale(1.4); }
@@ -1701,7 +2183,7 @@
   30% { opacity: 1; transform: scale(0.88) rotate(2deg); filter: blur(0) brightness(2); }
   55% { transform: scale(1.1) rotate(-1deg); filter: brightness(1.4); }
   75% { transform: scale(0.97); }
-  100% { transform: scale(1); filter: drop-shadow(0 0 22px color-mix(in oklab, var(--sx-tier) 70%, transparent)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 calc(14px + var(--lvl, 1) * 3px) color-mix(in oklab, var(--sx-tier) 70%, transparent)); }
 }
 @keyframes sx-tu-float {
   0%, 100% { translate: 0 0; }
@@ -1724,6 +2206,136 @@
   0% { opacity: 0; transform: translateY(0); }
   15% { opacity: 0.9; }
   100% { opacity: 0; transform: translateY(-95vh) translateX(30px); }
+}
+@keyframes sx-tu-fount {
+  0% { opacity: 0; transform: translate(0, 0); }
+  8% { opacity: 1; }
+  45% { transform: translate(calc(var(--dx) * 0.6), var(--dy)); }
+  100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 280px)); }
+}
+@keyframes sx-tu-slash {
+  0% { opacity: 1; transform: scaleX(0); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(0.2); }
+}
+@keyframes sx-tu-sheen {
+  0% { background-position: 120% 0; }
+  45%, 100% { background-position: -20% 0; }
+}
+@keyframes sx-tu-coin {
+  0% { opacity: 0; transform: translateY(0); }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(110vh); }
+}
+@keyframes sx-tu-coinflip {
+  0%, 100% { scale: 1 1; }
+  50% { scale: 0.15 1; }
+}
+@keyframes sx-tu-spike {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(calc(var(--sx-tu-size) * -0.42 - 50%)) scaleY(0); filter: brightness(2.5) drop-shadow(0 0 6px var(--sx-tier)); }
+  60% { opacity: 1; }
+  100% { opacity: 0.4; transform: rotate(var(--a)) translateY(calc(var(--sx-tu-size) * -0.42 - 50%)) scaleY(1); filter: drop-shadow(0 0 6px var(--sx-tier)); }
+}
+@keyframes sx-tu-hex {
+  0% { opacity: 1; scale: 0.4; rotate: 0deg; }
+  100% { opacity: 0; scale: 3; rotate: 30deg; }
+}
+@keyframes sx-tu-spiral {
+  0% { opacity: 0; transform: rotate(var(--a)) translateX(calc(var(--r) * 1.8)); }
+  20% { opacity: 1; }
+  100% { opacity: 1; transform: rotate(calc(var(--a) + 720deg)) translateX(0); }
+}
+@keyframes sx-tu-orbit {
+  from { transform: rotate(var(--a)) translateX(var(--r)); }
+  to { transform: rotate(calc(var(--a) + 360deg)) translateX(var(--r)); }
+}
+@keyframes sx-tu-pillar {
+  0% { opacity: 0; scale: 0 1; }
+  25% { opacity: 1; scale: 1.6 1; filter: blur(2px) brightness(2); }
+  100% { opacity: 0.45; scale: 1 1; }
+}
+@keyframes sx-tu-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.75; }
+}
+@keyframes sx-tu-sweep {
+  from { rotate: calc(var(--dir) * 22deg); }
+  to { rotate: calc(var(--dir) * -14deg); }
+}
+@keyframes sx-tu-runecharge {
+  0% { opacity: 0; scale: 0.4; rotate: 0deg; }
+  100% { opacity: 1; scale: 0.9; rotate: -540deg; }
+}
+@keyframes sx-tu-runeburst {
+  0% { opacity: 1; scale: 0.9; filter: brightness(3) drop-shadow(0 0 20px var(--sx-tier)); }
+  100% { opacity: 0.75; scale: 1; }
+}
+@keyframes sx-tu-bolt {
+  0%, 100% { opacity: 0; }
+  4% { opacity: 1; }
+  7% { opacity: 0; }
+  10% { opacity: 0.8; }
+  13% { opacity: 0; }
+}
+@keyframes sx-tu-boltburst {
+  0% { opacity: 1; }
+  20% { opacity: 0; }
+  35% { opacity: 1; }
+  60% { opacity: 0.4; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes sx-tu-crack {
+  from { stroke-dashoffset: 1; opacity: 1; filter: brightness(2.5) drop-shadow(0 0 10px var(--sx-tier)); }
+  to { stroke-dashoffset: 0; opacity: 0.55; }
+}
+@keyframes sx-tu-flamesin {
+  from { opacity: 0; translate: 0 40%; }
+}
+@keyframes sx-tu-flame {
+  from { transform: scale(0.8, 0.75) skewX(-4deg); opacity: 0.7; }
+  to { transform: scale(1.05, 1.15) skewX(5deg); opacity: 1; }
+}
+@keyframes sx-tu-strike {
+  0% { opacity: 1; }
+  12% { opacity: 0; }
+  22% { opacity: 1; }
+  40% { opacity: 0.3; }
+  52% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes sx-tu-twinkle {
+  0%, 100% { opacity: 0.15; scale: 0.6; }
+  50% { opacity: 1; scale: 1.3; }
+}
+@keyframes sx-tu-comet {
+  0% { opacity: 0; transform: translateX(0); }
+  5% { opacity: 1; }
+  25%, 100% { opacity: 0; transform: translateX(150vw); }
+}
+@keyframes sx-tu-crown {
+  0% { opacity: 0; transform: translateY(-160%) rotate(-14deg) scale(1.4); }
+  60% { opacity: 1; transform: translateY(6%) rotate(3deg) scale(0.96); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes sx-tu-blackout {
+  from { opacity: 0.85; }
+  to { opacity: 1; }
+}
+@keyframes sx-tu-heart {
+  0%, 100% { scale: 1; }
+  15% { scale: 1.08; }
+  30% { scale: 0.98; }
+  45% { scale: 1.05; }
+}
+@keyframes sx-tu-gold {
+  from { background-position: 100% 0; }
+  to { background-position: -150% 0; }
+}
+@keyframes sx-tu-kickglow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 14px var(--sx-tier)); }
 }
 
 /* ---------- Animaciones ---------- */
@@ -1849,4 +2461,27 @@
 
 .sx-hint.is-bad {
   color: var(--sx-opp);
+}
+
+/* ---------- Botón de sonido de la ceremonia ---------- */
+.sx-tu-sound {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 20;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--sx-fg) 22%, transparent);
+  background: color-mix(in oklab, var(--sx-ink) 70%, transparent);
+  font-size: 18px;
+  line-height: 1;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.sx-tu-sound:hover {
+  border-color: var(--sx-tier, var(--sx-fg));
+}
+.sx-tu-sound:active {
+  transform: translateY(1px);
 }
