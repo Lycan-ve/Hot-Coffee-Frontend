@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronRight, Crown, Download, Info, RefreshCw, Search, SlidersHorizontal, Swords, Trophy, Users } from "lucide-react";
+import { ChevronRight, Crown, Download, Info, RefreshCw, Search, SlidersHorizontal, Swords, Trophy, Users, X } from "lucide-react";
 import { API_URL, fetchUserProfile, fuseIconUrl, getToken, type MeResponse } from "@/lib/auth";
 import { A, AppShell, RankBadge, SectionTitle } from "@/components/hc/shared";
 
@@ -583,8 +583,14 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                 />
               </label>
               {mode === "torneos" && (
-                <button type="button" className={showFilters ? "on" : ""} onClick={() => setShowFilters((v) => !v)}>
-                  <SlidersHorizontal /> Filtrar torneos
+                <button
+                  type="button"
+                  className={showFilters ? "on" : ""}
+                  aria-pressed={showFilters}
+                  aria-expanded={showFilters}
+                  onClick={() => setShowFilters((v) => !v)}
+                >
+                  {showFilters ? <X /> : <SlidersHorizontal />} {showFilters ? "Ocultar filtros" : "Filtrar torneos"}
                 </button>
               )}
               <button type="button" onClick={sync} disabled={isFetching}>
@@ -881,4 +887,5 @@ function Team({ value }: { value?: string | undefined }) {
     </div>
   );
 }
+
 

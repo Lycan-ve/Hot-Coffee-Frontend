@@ -1642,7 +1642,9 @@ a.discord, a.search-button, a.secondary-button { text-decoration: none; display:
 .hc-notice h2 { font: 700 40px/1 "Barlow Condensed", sans-serif; }
 .hc-notice p { color: var(--hc-muted); font-size: 15px; }
 .hc-empty { padding: 24px 18px; color: var(--hc-muted); font-size: 14px; }
-.rk-tools > button.on { border-color: var(--orange); background: rgba(180,77,29,.15); }
+/* Botón de filtros activo: borde naranja + texto dorado, sin relleno sólido */
+.rk-tools > button.on { border-color: var(--orange); background: rgba(180,77,29,.08); color: var(--gold); }
+.rk-tools > button.on svg { color: var(--gold); }
 .rk-tools > button:disabled { opacity: .6; }
 .rk-filters { display: flex; align-items: center; gap: 18px; padding: 0 20px 16px; color: var(--hc-muted); font-size: 13px; }
 .rk-filters span { color: var(--cream); letter-spacing: 1.5px; font-size: 11px; }
@@ -2324,3 +2326,4 @@ img.mini-avatar, img.avatar { object-fit: cover; }
     flex-direction: row;
   }
 }
+
