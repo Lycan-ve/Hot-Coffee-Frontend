@@ -152,7 +152,7 @@ type Row = {
   profileId?: string | undefined;
 };
 
-// Diapositiva del carrusel de destacados: el sistema elje a los jugadores
+// Diapositiva del carrusel de destacados: el sistema elige a los jugadores
 // según el modo (campeón vigente, líder de la temporada, más victorias...).
 type FeaturedSlide = {
   key: string;
@@ -340,10 +340,8 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         character: p.character,
         points: p.points,
         profileId: p.discordId || (p.id != null ? String(p.id) : ""),
-        sub:
-          sub ??
-          [p.character, p.sponsor ? `#${p.sponsor}` : ""].filter(Boolean).join(" · ") ||
-            "Top de la temporada de torneos",
+        // Paréntesis obligatorios: no se puede mezclar ?? y || sin ellos.
+        sub: sub ?? ([p.character, p.sponsor ? `#${p.sponsor}` : ""].filter(Boolean).join(" · ") || "Top de la temporada de torneos"),
       });
     };
     const champ = lastTourney?.live ? lastTourney.players[0] : undefined;
