@@ -380,7 +380,11 @@ export default function RankingPage() {
             <Users />
             <div>
               <small>PARTICIPANTES</small>
-              <p><strong>{loading ? "—" : String(rows.length).padStart(2, "0")}</strong> jugadores en la liga</p>
+              {/* Con un torneo elegido se aclara de dónde salen los jugadores. */}
+              <p>
+                <strong>{loading ? "—" : String(rows.length).padStart(2, "0")}</strong>{" "}
+                {series ? `jugadores de la liga (${currentSeries?.name ?? series})` : "jugadores en la liga"}
+              </p>
             </div>
           </div>
           <div className="rk-stat">
@@ -408,188 +412,230 @@ export default function RankingPage() {
         </section>
 
         <section className="rk-layout">
-          <article className="panel rk-table" ref={boardRef}>
-            <div className="rk-tabs">
-              <button type="button" className={mode === "torneos" ? "on" : ""} onClick={() => switchMode("torneos")}>
-                RANKING TORNEOS
-              </button>
-              <button type="button" className={mode === "matchmaking" ? "on" : ""} onClick={() => switchMode("matchmaking")}>
-                RANKING MATCHMAKING
-              </button>
-              <span>
-                {mode === "torneos"
-                  ? series
-                    ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
-                    : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
-                  : "SETS /FT · LIGA 2XKO"}
-              </span>
-            </div>
-            <div className="rk-tools">
-              <label className="rk-search">
-                <Search />
-                <input
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Buscar jugador o equipo"
-                />
-              </label>
-              {mode === "torneos" && (
-                <button type="button" className={showFilters ? "on" : ""} onClick={() => setShowFilters((v) => !v)}>
-                  <SlidersHorizontal /> Filtrar torneos
+          <div className="rk-main">
+            <article className="panel rk-table" ref={boardRef}>
+              <div className="rk-tabs">
+                <button type="button" className={mode === "torneos" ? "on" : ""} onClick={() => switchMode("torneos")}>
+                  RANKING TORNEOS
                 </button>
-              )}
-              <button type="button" onClick={sync} disabled={isFetching}>
-                <RefreshCw className={isFetching ? "spin" : ""} /> {isFetching ? "Sincronizando" : "Sincronizar"}
-              </button>
-              <button type="button" onClick={exportPng}><Download /> PNG</button>
-            </div>
-            {showFilters && mode === "torneos" && (
-              <div className="rk-filters">
-                <span>TORNEOS</span>
-                <label>
-                  Serie
-                  <select
-                    value={series}
-                    onChange={(e) => { setSeries(e.target.value); setPage(1); }}
-                    title="Filtra por una serie de torneos (p. ej. TNS muestra solo los resultados de TNS)"
-                  >
-                    <option value="">TODAS</option>
-                    {seriesList.map((s) => (
-                      <option key={s.key} value={s.key}>{`${s.name} (${s.count})`}</option>
-                    ))}
-                  </select>
-                </label>
-                <label title={series ? "Se ignora al elegir una serie" : undefined}>
-                  Desde
-                  <select value={from} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setFrom(v); if (v > to) setTo(v); setPage(1); }}>
-                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </label>
-                <label title={series ? "Se ignora al elegir una serie" : undefined}>
-                  Hasta
-                  <select value={to} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setTo(v); if (v < from) setFrom(v); setPage(1); }}>
-                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </label>
+                <button type="button" className={mode === "matchmaking" ? "on" : ""} onClick={() => switchMode("matchmaking")}>
+                  RANKING MATCHMAKING
+                </button>
+                <span>
+                  {mode === "torneos"
+                    ? series
+                      ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
+                      : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
+                    : "SETS /FT · LIGA 2XKO"}
+                </span>
               </div>
-            )}
-            <div className="rk-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}<th className="accent">PUNTOS ↓</th><th className="r">PERFIL</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading &&
-                    Array.from({ length: 6 }, (_, i) => (
-                      <tr key={i}><td colSpan={cols}><div className="rk-skeleton" /></td></tr>
-                    ))}
-                  {!loading && shown.length === 0 && (
-                    <tr><td colSpan={cols} className="c">No hay jugadores con ese nombre.</td></tr>
-                  )}
-                  {shown.map((r) => {
-                    const top = r.ranking <= 3;
-                    const prof = profiles[r.key];
-                    const lastTeam = prof?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam;
-                    return (
-                      <tr key={r.key} className={r.ranking === 1 ? "first" : ""}>
-                        <td className={`pos ${top ? "top" : ""}`}>{String(r.ranking).padStart(2, "0")}</td>
-                        <td>
-                          <div className="who">
-                            {r.avatar ? (
-                              <img className="ini" src={r.avatar} alt="" />
-                            ) : (
-                              <span className={`ini ${top ? "top" : ""}`}>{r.name[0]}</span>
-                            )}
-                            <div>
-                              <strong>{r.name} {r.sponsor ? <em>#{r.sponsor}</em> : null}</strong>
-                              {mm && (
-                                <small className="rk-sub">
-                                  {lastTeam ? `${lastTeam.point.name} / ${lastTeam.assist.name}` : `${r.wins ?? 0}V — ${r.losses ?? 0}D`}
-                                </small>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        {mm && (
+              <div className="rk-tools">
+                <label className="rk-search">
+                  <Search />
+                  <input
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="Buscar jugador o equipo"
+                  />
+                </label>
+                {mode === "torneos" && (
+                  <button type="button" className={showFilters ? "on" : ""} onClick={() => setShowFilters((v) => !v)}>
+                    <SlidersHorizontal /> Filtrar torneos
+                  </button>
+                )}
+                <button type="button" onClick={sync} disabled={isFetching}>
+                  <RefreshCw className={isFetching ? "spin" : ""} /> {isFetching ? "Sincronizando" : "Sincronizar"}
+                </button>
+                <button type="button" onClick={exportPng}><Download /> PNG</button>
+              </div>
+              {showFilters && mode === "torneos" && (
+                <div className="rk-filters">
+                  <span>TORNEOS</span>
+                  <label>
+                    Serie
+                    <select
+                      value={series}
+                      onChange={(e) => { setSeries(e.target.value); setPage(1); }}
+                      title="Filtra por una serie de torneos (p. ej. TNS muestra solo los resultados de TNS)"
+                    >
+                      <option value="">TODAS</option>
+                      {seriesList.map((s) => (
+                        <option key={s.key} value={s.key}>{`${s.name} (${s.count})`}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label title={series ? "Se ignora al elegir una serie" : undefined}>
+                    Desde
+                    <select value={from} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setFrom(v); if (v > to) setTo(v); setPage(1); }}>
+                      {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </label>
+                  <label title={series ? "Se ignora al elegir una serie" : undefined}>
+                    Hasta
+                    <select value={to} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setTo(v); if (v < from) setFrom(v); setPage(1); }}>
+                      {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </label>
+                </div>
+              )}
+              <div className="rk-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}<th className="accent">PUNTOS ↓</th><th className="r">PERFIL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading &&
+                      Array.from({ length: 6 }, (_, i) => (
+                        <tr key={i}><td colSpan={cols}><div className="rk-skeleton" /></td></tr>
+                      ))}
+                    {!loading && shown.length === 0 && (
+                      <tr><td colSpan={cols} className="c">No hay jugadores con ese nombre.</td></tr>
+                    )}
+                    {shown.map((r) => {
+                      const top = r.ranking <= 3;
+                      const prof = profiles[r.key];
+                      const lastTeam = prof?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam;
+                      return (
+                        <tr key={r.key} className={r.ranking === 1 ? "first" : ""}>
+                          <td className={`pos ${top ? "top" : ""}`}>{String(r.ranking).padStart(2, "0")}</td>
                           <td>
-                            {prof?.rank ? (
-                              <div className="rk-rank">
-                                <RankBadge small rank={prof.rank} />
-                                <span style={{ color: prof.rank.color }}>{prof.rank.displayName}</span>
-                              </div>
-                            ) : <span className="dim">—</span>}
-                          </td>
-                        )}
-                        <td>
-                          {mm ? (
-                            lastTeam ? (
-                              <div className="rk-team">
-                                {[lastTeam.point, lastTeam.assist].map((c) => (
-                                  <span key={c.id} title={c.name}>
-                                    <img src={`/fighters/${encodeURIComponent(c.id)}.png`} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
-                                    {c.name}
-                                  </span>
-                                ))}
-                                {lastTeam.fuse?.id && (
-                                  <span className="fuse" title={`Fuse: ${lastTeam.fuse.name}`}>
-                                    <img src={fuseIconUrl(lastTeam.fuse.id)} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
-                                    {lastTeam.fuse.name}
-                                  </span>
+                            <div className="who">
+                              {r.avatar ? (
+                                <img className="ini" src={r.avatar} alt="" />
+                              ) : (
+                                <span className={`ini ${top ? "top" : ""}`}>{r.name[0]}</span>
+                              )}
+                              <div>
+                                <strong>{r.name} {r.sponsor ? <em>#{r.sponsor}</em> : null}</strong>
+                                {mm && (
+                                  <small className="rk-sub">
+                                    {lastTeam ? `${lastTeam.point.name} / ${lastTeam.assist.name}` : `${r.wins ?? 0}V — ${r.losses ?? 0}D`}
+                                  </small>
                                 )}
                               </div>
-                            ) : <span className="dim">—</span>
-                          ) : (
-                            <Team value={r.character} />
-                          )}
-                        </td>
-                        {mm && (
-                          <td>
-                            {prof?.fights?.length ? (
-                              <div className="rk-sets">
-                                {prof.fights.slice(0, 5).map((f) => (
-                                  <b key={f.id} className={f.result === "WIN" ? "w" : "l"} title={`${f.scoreFor}-${f.scoreAgainst} vs ${f.opponentTag}`}>
-                                    {f.result === "WIN" ? "V" : "D"}
-                                  </b>
-                                ))}
-                              </div>
-                            ) : <span className="dim">—</span>}
+                            </div>
                           </td>
-                        )}
-                        <td>
-                          <span className={`pts ${top ? "top" : ""}`}>{fmt(r.points)}</span>
-                        </td>
-                        <td className="r">
-                          {r.profileId ? (
-                            <Link href={`/perfil/${String(r.profileId)}`} className="rk-link" aria-label={`Ver perfil de ${r.name}`}>
-                              <ChevronRight />
-                            </Link>
-                          ) : null}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="rk-foot">
-              <span>
-                Mostrando {filtered.length ? (current - 1) * PER_PAGE + 1 : 0}–{Math.min(current * PER_PAGE, filtered.length)} de {filtered.length} jugadores
-              </span>
-              <div className="pager">
-                <small>{PER_PAGE} por página</small>
-                <button type="button" onClick={() => setPage(Math.max(1, current - 1))} aria-label="Página anterior">‹</button>
-                {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
-                  <button type="button" key={n} className={n === current ? "on" : ""} onClick={() => setPage(n)}>{n}</button>
-                ))}
-                <button type="button" onClick={() => setPage(Math.min(pages, current + 1))} aria-label="Página siguiente">›</button>
+                          {mm && (
+                            <td>
+                              {prof?.rank ? (
+                                <div className="rk-rank">
+                                  <RankBadge small rank={prof.rank} />
+                                  <span style={{ color: prof.rank.color }}>{prof.rank.displayName}</span>
+                                </div>
+                              ) : <span className="dim">—</span>}
+                            </td>
+                          )}
+                          <td>
+                            {mm ? (
+                              lastTeam ? (
+                                <div className="rk-team">
+                                  {[lastTeam.point, lastTeam.assist].map((c) => (
+                                    <span key={c.id} title={c.name}>
+                                      <img src={`/fighters/${encodeURIComponent(c.id)}.png`} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
+                                      {c.name}
+                                    </span>
+                                  ))}
+                                  {lastTeam.fuse?.id && (
+                                    <span className="fuse" title={`Fuse: ${lastTeam.fuse.name}`}>
+                                      <img src={fuseIconUrl(lastTeam.fuse.id)} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
+                                      {lastTeam.fuse.name}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : <span className="dim">—</span>
+                            ) : (
+                              <Team value={r.character} />
+                            )}
+                          </td>
+                          {mm && (
+                            <td>
+                              {prof?.fights?.length ? (
+                                <div className="rk-sets">
+                                  {prof.fights.slice(0, 5).map((f) => (
+                                    <b key={f.id} className={f.result === "WIN" ? "w" : "l"} title={`${f.scoreFor}-${f.scoreAgainst} vs ${f.opponentTag}`}>
+                                      {f.result === "WIN" ? "V" : "D"}
+                                    </b>
+                                  ))}
+                                </div>
+                              ) : <span className="dim">—</span>}
+                            </td>
+                          )}
+                          <td>
+                            <span className={`pts ${top ? "top" : ""}`}>{fmt(r.points)}</span>
+                          </td>
+                          <td className="r">
+                            {r.profileId ? (
+                              <Link href={`/perfil/${String(r.profileId)}`} className="rk-link" aria-label={`Ver perfil de ${r.name}`}>
+                                <ChevronRight />
+                              </Link>
+                            ) : null}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </article>
+              <div className="rk-foot">
+                <span>
+                  Mostrando {filtered.length ? (current - 1) * PER_PAGE + 1 : 0}–{Math.min(current * PER_PAGE, filtered.length)} de {filtered.length} jugadores
+                </span>
+                <div className="pager">
+                  <small>{PER_PAGE} por página</small>
+                  <button type="button" onClick={() => setPage(Math.max(1, current - 1))} aria-label="Página anterior">‹</button>
+                  {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
+                    <button type="button" key={n} className={n === current ? "on" : ""} onClick={() => setPage(n)}>{n}</button>
+                  ))}
+                  <button type="button" onClick={() => setPage(Math.min(pages, current + 1))} aria-label="Página siguiente">›</button>
+                </div>
+              </div>
+            </article>
+
+            {/* Torneos procesados bajo la tabla: siempre visibles, con el botón
+                TODOS para quitar el filtro de un toque y no confundir a nadie. */}
+            {mode === "torneos" && seriesList.length > 0 && (
+              <article className="panel rk-tourneys">
+                <div className="head">
+                  <h3>TORNEOS PROCESADOS</h3>
+                  <Trophy />
+                </div>
+                <div className="rk-tourneys-grid">
+                  <button
+                    type="button"
+                    className={`chip chip-all ${series === "" ? "on" : ""}`}
+                    onClick={() => { setSeries(""); setPage(1); }}
+                    title="Ver todos los torneos procesados (quita el filtro)"
+                  >
+                    <span className="badge-ini">☕</span>
+                    <span className="nm">TODOS</span>
+                    <small>{tournamentsList.length} {tournamentsList.length === 1 ? "TORNEO" : "TORNEOS"}</small>
+                  </button>
+                  {seriesList.map((s) => (
+                    <button
+                      type="button"
+                      key={s.key}
+                      className={`chip ${series === s.key ? "on" : ""}`}
+                      onClick={() => { setSeries(series === s.key ? "" : s.key); setPage(1); }}
+                      title={`Ver solo los resultados de ${s.name}`}
+                    >
+                      {s.image ? (
+                        <img src={s.image} alt={s.name} onError={(e) => (e.currentTarget.style.display = "none")} />
+                      ) : (
+                        <span className="badge-ini">{s.name.charAt(0).toUpperCase()}</span>
+                      )}
+                      <span className="nm">{s.name.toUpperCase()}</span>
+                      <small>{s.count} {s.count === 1 ? "EVENTO" : "EVENTOS"}</small>
+                    </button>
+                  ))}
+                </div>
+              </article>
+            )}
+          </div>
 
           <aside className="rk-side">
             <article className="rk-featured">
@@ -618,34 +664,6 @@ export default function RankingPage() {
                 ) : null}
               </div>
             </article>
-
-            {mode === "torneos" && seriesList.length > 0 && (
-              <article className="panel rk-tourneys">
-                <div className="head">
-                  <h3>TORNEOS PROCESADOS</h3>
-                  <Trophy />
-                </div>
-                <div className="rk-tourneys-grid">
-                  {seriesList.map((s) => (
-                    <button
-                      type="button"
-                      key={s.key}
-                      className={`chip ${series === s.key ? "on" : ""}`}
-                      onClick={() => { setSeries(series === s.key ? "" : s.key); setPage(1); }}
-                      title={`Ver solo los resultados de ${s.name}`}
-                    >
-                      {s.image ? (
-                        <img src={s.image} alt={s.name} onError={(e) => (e.currentTarget.style.display = "none")} />
-                      ) : (
-                        <span className="badge-ini">{s.name.charAt(0).toUpperCase()}</span>
-                      )}
-                      <span className="nm">{s.name.toUpperCase()}</span>
-                      <small>{s.count} {s.count === 1 ? "EVENTO" : "EVENTOS"}</small>
-                    </button>
-                  ))}
-                </div>
-              </article>
-            )}
 
             <article className="panel rk-points">
               <div className="head"><h3>¿CÓMO SE SUMA?</h3><Info /></div>

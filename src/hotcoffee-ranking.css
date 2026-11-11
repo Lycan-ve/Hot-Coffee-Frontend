@@ -11,3 +11,25 @@
 .rk-sets b.w { color: #4ade80; border-color: #4ade80; }
 .rk-sets b.l { color: #f87171; border-color: #f87171; }
 .rk-rank .rank-glow { display: none; }
+
+/* ---------- Torneos procesados en la columna izquierda + botón TODOS ---------- */
+
+/* Columna principal: tabla + torneos procesados apilados (el aside sigue a la derecha). */
+.rk-main { display: grid; gap: 24px; min-width: 0; }
+
+/* Botón TODOS: siempre disponible al inicio del grid para quitar el filtro. */
+.rk-tourneys .chip-all { border-color: rgba(180, 77, 29, 0.45); }
+.rk-tourneys .chip-all .badge-ini { color: var(--orange); font-size: 22px; }
+.rk-tourneys .chip-all.on {
+  border-color: var(--orange);
+  background: rgba(180, 77, 29, 0.12);
+  box-shadow: inset 2px 0 var(--orange), inset 0 0 0 1px var(--orange);
+}
+.rk-tourneys .chip-all.on .nm { color: var(--gold); }
+
+/* El grid de torneos ya no vive en el aside de 336px: reparte mejor el ancho. */
+.rk-tourneys .rk-tourneys-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
+
+@media (max-width: 1100px) {
+  .rk-main { gap: 18px; }
+}
