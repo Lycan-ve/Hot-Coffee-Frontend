@@ -90,21 +90,31 @@
 .rk-featured .info .row { align-items: center; }
 .rk-featured .info .row .rank-badge.small { width: 34px; height: 34px; flex: 0 0 auto; }
 
-/* ---------- Alcance del ranking (sustituye a las pestañas rk-tabs) ---------- */
+/* ---------- Título del ranking (sustituye a las pestañas rk-tabs) ---------- */
 
 /* El cambio entre Ranking Torneos y Ranking MM vive en la Topbar; dentro de
-   la tabla solo queda la etiqueta de qué está mirando. */
+   la tabla queda el título con su alcance: TORNEOS (RANKING DE TORNEOS) ·
+   ACUMULADO · TORNEOS 01—29 / MATCHMAKING (RANKING DE MATCHMAKING) · SETS /FT. */
 .rk-scope {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 14px;
   color: var(--hc-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
-.rk-scope::before { content: ""; flex: 0 0 auto; width: 22px; height: 2px; background: var(--orange); }
+.rk-scope::before { content: ""; align-self: center; flex: 0 0 auto; width: 22px; height: 2px; background: var(--orange); }
+.rk-scope b {
+  color: var(--gold);
+  font-size: 17px;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 18px rgba(240, 200, 120, 0.25);
+}
+.rk-scope .kind { color: #f5e9d8; opacity: 0.8; font-size: 13px; }
+.rk-scope em { font-style: normal; opacity: 0.5; }
 
 /* ---------- Ajustes por ancho de pantalla ---------- */
 @media (max-width: 1360px) {

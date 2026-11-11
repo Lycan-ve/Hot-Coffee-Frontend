@@ -528,12 +528,18 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
           )}
 
           <article className="panel rk-table" ref={boardRef}>
+            {/* Título del ranking (el switch vive en la Topbar) + alcance actual. */}
             <div className="rk-scope">
-              {mode === "torneos"
-                ? series
-                  ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
-                  : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
-                : "SETS /FT · LIGA 2XKO"}
+              <b>{mm ? "MATCHMAKING" : "TORNEOS"}</b>
+              <span className="kind">{mm ? "RANKING DE MATCHMAKING" : "RANKING DE TORNEOS"}</span>
+              <em>·</em>
+              <span>
+                {mode === "torneos"
+                  ? series
+                    ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
+                    : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
+                  : "SETS /FT · LIGA 2XKO"}
+              </span>
             </div>
             <div className="rk-tools">
               <label className="rk-search">
