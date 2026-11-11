@@ -12,12 +12,27 @@
 .rk-sets b.l { color: #f87171; border-color: #f87171; }
 .rk-rank .rank-glow { display: none; }
 
-/* ---------- Torneos procesados en la columna izquierda + botón TODOS ---------- */
+/* ---------- Layout de 3 columnas: torneos | tabla | sidebar ---------- */
 
-/* Columna principal: tabla + torneos procesados apilados (el aside sigue a la derecha). */
-.rk-main { display: grid; gap: 24px; min-width: 0; }
+/* Con torneos visibles (modo torneos y con series cargadas), la columna de
+   torneos se antepone a la tabla: 280px | flexible | 336px. La tabla nunca
+   se aplasta: minmax(0, 1fr) + el scroll horizontal de .rk-scroll solo
+   aparece en pantallas medianas. */
+.rk-layout.with-tourneys { grid-template-columns: 280px minmax(0, 1fr) 336px; }
 
-/* Botón TODOS: siempre disponible al inicio del grid para quitar el filtro. */
+/* La columna de torneos acompaña el scroll sin robarte la vista de la tabla. */
+.rk-layout .rk-tourneys {
+  align-self: start;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+/* Chips en 2 columnas dentro de la columna estrecha. */
+.rk-layout .rk-tourneys .rk-tourneys-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ---------- Botón TODOS ---------- */
 .rk-tourneys .chip-all { border-color: rgba(180, 77, 29, 0.45); }
 .rk-tourneys .chip-all .badge-ini { color: var(--orange); font-size: 22px; }
 .rk-tourneys .chip-all.on {
@@ -27,9 +42,20 @@
 }
 .rk-tourneys .chip-all.on .nm { color: var(--gold); }
 
-/* El grid de torneos ya no vive en el aside de 336px: reparte mejor el ancho. */
-.rk-tourneys .rk-tourneys-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
+/* ---------- Ajustes por ancho de pantalla ---------- */
+@media (max-width: 1360px) {
+  /* Columna central más justa: la tabla compacta en vez de hacer scroll. */
+  .rk-layout.with-tourneys { grid-template-columns: 240px minmax(0, 1fr) 336px; }
+  .rk-layout.with-tourneys .rk-table table { min-width: 640px; }
+}
 
 @media (max-width: 1100px) {
-  .rk-main { gap: 18px; }
+  /* Kolibri: todo apilado — tabla, luego torneos, luego sidebar. */
+  .rk-layout,
+  .rk-layout.with-tourneys { grid-template-columns: 1fr; }
+  .rk-layout .rk-tourneys { position: static; max-height: none; overflow: visible; }
+  .rk-layout.with-tourneys .rk-tourneys { order: 2; }
+  .rk-layout.with-tourneys .rk-table { order: 1; }
+  .rk-layout.with-tourneys .rk-side { order: 3; }
+  .rk-layout .rk-tourneys .rk-tourneys-grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
 }
