@@ -667,12 +667,6 @@ export default function RankingPage() {
               </div>
             </article>
 
-            <article className="panel rk-points">
-              <div className="head"><h3>¿CÓMO SE SUMA?</h3><Info /></div>
-              <p className="lead">Los puntos se acumulan con cada torneo de la temporada y con los sets de matchmaking.</p>
-              <p>Cada torneo cuenta. Cada puesto suma.</p>
-            </article>
-
             <article className="panel rk-cta">
               <h3><img src={`${A}/5fb79.svg`} alt="" /> TU PRÓXIMO RIVAL ESTÁ AQUÍ.</h3>
               <p>Ranked, torneos y café. Encuentra partidas y sube de nivel.</p>

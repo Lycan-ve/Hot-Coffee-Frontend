@@ -1545,7 +1545,7 @@ footer strong {
 .rk-tools > button { display: flex; align-items: center; gap: 9px; height: 36px; padding: 0 16px; border: 1px solid var(--line); background: var(--panel-2); color: #fff; font-size: 13px; font-weight: 600; }
 .rk-tools > button:hover { border-color: var(--orange); }
 .rk-scroll { overflow-x: auto; }
-.rk-table table { width: 100%; border-collapse: collapse; min-width: 760px; }
+.rk-table table { width: 100%; border-collapse: collapse; min-width: 700px; }
 .rk-table th { text-align: left; padding: 10px 20px; color: var(--dim); font-size: 11px; font-weight: 400; letter-spacing: 1px; }
 .rk-table th.accent { color: var(--cream); }
 .rk-table td { padding: 0 20px; height: 48px; border-top: 1px solid var(--line); font-size: 13px; color: var(--hc-muted); }
