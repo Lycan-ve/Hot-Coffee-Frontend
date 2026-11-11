@@ -6,6 +6,10 @@ export interface QueuePlayer {
   avatarUrl: string;
   points: number;
   rank: RankInfo;
+  // Récord y racha del jugador (contexto del VS; 0 si nunca jugó).
+  wins?: number;
+  losses?: number;
+  streak?: number;
 }
 
 export interface QueueProposal {
@@ -21,7 +25,7 @@ export interface QueueProposal {
 
 export interface QueueState {
   status: 'idle' | 'searching' | 'found' | 'confirmed' | 'matched' | 'failed';
-  queue?: { ft: number; since: string; players: number; radius: number };
+  queue?: { ft: number; since: string; players: number; radius: number; wide?: boolean };
   proposal?: QueueProposal;
   match?: { id: number; threadId: string; threadUrl: string; web: boolean };
 }

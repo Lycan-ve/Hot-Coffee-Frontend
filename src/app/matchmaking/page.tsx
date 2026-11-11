@@ -29,13 +29,35 @@ const SEARCH_FLAVORS = [
   "PREPARANDO EL ESCENARIO…",
 ];
 
-function VsCard({ name, avatar, points, rank, ok }: { name: string; avatar?: string; points: number; rank: RankInfo; ok: boolean }) {
+function VsCard({
+  name,
+  avatar,
+  points,
+  rank,
+  ok,
+  wins,
+  losses,
+  streak,
+}: {
+  name: string;
+  avatar?: string;
+  points: number;
+  rank: RankInfo;
+  ok: boolean;
+  wins?: number;
+  losses?: number;
+  streak?: number;
+}) {
   return (
     <div className={`hc-vs-card ${ok ? "ok" : ""}`}>
       {avatar ? <img className="av" src={avatar} alt="" /> : <span className="av">{name[0]}</span>}
       <strong>{name}</strong>
       <RankBadge small rank={rank} />
       <span>{rank.displayName} · {points} pts</span>
+      <small>
+        <span className="success">{wins ?? 0}W</span> <span className="danger">{losses ?? 0}L</span>
+        {(streak ?? 0) >= 3 ? ` · 🔥 racha de ${streak}` : ""}
+      </small>
       <small>{ok ? "✓ ACEPTÓ" : "ESPERANDO"}</small>
     </div>
   );
@@ -189,12 +211,12 @@ export default function MatchmakingPage() {
             {found && revealFound && state?.proposal ? (
               <>
                 <div className="hc-vs">
-                  <VsCard name={state.proposal.me.tag} avatar={state.proposal.me.avatarUrl} points={state.proposal.me.points} rank={state.proposal.me.rank} ok={state.proposal.acceptedByMe} />
+                  <VsCard name={state.proposal.me.tag} avatar={state.proposal.me.avatarUrl} points={state.proposal.me.points} rank={state.proposal.me.rank} ok={state.proposal.acceptedByMe} wins={state.proposal.me.wins} losses={state.proposal.me.losses} streak={state.proposal.me.streak} />
                   <div className="mid">
                     <b>VS</b>
                     <span>{clock(remaining)}</span>
                   </div>
-                  <VsCard name={state.proposal.opponent.tag} avatar={state.proposal.opponent.avatarUrl} points={state.proposal.opponent.points} rank={state.proposal.opponent.rank} ok={state.proposal.acceptedByOpponent} />
+                  <VsCard name={state.proposal.opponent.tag} avatar={state.proposal.opponent.avatarUrl} points={state.proposal.opponent.points} rank={state.proposal.opponent.rank} ok={state.proposal.acceptedByOpponent} wins={state.proposal.opponent.wins} losses={state.proposal.opponent.losses} streak={state.proposal.opponent.streak} />
                 </div>
                 <p>
                   FT {state.proposal.ft} · <strong className="gold">{state.proposal.pointsAtStake} pts</strong> en juego
@@ -230,7 +252,7 @@ export default function MatchmakingPage() {
                   {status === "anon" && "Inicia sesión con Discord (debes ser miembro de Hot Coffee 2XKO)."}
                   {status === "idle" && "Entra a la cola y te encontramos un rival de tu rango."}
                   {status === "loading" && "Consultando el estado de tu cola…"}
-                  {searching && "Buscando un rival de tu rango (partidas equitativas)…"}
+                  {searching && (state?.queue?.wide ? "Hay poca gente activa: ampliamos la búsqueda (puede tocarte una revancha)…" : "Buscando un rival de tu rango (partidas equitativas)…")}
                   {status === "matched" &&
                     (state?.match?.web
                       ? "Entra a la sala para armar tu equipo, compartir el código, chatear y reportar."

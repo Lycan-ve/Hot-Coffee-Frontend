@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/hc/shared';
 import { LoginLink } from '@/components/hc/DiscordLogin';
 import { fetchMe, fuseIconUrl, getToken, rankIconUrl, type ProfileTeam } from '@/lib/auth';
@@ -16,6 +17,7 @@ import {
   rejectReport,
   reportFinal,
   reportGame,
+  requestRematch,
   respondClose,
   saveRoom,
   saveTeam,
@@ -49,6 +51,7 @@ function mergeMessages(prev: SalaMessage[], next: SalaMessage[]) {
 }
 
 export default function SalaPage() {
+  const router = useRouter();
   // null mientras renderiza en el servidor; true/false ya en el navegador.
   const authed = useSyncExternalStore(
     noopSubscribe,
@@ -59,6 +62,8 @@ export default function SalaPage() {
   const [roster, setRoster] = useState<Roster | null>(null);
   const [mains, setMains] = useState<ProfileTeam | null>(null);
   const [connFails, setConnFails] = useState(0);
+  const [rematchNote, setRematchNote] = useState<string | null>(null);
+  const [rematchBusy, setRematchBusy] = useState(false);
   const lastIdRef = useRef(0);
   const matchIdRef = useRef(0);
   const inFlightRef = useRef<Promise<void> | null>(null);
@@ -201,9 +206,45 @@ export default function SalaPage() {
   }
 
   if (match.finished) {
+    const rm = state.rematch;
+    const rematchExtra = (
+      <>
+        {rm ? (
+          rm.byMe ? (
+            <p className="sx-hint">
+              ⏳ Le propusiste la revancha a {rm.opponentTag}: tiene que aceptarla desde el matchmaking.
+            </p>
+          ) : (
+            <Link href="/matchmaking" className="sx-btn sx-btn--primary sx-btn--lg">
+              🔁 {rm.opponentTag} quiere revancha — ver propuesta
+            </Link>
+          )
+        ) : (
+          <button
+            className="sx-btn sx-btn--primary sx-btn--lg"
+            disabled={rematchBusy}
+            onClick={async () => {
+              setRematchNote(null);
+              setRematchBusy(true);
+              const err = await requestRematch();
+              setRematchBusy(false);
+              if (err) {
+                setRematchNote(err);
+                return;
+              }
+              router.push('/matchmaking');
+            }}
+            type="button"
+          >
+            {rematchBusy ? 'Proponiendo…' : '🔁 Proponer revancha'}
+          </button>
+        )}
+        {rematchNote ? <span className="sx-hint is-bad">{rematchNote}</span> : null}
+      </>
+    );
     return (
       <AppShell>
-        <SalaFinishedScreen finished={match.finished} assets={assets} Link={Link} />
+        <SalaFinishedScreen finished={match.finished} assets={assets} Link={Link} extra={rematchExtra} />
       </AppShell>
     );
   }

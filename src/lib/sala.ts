@@ -73,10 +73,20 @@ export interface SalaMessage {
   createdAt: string;
 }
 
+/** Propuesta de revancha activa (la muestra la sala terminada). */
+export interface SalaRematch {
+  id: number;
+  /** true si la propuse yo (estoy esperando al rival). */
+  byMe: boolean;
+  opponentTag: string;
+  status: string;
+}
+
 export interface SalaState {
   match: SalaMatch | null;
   messages: SalaMessage[];
   lastMessageId: number;
+  rematch?: SalaRematch | null;
 }
 
 export interface RosterEntry {
@@ -150,3 +160,6 @@ export const reportFinal = (myScore: number, oppScore: number) =>
 export const closeSet = () => postAction('/api/matchmaking/match/close');
 export const respondClose = (accept: boolean) =>
   postAction('/api/matchmaking/match/close/respond', { accept });
+
+/** Revancha contra el rival del último set terminado (solo justo al terminar). */
+export const requestRematch = () => postAction('/api/matchmaking/rematch');
