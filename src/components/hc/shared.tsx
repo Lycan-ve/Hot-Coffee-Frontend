@@ -32,11 +32,14 @@ function Header() {
         <Link href="/" className={`nav-item${pathname === "/" ? " active" : ""}`}>
           <small>01</small> Ranking
         </Link>
+        <Link href="/ranking-matchmaking" className={`nav-item${pathname.startsWith("/ranking-matchmaking") ? " active" : ""}`}>
+          <small>02</small> Ranking MM
+        </Link>
         <Link href="/perfil" className={`nav-item${pathname.startsWith("/perfil") ? " active" : ""}`}>
-          <small>02</small> Mi perfil
+          <small>03</small> Mi perfil
         </Link>
         <Link href="/matchmaking" className={`nav-item${pathname.startsWith("/matchmaking") ? " active" : ""}`}>
-          <small>03</small> Matchmaking
+          <small>04</small> Matchmaking
         </Link>
       </nav>
       <div className="top-actions">

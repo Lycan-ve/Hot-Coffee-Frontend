@@ -1,6 +1,6 @@
-// Portada: RANKING TORNEOS. El ranking de matchmaking vive en /ranking-matchmaking.
-import RankingView from "@/components/hc/ranking-view";
+import RankingBoard from "@/components/hc/RankingBoard";
 
-export default function RankingPage() {
-  return <RankingView mode="torneos" />;
+// Portada: ranking de TORNEOS (el de matchmaking vive en /ranking-matchmaking).
+export default function HomePage() {
+  return <RankingBoard mode="torneos" />;
 }
