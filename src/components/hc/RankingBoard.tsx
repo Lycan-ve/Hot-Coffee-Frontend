@@ -2,7 +2,6 @@
 
 import "../../hotcoffee-ranking.css";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -169,7 +168,6 @@ type FeaturedSlide = {
 };
 
 export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking" }) {
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState(DEFAULT_RANGE);
@@ -354,16 +352,18 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
   }, [mm, mmPlayers, players, lastTourney, tournamentCount]);
 
   const [slideIdx, setSlideIdx] = useState(0);
+  // Pausa el giro automático mientras el cursor está sobre la tarjeta.
+  const [featPaused, setFeatPaused] = useState(false);
   const nSlides = slides.length;
   useEffect(() => {
     if (slideIdx >= nSlides) setSlideIdx(0);
   }, [nSlides, slideIdx]);
-  // Giro automático del carrusel: 6 s por jugador.
+  // Giro automático del carrusel: 6 s por jugador (se pausa al hover).
   useEffect(() => {
-    if (nSlides < 2) return;
+    if (nSlides < 2 || featPaused) return;
     const t = window.setInterval(() => setSlideIdx((i) => (i + 1) % nSlides), 6000);
     return () => window.clearInterval(t);
-  }, [nSlides]);
+  }, [nSlides, featPaused]);
   const cur = nSlides ? slides[Math.min(slideIdx, nSlides - 1)] : undefined;
 
   // Perfiles de los destacados (modo matchmaking): dan el personaje para el arte y el rango.
@@ -392,11 +392,6 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
     setArtIdx(0);
   }, [slideIdx, artList.length]);
   const artSrc = artList[Math.min(artIdx, artList.length - 1)];
-
-  const switchMode = () => {
-    router.push(mode === "torneos" ? "/ranking-matchmaking" : "/");
-    setPage(1);
-  };
 
   const sync = async () => {
     try {
@@ -533,20 +528,12 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
           )}
 
           <article className="panel rk-table" ref={boardRef}>
-            <div className="rk-tabs">
-              <button type="button" className={mode === "torneos" ? "on" : ""} onClick={switchMode}>
-                RANKING TORNEOS
-              </button>
-              <button type="button" className={mode === "matchmaking" ? "on" : ""} onClick={switchMode}>
-                RANKING MATCHMAKING
-              </button>
-              <span>
-                {mode === "torneos"
-                  ? series
-                    ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
-                    : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
-                  : "SETS /FT · LIGA 2XKO"}
-              </span>
+            <div className="rk-scope">
+              {mode === "torneos"
+                ? series
+                  ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
+                  : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
+                : "SETS /FT · LIGA 2XKO"}
             </div>
             <div className="rk-tools">
               <label className="rk-search">
@@ -716,7 +703,11 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
           </article>
 
           <aside className="rk-side">
-            <article className="rk-featured">
+            <article
+              className="rk-featured"
+              onMouseEnter={() => setFeatPaused(true)}
+              onMouseLeave={() => setFeatPaused(false)}
+            >
               <img
                 key={artSrc}
                 src={artSrc}

@@ -90,6 +90,22 @@
 .rk-featured .info .row { align-items: center; }
 .rk-featured .info .row .rank-badge.small { width: 34px; height: 34px; flex: 0 0 auto; }
 
+/* ---------- Alcance del ranking (sustituye a las pestañas rk-tabs) ---------- */
+
+/* El cambio entre Ranking Torneos y Ranking MM vive en la Topbar; dentro de
+   la tabla solo queda la etiqueta de qué está mirando. */
+.rk-scope {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: var(--hc-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.rk-scope::before { content: ""; flex: 0 0 auto; width: 22px; height: 2px; background: var(--orange); }
+
 /* ---------- Ajustes por ancho de pantalla ---------- */
 @media (max-width: 1360px) {
   /* Columna central más justa: la tabla compacta en vez de hacer scroll. */
