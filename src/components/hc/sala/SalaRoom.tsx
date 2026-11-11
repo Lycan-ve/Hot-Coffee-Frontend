@@ -7,6 +7,7 @@
  * usar igual en Next.js (datos reales) o en una demo.
  */
 import {
+  type CSSProperties,
   type ComponentType,
   type FormEvent,
   type ReactNode,
@@ -1064,6 +1065,392 @@ export function SalaLoading({ label = 'Cargando la sala…' }: { label?: string 
   );
 }
 
+// ---------------------------------------------------------------------------
+// Barra de LP animada al terminar el set
+// Misma escalera que ranks.FromPoints del backend: cada 100 pts totales es
+// una división; Iron I = 100, Gold I = 1.000, Grandmaster = 2.500.
+// ---------------------------------------------------------------------------
+
+const LP_PER_DIVISION = 100;
+const RP_INDEX = 24;
+const LADDER: [string, string][] = [
+  ['Iron', 'I'], ['Iron', 'II'], ['Iron', 'III'],
+  ['Bronze', 'I'], ['Bronze', 'II'], ['Bronze', 'III'],
+  ['Silver', 'I'], ['Silver', 'II'], ['Silver', 'III'],
+  ['Gold', 'I'], ['Gold', 'II'], ['Gold', 'III'],
+  ['Platinum', 'I'], ['Platinum', 'II'], ['Platinum', 'III'],
+  ['Emerald', 'I'], ['Emerald', 'II'], ['Emerald', 'III'],
+  ['Diamond', 'I'], ['Diamond', 'II'], ['Diamond', 'III'],
+  ['Master', 'I'], ['Master', 'II'], ['Master', 'III'],
+  ['Grandmaster', ''],
+  ['Challenger', ''],
+];
+const TIER_NUM: Record<string, number> = { I: 1, II: 2, III: 3 };
+/** Mismos colores que ranks.Colors del backend (overlays). */
+const TIER_COLOR: Record<string, string> = {
+  Iron: '#c8c8c8', Bronze: '#e8a065', Silver: '#c0d5cc', Gold: '#f5d060', Platinum: '#78d8f0',
+  Emerald: '#60e090', Diamond: '#90b8ff', Master: '#d080f8', Grandmaster: '#f07070', Challenger: '#ffe787',
+};
+
+export interface LadderRank {
+  index: number;
+  /** Rango sin división: "Gold", "Platinum"… */
+  tier: string;
+  displayName: string;
+  /** Nombre de archivo del ícono (sin carpeta), igual que el backend. */
+  iconFile: string;
+  isRp: boolean;
+  /** LP dentro de la división (0-100). En GM/Challenger siempre 100. */
+  lp: number;
+}
+
+/** Rango para un total de puntos (base + ganados), como ranks.FromPoints. */
+export function ladderRank(total: number): LadderRank {
+  const index = Math.min(LADDER.length - 1, Math.max(0, Math.floor(total / LP_PER_DIVISION) - 1));
+  const [rank, tier] = LADDER[index] ?? ['Iron', 'I'];
+  const isRp = index >= RP_INDEX;
+  const lp = isRp ? 100 : Math.min(100, Math.max(0, total - (index + 1) * LP_PER_DIVISION));
+  return {
+    index,
+    tier: rank,
+    displayName: tier ? rank + ' ' + tier : rank,
+    iconFile: tier ? rank + '_tier_' + TIER_NUM[tier] + '_icon.png' : rank + '_icon.png',
+    isRp,
+    lp,
+  };
+}
+
+/** Puntos por los que pasa la barra: al cruzar una división se llena/vacía y salta. */
+function lpWaypoints(from: number, to: number): { to: number; jump: boolean }[] {
+  const steps: { to: number; jump: boolean }[] = [];
+  const top = LADDER.length * LP_PER_DIVISION; // Challenger: ya no hay más divisiones
+  if (to > from) {
+    for (let b = (Math.floor(from / LP_PER_DIVISION) + 1) * LP_PER_DIVISION; b <= to && b <= top; b += LP_PER_DIVISION) {
+      if (b <= LP_PER_DIVISION) continue;
+      steps.push({ to: b - 0.001, jump: false }, { to: b, jump: true });
+    }
+  } else if (to < from) {
+    for (let b = Math.floor(from / LP_PER_DIVISION) * LP_PER_DIVISION; b > to && b > LP_PER_DIVISION; b -= LP_PER_DIVISION) {
+      if (b > top) continue;
+      steps.push({ to: b, jump: false }, { to: b - 0.001, jump: true });
+    }
+  }
+  steps.push({ to, jump: false });
+  return steps;
+}
+
+/** Ascensos de rango completo (Gold → Platinum) entre dos totales; no cuenta divisiones. */
+export function tierUpsBetween(from: number, to: number): { from: LadderRank; to: LadderRank }[] {
+  const ups: { from: LadderRank; to: LadderRank }[] = [];
+  const top = LADDER.length * LP_PER_DIVISION;
+  for (let b = (Math.floor(from / LP_PER_DIVISION) + 1) * LP_PER_DIVISION; b <= to && b <= top; b += LP_PER_DIVISION) {
+    if (b <= LP_PER_DIVISION) continue;
+    const prev = ladderRank(b - 1);
+    const next = ladderRank(b);
+    if (prev.tier !== next.tier) ups.push({ from: prev, to: next });
+  }
+  return ups;
+}
+
+type TierUp = { from: LadderRank; to: LadderRank };
+
+function useLpTimeline(from: number, to: number) {
+  const [value, setValue] = useState(from);
+  const [done, setDone] = useState(false);
+  const [flash, setFlash] = useState<'up' | 'down' | null>(null);
+  const [tierUp, setTierUp] = useState<TierUp | null>(null);
+  const tierUpDone = useRef<(() => void) | null>(null);
+  const endTierUp = () => {
+    setTierUp(null);
+    const res = tierUpDone.current;
+    tierUpDone.current = null;
+    res?.();
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    let raf = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    const wait = (ms: number) => new Promise<void>((res) => { timer = setTimeout(res, ms); });
+    const tween = (a: number, b: number) =>
+      new Promise<void>((res) => {
+        const ms = Math.min(2000, Math.max(900, Math.abs(b - a) * 60));
+        const t0 = performance.now();
+        const tick = (now: number) => {
+          if (cancelled) return;
+          const k = Math.min(1, (now - t0) / ms);
+          const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+          setValue(a + (b - a) * e);
+          if (k < 1) raf = requestAnimationFrame(tick);
+          else res();
+        };
+        raf = requestAnimationFrame(tick);
+      });
+
+    (async () => {
+      if (reduce || from === to) {
+        await wait(0);
+        if (cancelled) return;
+        setValue(to);
+        if (ladderRank(from).index !== ladderRank(to).index) setFlash(to > from ? 'up' : 'down');
+        setTierUp(tierUpsBetween(from, to).at(-1) ?? null);
+        setDone(true);
+        return;
+      }
+      await wait(750);
+      let cur = from;
+      for (const step of lpWaypoints(from, to)) {
+        if (cancelled) return;
+        if (step.jump) {
+          await wait(380);
+          if (cancelled) return;
+          // Cambio de rango completo: la ceremonia tapa la pantalla y la barra espera.
+          const up = to > from ? tierUpsBetween(step.to - 1, step.to)[0] : undefined;
+          if (up) {
+            await new Promise<void>((res) => {
+              tierUpDone.current = res;
+              setTierUp(up);
+            });
+            if (cancelled) return;
+          }
+          setValue(step.to);
+          setFlash(to > from ? 'up' : 'down');
+          await wait(650);
+        } else {
+          await tween(cur, step.to);
+        }
+        cur = step.to;
+      }
+      if (!cancelled) {
+        setValue(to);
+        setDone(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      tierUpDone.current = null;
+      cancelAnimationFrame(raf);
+      if (timer) clearTimeout(timer);
+    };
+  }, [from, to]);
+
+  return { value, done, flash, tierUp, endTierUp };
+}
+
+// ---------------------------------------------------------------------------
+// Ceremonia de ascenso de rango (Gold → Platinum): carga, estallido y revelación
+// ---------------------------------------------------------------------------
+
+const px = (n: number) => Math.round(n) + 'px';
+const polar = (deg: number, r: number) => ({ x: Math.cos((deg * Math.PI) / 180) * r, y: Math.sin((deg * Math.PI) / 180) * r });
+
+// Valores fijos (no aleatorios) para que la animación sea igual siempre.
+const SHARDS = Array.from({ length: 7 }, (_, i) => {
+  const a0 = (i * 360) / 7 - 90;
+  const a1 = ((i + 1) * 360) / 7 - 90;
+  const mid = (a0 + a1) / 2;
+  const pt = (deg: number) => {
+    const p = polar(deg, 80);
+    return (50 + p.x).toFixed(1) + '% ' + (50 + p.y).toFixed(1) + '%';
+  };
+  const out = polar(mid, 240 + (i % 3) * 50);
+  return {
+    clip: 'polygon(50% 50%, ' + pt(a0) + ', ' + pt(mid) + ', ' + pt(a1) + ')',
+    style: { '--dx': px(out.x), '--dy': px(out.y), '--rot': (i % 2 ? 1 : -1) * (35 + i * 17) + 'deg' } as CSSProperties,
+  };
+});
+const SPARKS = Array.from({ length: 30 }, (_, i) => {
+  const p = polar(i * 137.5, 150 + ((i * 53) % 170));
+  return { '--dx': px(p.x), '--dy': px(p.y), '--sz': 3 + (i % 4) * 2 + 'px', '--dl': (i % 6) * 35 + 'ms' } as CSSProperties;
+});
+const MOTES = Array.from({ length: 14 }, (_, i) => {
+  const p = polar(i * 25.7 + 8, 170 + (i % 3) * 40);
+  return { '--dx': px(p.x), '--dy': px(p.y), '--dl': i * 90 + 'ms' } as CSSProperties;
+});
+const EMBERS = Array.from({ length: 18 }, (_, i) => ({
+  '--x': ((i * 61) % 100) + '%', '--dl': ((i * 370) % 3000) + 'ms', '--du': 3200 + ((i * 410) % 2400) + 'ms', '--sz': 2 + (i % 3) * 2 + 'px',
+}) as CSSProperties);
+
+function TierUpCeremony(props: { from: LadderRank; to: LadderRank; fromIcon: string; toIcon: string; onDone: () => void }) {
+  const { from, to, fromIcon, toIcon } = props;
+  const [phase, setPhase] = useState<'charge' | 'burst' | 'reveal'>(() =>
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'reveal' : 'charge',
+  );
+  const onDone = useRef(props.onDone);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    onDone.current = props.onDone;
+  });
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setPhase((p) => (p === 'charge' ? 'burst' : p)), 1500),
+      setTimeout(() => setPhase('reveal'), 2050),
+      setTimeout(() => onDone.current(), 9000),
+    ];
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Enter') onDone.current();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      timers.forEach(clearTimeout);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (phase === 'reveal') btnRef.current?.focus({ preventScroll: true });
+  }, [phase]);
+
+  if (typeof document === 'undefined') return null;
+  const style = {
+    '--sx-tier': TIER_COLOR[to.tier] ?? 'var(--gold)',
+    '--sx-tier-old': TIER_COLOR[from.tier] ?? 'var(--orange)',
+  } as CSSProperties;
+
+  return createPortal(
+    <div
+      className={'sx-tierup is-' + phase}
+      style={style}
+      role="dialog"
+      aria-modal="true"
+      aria-label={'Nuevo rango: ' + to.displayName}
+      onClick={() => phase === 'reveal' && onDone.current()}
+    >
+      <div className="sx-tu-bg" />
+      <div className="sx-tu-rays" />
+      <div className="sx-tu-flash" />
+      <div className="sx-tu-shake">
+        <div className="sx-tu-stage">
+          <span className="sx-tu-halo" />
+          <span className="sx-tu-gather" />
+          {MOTES.map((st, i) => (
+            <span key={'m' + i} className="sx-tu-mote" style={st} />
+          ))}
+          <img alt="" className="sx-tu-old" src={fromIcon} />
+          {SHARDS.map((sh, i) => (
+            <img key={'s' + i} alt="" className="sx-tu-shard" src={fromIcon} style={{ ...sh.style, clipPath: sh.clip }} />
+          ))}
+          {[0, 1, 2].map((i) => (
+            <span key={'r' + i} className="sx-tu-ring" style={{ '--dl': i * 140 + 'ms' } as CSSProperties} />
+          ))}
+          {SPARKS.map((st, i) => (
+            <span key={'k' + i} className={'sx-tu-spark' + (i % 3 === 0 ? ' is-hot' : '')} style={st} />
+          ))}
+          <img alt="" className="sx-tu-new" src={toIcon} />
+        </div>
+        <div className="sx-tu-text">
+          <span className="sx-tu-kicker">▲ ¡Nuevo rango!</span>
+          <h2 className="sx-tu-name" aria-label={to.tier}>
+            {to.tier.split('').map((ch, i) => (
+              <span key={i} aria-hidden="true" style={{ '--i': i } as CSSProperties}>
+                {ch}
+              </span>
+            ))}
+          </h2>
+          <p className="sx-tu-sub">
+            {from.displayName} <span aria-hidden="true">➜</span> <b>{to.displayName}</b>
+          </p>
+          <button ref={btnRef} className="sx-btn sx-btn--lg sx-tu-btn" onClick={() => onDone.current()} type="button">
+            Continuar
+          </button>
+        </div>
+      </div>
+      <div className="sx-tu-embers" aria-hidden="true">
+        {EMBERS.map((st, i) => (
+          <span key={'e' + i} style={st} />
+        ))}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function LpProgress(props: { after: number; delta: number; won: boolean; rank?: SalaFinished['rank']; assets: SalaAssets }) {
+  const { after, delta, won, rank, assets } = props;
+  const before = after - delta;
+  const { value, done, flash, tierUp, endTierUp } = useLpTimeline(before, after);
+
+  const iconDir = rank?.iconPath ? rank.iconPath.slice(0, rank.iconPath.lastIndexOf('/') + 1) : '';
+  const cur = ladderRank(value);
+  const isFinal = cur.index === ladderRank(after).index;
+  const name = isFinal && rank?.displayName ? rank.displayName : cur.displayName;
+  const icon = isFinal && rank?.iconPath ? rank.iconPath : iconDir + cur.iconFile;
+  const iconFor = (r: LadderRank) =>
+    assets.rankIcon(r.index === ladderRank(after).index && rank?.iconPath ? rank.iconPath : iconDir + r.iconFile);
+
+  // Tramo ganado/perdido dentro de la división que se ve ahora.
+  const divStart = (cur.index + 1) * LP_PER_DIVISION;
+  const beforeLp = cur.isRp ? 100 : Math.min(100, Math.max(0, before - divStart));
+  const lo = Math.min(beforeLp, cur.lp);
+  const hi = Math.max(beforeLp, cur.lp);
+  const moved = Math.round(value - before);
+  const shownLp = Math.floor(cur.lp + 0.0001);
+  const tone = won ? 'is-up' : 'is-down';
+
+  return (
+    <section
+      className={'sx-lp ' + tone + (done ? ' is-done' : '') + (flash ? ' has-flash' : '')}
+      aria-label={(delta >= 0 ? '+' : '') + delta + ' LP. Ahora: ' + (rank?.displayName ?? name)}
+    >
+      <div className="sx-lp-head">
+        <img key={cur.index} alt="" className="sx-lp-icon" src={assets.rankIcon(icon)} />
+        <div className="sx-lp-name">
+          <strong key={cur.index}>{name}</strong>
+          <small>{cur.isRp ? Math.round(value) + ' RP' : shownLp + ' / 100 LP'}</small>
+        </div>
+        <b className={'sx-lp-delta ' + tone}>
+          {moved >= 0 ? '+' + moved : moved} LP
+        </b>
+      </div>
+
+      <div
+        className="sx-lp-bar"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={shownLp}
+        aria-label="LP de la división"
+      >
+        <span className="sx-lp-fill" style={{ width: (won ? lo : cur.lp) + '%' }} />
+        <span className={'sx-lp-seg ' + tone} style={{ left: lo + '%', width: hi - lo + '%' }} />
+        {!cur.isRp ? <span className="sx-lp-head-glow" style={{ left: cur.lp + '%' }} /> : null}
+      </div>
+
+      {flash ? (
+        <div key={flash + cur.index} className={'sx-lp-banner ' + (flash === 'up' ? 'is-up' : 'is-down')}>
+          {flash === 'up' ? '▲ ¡Ascendiste a ' + name + '!' : '▼ Bajaste a ' + name}
+        </div>
+      ) : null}
+
+      <p className="sx-lp-foot">
+        {done
+          ? rank && rank.next
+            ? 'Faltan ' + rank.lpToNext + (rank.nextIsRp ? ' pts' : ' LP') + ' para ' + rank.next + ' · total ' + after + ' pts'
+            : 'Total ' + after + ' pts'
+          : won
+            ? 'Sumando LP…'
+            : 'Restando LP…'}
+      </p>
+
+      {tierUp ? (
+        <TierUpCeremony
+          key={tierUp.to.index}
+          from={tierUp.from}
+          to={tierUp.to}
+          fromIcon={iconFor(tierUp.from)}
+          toIcon={iconFor(tierUp.to)}
+          onDone={endTierUp}
+        />
+      ) : null}
+    </section>
+  );
+}
+
 export function SalaFinishedScreen(props: { finished: SalaFinished; assets: SalaAssets; Link: SalaLink; extra?: ReactNode }) {
   const { finished: f, assets, Link } = props;
   if (f.status === 'CANCELLED') {
@@ -1108,13 +1495,15 @@ export function SalaFinishedScreen(props: { finished: SalaFinished; assets: Sala
       <div className="sx-result">
         {f.myScore} - {f.oppScore}
       </div>
-      <p>
-        <span className={'sx-delta ' + (delta >= 0 ? 'is-up' : 'is-down')}>
-          {delta >= 0 ? '+' + delta : delta} pts
-        </span>{' '}
-        · ahora tienes {f.myPoints ?? '—'} pts
-      </p>
-      {f.rank ? <img alt={f.rank.displayName} className="sx-screen-rank" src={assets.rankIcon(f.rank.iconPath)} /> : null}
+      {typeof f.myPoints === 'number' ? (
+        <LpProgress after={f.myPoints} delta={delta} won={won} rank={f.rank} assets={assets} />
+      ) : (
+        <p>
+          <span className={'sx-delta ' + (delta >= 0 ? 'is-up' : 'is-down')}>
+            {delta >= 0 ? '+' + delta : delta} pts
+          </span>
+        </p>
+      )}
     </SalaScreen>
   );
 }
