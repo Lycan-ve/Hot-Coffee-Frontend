@@ -172,7 +172,9 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState(DEFAULT_RANGE);
   const [series, setSeries] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  // El botón "Filtrar torneos" muestra u oculta la columna de torneos
+  // procesados (los chips), única vía de filtro por serie. Empieza visible.
+  const [showFilters, setShowFilters] = useState(true);
   const [page, setPage] = useState(1);
   const boardRef = useRef<HTMLElement>(null);
   const { data, isLoading, isFetching, refetch } = useQuery({
@@ -456,9 +458,9 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
     }
   };
 
-  // Con series cargadas en modo torneos, la portada pasa a 3 columnas:
-  // torneos procesados | tabla de ranking | sidebar.
-  const showTourneys = mode === "torneos" && seriesList.length > 0;
+  // Con series cargadas en modo torneos y el panel activo, la portada pasa a
+  // 3 columnas: torneos procesados | tabla de ranking | sidebar.
+  const showTourneys = mode === "torneos" && seriesList.length > 0 && showFilters;
 
   return (
     <AppShell>
@@ -552,6 +554,23 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                   </button>
                 ))}
               </div>
+              {/* Rango de torneos que suma el acumulado: solo aplica sin serie
+                  elegida (con serie, el backend ignora from/to). */}
+              <div className="rk-tourneys-range">
+                <span>RANGO</span>
+                <label title={series ? "Se ignora al elegir una serie" : "Primer torneo del acumulado"}>
+                  Desde
+                  <select value={from} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setFrom(v); if (v > to) setTo(v); setPage(1); }}>
+                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </label>
+                <label title={series ? "Se ignora al elegir una serie" : "Último torneo del acumulado"}>
+                  Hasta
+                  <select value={to} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setTo(v); if (v < from) setFrom(v); setPage(1); }}>
+                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </label>
+              </div>
             </article>
           )}
 
@@ -582,8 +601,13 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                   placeholder="Buscar jugador o equipo"
                 />
               </label>
-              {mode === "torneos" && (
-                <button type="button" className={showFilters ? "on" : ""} onClick={() => setShowFilters((v) => !v)}>
+              {mode === "torneos" && seriesList.length > 0 && (
+                <button
+                  type="button"
+                  className={showFilters ? "on" : ""}
+                  onClick={() => setShowFilters((v) => !v)}
+                  title="Muestra u oculta los torneos procesados para filtrar el ranking por serie"
+                >
                   <SlidersHorizontal /> Filtrar torneos
                 </button>
               )}
@@ -592,36 +616,6 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
               </button>
               <button type="button" onClick={exportPng}><Download /> PNG</button>
             </div>
-            {showFilters && mode === "torneos" && (
-              <div className="rk-filters">
-                <span>TORNEOS</span>
-                <label>
-                  Serie
-                  <select
-                    value={series}
-                    onChange={(e) => { setSeries(e.target.value); setPage(1); }}
-                    title="Filtra por una serie de torneos (p. ej. TNS muestra solo los resultados de TNS)"
-                  >
-                    <option value="">TODAS</option>
-                    {seriesList.map((s) => (
-                      <option key={s.key} value={s.key}>{`${s.name} (${s.count})`}</option>
-                    ))}
-                  </select>
-                </label>
-                <label title={series ? "Se ignora al elegir una serie" : undefined}>
-                  Desde
-                  <select value={from} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setFrom(v); if (v > to) setTo(v); setPage(1); }}>
-                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </label>
-                <label title={series ? "Se ignora al elegir una serie" : undefined}>
-                  Hasta
-                  <select value={to} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setTo(v); if (v < from) setFrom(v); setPage(1); }}>
-                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </label>
-              </div>
-            )}
             <div className="rk-scroll">
               <table>
                 <thead>
@@ -881,4 +875,5 @@ function Team({ value }: { value?: string | undefined }) {
     </div>
   );
 }
+
 
