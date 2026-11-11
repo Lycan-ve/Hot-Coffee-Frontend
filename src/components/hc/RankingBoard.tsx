@@ -1,6 +1,6 @@
 'use client';
 
-import "../hotcoffee-ranking.css";
+import "../../hotcoffee-ranking.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
