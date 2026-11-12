@@ -1,141 +1,212 @@
-/* ---------- Overlay de PARTIDA 1920×1080 para OBS (respeta las Death Zones del HUD de 2XKO) ---------- */
+/* ---------- Overlay de PARTIDA 1920×1080 — diseño TSH 2XKO ----------
+   Replica el template de TSH (barras skewX 12°, chips tintados, barra
+   superior central y banner inferior) respetando las Death Zones del HUD. */
 
-.ov2-viewport { position: fixed; inset: 0; overflow: hidden; }
-.ov2-viewport.ov2-dark { background: #111; }
+.tsh-viewport { position: fixed; inset: 0; overflow: hidden; }
+.tsh-viewport.tsh-dark { background: #111; }
 
-.ov2-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+.tsh-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  --bg: #17171c;
+  --text: #ffffff;
+  --radius: 10px;
+  --p1: #e23b3b;
+  --p2: #2f6fe4;
+  --p1-mix: #351c21; /* p1 15% sobre bg */
+  --p2-mix: #1b243a; /* p2 15% sobre bg */
+  --p1-tint: #5e2427; /* p1 35% sobre bg (chips) */
+  --p2-tint: #1f3662; /* p2 35% sobre bg (chips) */
+  --fuse1-tint: #402a64;
+  --fuse2-tint: #5b4023;
+  font-family: "Barlow Condensed", sans-serif;
+  color: var(--text);
+}
 
-/* Death Zones (solo visibles con &zones=1): referencia de lo que NO se puede pisar. */
-.ov2-zone { position: absolute; background: rgba(255, 0, 0, 0.16); border: 2px dashed rgba(255, 60, 60, 0.65); z-index: 50; pointer-events: none; }
+/* Death Zones (solo con &zones=1): lo que NO se puede pisar. */
+.tsh-zone { position: absolute; background: rgba(255, 0, 0, 0.16); border: 2px dashed rgba(255, 60, 60, 0.65); z-index: 50; pointer-events: none; }
 
-/* ——— Lados de jugador ——— */
-.ov2-side { position: absolute; top: 10px; display: flex; align-items: flex-start; gap: 12px; z-index: 10; }
-.ov2-p1 { left: 40px; max-width: 700px; }
-.ov2-p2 { right: 40px; max-width: 700px; }
+/* ——— Jugadores ——— */
+.tsh-player {
+  position: absolute;
+  top: 10px;
+  width: 348px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: calc(var(--radius) / 2);
+  overflow: hidden;
+  z-index: 10;
+}
+.tsh-p1 { left: 434px; background: var(--p1-mix); transform: skewX(12deg); }
+.tsh-p2 { right: 434px; background: var(--p2-mix); transform: skewX(-12deg); flex-direction: row-reverse; }
 
-.ov2-portrait { width: 118px; height: 118px; object-fit: cover; border-radius: 10px; border: 2px solid rgba(255, 231, 135, 0.4); filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55)); flex: none; }
-.ov2-portrait-fb { display: grid; place-items: center; font-size: 54px; background: rgba(24, 16, 11, 0.85); }
+/* El contenido se contra-inclina para verse recto dentro de la barra. */
+.tsh-p1 > *:not(.tsh-score) { transform: skewX(-12deg); }
+.tsh-p2 > *:not(.tsh-score) { transform: skewX(12deg); }
+/* El número del marcador también se contra-inclina (la caja queda skewed). */
+.tsh-p1 .tsh-score > span { display: block; transform: skewX(-12deg); }
+.tsh-p2 .tsh-score > span { display: block; transform: skewX(12deg); }
 
-.ov2-stack { display: grid; gap: 6px; flex: 1; min-width: 0; }
-.ov2-row { display: flex; align-items: stretch; gap: 8px; height: 46px; min-width: 0; }
+.tsh-avatar {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: calc(var(--radius) * 2 / 3);
+  overflow: hidden;
+  background: #3f3f46;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+.tsh-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-.ov2-name {
+.tsh-name {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 180px;
-  padding: 0 22px;
-  background: #0e0e12;
-  color: #fff;
-  font: 700 27px "Barlow Condensed", sans-serif;
-  letter-spacing: 0.05em;
-  clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+  padding: 0 8px;
+  font-size: 30px;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.ov2-score {
-  width: 58px;
+.tsh-score {
+  width: 64px;
+  height: 100%;
+  flex: none;
   display: grid;
   place-items: center;
-  font: 800 32px "Barlow Condensed", sans-serif;
-  color: #fff;
-  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-  flex: none;
+  font-size: 34px;
+  font-weight: 800;
 }
-.ov2-score-p1 { background: linear-gradient(180deg, #f0554f, #c92f2f); }
-.ov2-score-p2 { background: linear-gradient(180deg, #4d8df0, #2456c9); }
+.tsh-p1 .tsh-score { background: var(--p1); margin-right: -16px; margin-left: 16px; }
+.tsh-p2 .tsh-score { background: var(--p2); margin-left: -16px; margin-right: 16px; }
 
-/* Píldoras de datos (rango, puntos, récord, aceptación) */
-.ov2-chips { display: flex; gap: 6px; }
-.ov2-chips-right { justify-content: flex-end; }
-.ov2-chip {
+/* ——— Chips (rango, puntos, récord, equipo, fuse, redes) ——— */
+.tsh-chips {
+  position: absolute;
+  top: 126px;
+  width: 257px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  overflow: hidden;
+  z-index: 10;
+}
+.tsh-p1chips { left: 172px; }
+.tsh-p2chips { right: 172px; }
+
+.tsh-chip {
+  position: relative;
+  z-index: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 11px;
-  border-radius: 5px;
-  background: #e9e6df;
-  color: #14120f;
-  font: 600 13px "Inter", sans-serif;
-  letter-spacing: 0.02em;
+  height: 32px;
+  padding: 0 16px;
+  font-size: 20px;
+  font-weight: 700;
   white-space: nowrap;
+  flex: none;
 }
-.ov2-chip-dark { background: #0e0e12; color: #fff; }
-.ov2-chip-dark b { font-weight: 600; }
-.ov2-rank-ico { width: 20px; height: 20px; object-fit: contain; flex: none; }
-.ov2-chip-ok { background: #173d26; color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.5); }
-.ov2-chip-wait { background: #3d3417; color: #f2c94c; border: 1px solid rgba(242, 201, 76, 0.45); }
-
-/* ——— Centro: ronda + marcador grande ——— */
-.ov2-center { position: absolute; left: 760px; top: 10px; width: 400px; display: grid; justify-items: center; gap: 8px; z-index: 10; }
-.ov2-round {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  padding: 9px 26px;
-  background: #0c0c10;
-  color: #fff;
-  font: 700 21px "Barlow Condensed", sans-serif;
-  letter-spacing: 0.12em;
-  white-space: nowrap;
-  max-width: 400px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ov2-round::before,
-.ov2-round::after {
+.tsh-chip::before {
   content: "";
   position: absolute;
   top: 0;
-  width: 11px;
+  left: 0;
+  width: calc(100% + 4px);
   height: 100%;
-  background: #39c0d0;
-  transform: skewX(-14deg);
+  border-radius: calc(var(--radius) / 4);
+  z-index: -1;
 }
-.ov2-round::before { left: -16px; }
-.ov2-round::after { right: -16px; }
+.tsh-p1chips .tsh-chip::before { background: var(--p1-tint); transform: skewX(12deg); }
+.tsh-p2chips .tsh-chip::before { background: var(--p2-tint); transform: skewX(-12deg); }
+.tsh-chip-fuse1::before { background: var(--fuse1-tint) !important; }
+.tsh-chip-fuse2::before { background: var(--fuse2-tint) !important; }
+.tsh-chip-ok { color: #4ade80; }
+.tsh-chip-ok::before { background: #173d26 !important; }
+.tsh-chip-wait { color: #f2c94c; }
+.tsh-chip-wait::before { background: #3d3417 !important; }
 
-.ov2-mid {
-  font: 800 86px "Barlow Condensed", sans-serif;
-  line-height: 1;
-  color: #f2c94c;
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.65), 0 8px 22px rgba(0, 0, 0, 0.45);
-}
-.ov2-mid i { font-style: normal; color: rgba(255, 255, 255, 0.55); margin: 0 10px; }
-.ov2-mid.ov2-dim { color: #e9e6df; }
-.ov2-mid.ov2-live { animation: ov2-pulse 2s ease-in-out infinite; }
-@keyframes ov2-pulse { 50% { text-shadow: 0 3px 0 rgba(0, 0, 0, 0.65), 0 0 26px rgba(242, 201, 76, 0.65); } }
+.tsh-rank-ico { width: 22px; height: 22px; object-fit: contain; flex: none; }
 
-/* ——— Banner inferior de evento (zona segura central) ——— */
-.ov2-event {
+/* ——— Barra superior central: estado / ronda ——— */
+.tsh-top {
   position: absolute;
+  top: 0;
   left: 50%;
-  top: 950px;
   transform: translateX(-50%);
+  width: 340px;
+  height: 46px;
+  padding: 0 42px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 54px;
-  max-width: 900px;
-  padding: 0 46px;
-  background: #0c0c10;
-  clip-path: polygon(18px 0, 100% 0, calc(100% - 18px) 100%, 0 100%);
+  overflow: visible;
   z-index: 10;
 }
-.ov2-event span {
-  font: 700 27px "Barlow Condensed", sans-serif;
-  letter-spacing: 0.07em;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.tsh-top-bg {
+  position: absolute;
+  top: 0;
+  width: 60%;
+  height: 100%;
+  background: var(--bg);
+  border-radius: calc(var(--radius) / 2);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  z-index: 0;
 }
+.tsh-top-bg1 { left: 0; transform: skewX(12deg); transform-origin: top right; }
+.tsh-top-bg2 { right: 0; transform: skewX(-12deg); transform-origin: top left; }
+.tsh-match { position: relative; z-index: 1; font-size: 26px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; }
+.tsh-phase { position: relative; z-index: 1; font-size: 20px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; color: #e9e6df; }
+
+/* ——— Banner inferior: evento / sala (zona segura central) ——— */
+.tsh-bottom {
+  position: absolute;
+  top: 946px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 64px;
+  padding: 0 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  z-index: 10;
+}
+.tsh-bottom-bg {
+  position: absolute;
+  bottom: 0;
+  width: 60%;
+  height: 100%;
+  background: var(--bg);
+  border-radius: calc(var(--radius) / 2);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  z-index: 0;
+}
+.tsh-bottom-bg1 { right: 0; transform: skewX(12deg); transform-origin: bottom right; }
+.tsh-bottom-bg2 { left: 0; transform: skewX(-12deg); transform-origin: bottom left; }
+.tsh-tname { position: relative; z-index: 1; font-size: 24px; font-weight: 700; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 
 /* ——— Ayuda de configuración (solo en navegador, nunca en OBS) ——— */
-.ov2-setup {
+.tsh-setup {
   position: absolute;
   left: 50%;
   top: 300px;
@@ -150,8 +221,8 @@
   border-radius: 12px;
   z-index: 60;
 }
-.ov2-setup strong { font: 700 15px "Barlow Condensed", sans-serif; letter-spacing: 0.1em; color: var(--gold, #f2c94c); }
-.ov2-setup code {
+.tsh-setup strong { font: 700 15px "Barlow Condensed", sans-serif; letter-spacing: 0.1em; color: #f2c94c; }
+.tsh-setup code {
   display: block;
   max-width: 800px;
   overflow: hidden;
@@ -163,14 +234,14 @@
   color: #e9e6df;
   font: 500 12px "Inter", sans-serif;
 }
-.ov2-setup button {
+.tsh-setup button {
   padding: 8px 22px;
   border: none;
   border-radius: 6px;
-  background: var(--orange, #b44d1d);
+  background: #b44d1d;
   color: #fff;
   font: 700 14px "Barlow Condensed", sans-serif;
   letter-spacing: 0.08em;
   cursor: pointer;
 }
-.ov2-setup small { color: #a8907c; font-size: 11px; }
+.tsh-setup small { color: #a8907c; font-size: 11px; }
