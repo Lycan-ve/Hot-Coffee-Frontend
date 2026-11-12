@@ -353,13 +353,12 @@ function OverlayInner() {
 
   return (
     <div className={`tsh-viewport ${bg === "dark" ? "tsh-dark" : ""}`}>
+      {bgimg && <img className="tsh-bgimg" src={bgimg} alt="" />}
       <div className="tsh-stage" style={{ transform: `scale(${k})` }}>
         {showZones &&
           DEATH_ZONES.map((z, i) => (
             <div key={i} className="tsh-zone" style={{ left: z.x, top: z.y, width: z.w, height: z.h }} title="Death Zone" />
           ))}
-
-        {bgimg && <img className="tsh-bgimg" src={bgimg} alt="" />}
 
         {p1}
         {p2}

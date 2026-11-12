@@ -6,10 +6,25 @@
 .tsh-viewport { position: fixed; inset: 0; overflow: hidden; }
 .tsh-viewport.tsh-dark { background: radial-gradient(80% 80% at 50% 40%, #2a160b, #0d0704); }
 
+/* Imagen de fondo opcional (&bgimg, por defecto /overlay/stage.png): vive en el
+   VIEWPORT, no en el escenario escalado, así cubre TODA la ventana aunque el
+   escenario 1920×1080 tenga que reducirse para caber (modo maqueta).
+   Con &bgimg=0 se apaga (imprescindible en OBS sobre la captura del juego). */
+.tsh-bgimg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .tsh-stage {
   position: absolute;
   left: 0;
   top: 0;
+  z-index: 2;
   width: 1920px;
   height: 1080px;
   transform-origin: 0 0;
