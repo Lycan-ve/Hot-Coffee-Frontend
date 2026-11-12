@@ -172,7 +172,7 @@
 .tsh-chips {
   position: absolute;
   top: 145px;
-  width: 410px;
+  width: 350px;
   height: 32px;
   display: flex;
   align-items: center;
@@ -181,7 +181,7 @@
   z-index: 10;
 }
 .tsh-p1chips { left: 172px; }
-.tsh-p2chips { right: 172px; }
+.tsh-p2chips { right: 165px; }
 
 .tsh-chip {
   position: relative;
