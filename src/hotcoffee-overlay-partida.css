@@ -156,7 +156,7 @@
 /* ——— Chips (rango, puntos, récord, equipo, fuse, redes) ——— */
 .tsh-chips {
   position: absolute;
-  top: 130px;
+  top: 170px;
   width: 510px;
   height: 32px;
   display: flex;
