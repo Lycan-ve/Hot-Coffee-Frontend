@@ -32,6 +32,7 @@ import "../../../hotcoffee-overlay-partida.css";
 //   &zones=1          pinta las Death Zones (verificación)
 //   &bg=dark          fondo sólido de prueba
 //   &bgimg=<url>      imagen de fondo detrás del overlay (prueba o uso sin captura del juego)
+//   &bgimg=0          sin imagen de fondo (transparente, para OBS sobre el juego)
 
 // Zonas "Death": el HUD del juego vive aquí. PROHIBIDO tocar.
 const DEATH_ZONES = [
@@ -167,7 +168,10 @@ function OverlayInner() {
   const params = useSearchParams();
   const q = (k: string, d = "") => params.get(k) ?? d;
   const bg = q("bg");
-  const bgimg = q("bgimg") || "public/overlay/stage.png";
+  const bgimgParam = q("bgimg");
+  // Fondo por defecto: imagen del repo. Con &bgimg=0 se apaga
+  // (necesario en OBS cuando el browser source va sobre la captura del juego).
+  const bgimg = bgimgParam === "0" ? "" : (bgimgParam || "/overlay/stage.png");
   const showZones = q("zones") === "1";
   const extra = Number(q("scale")) || 1;
 
@@ -355,7 +359,7 @@ function OverlayInner() {
             <div key={i} className="tsh-zone" style={{ left: z.x, top: z.y, width: z.w, height: z.h }} title="Death Zone" />
           ))}
 
-        {bgimg && <img className="tsh-bgimg" src={bgimg || "public/overlay/stage.png"} alt="" />}
+        {bgimg && <img className="tsh-bgimg" src={bgimg} alt="" />}
 
         {p1}
         {p2}
