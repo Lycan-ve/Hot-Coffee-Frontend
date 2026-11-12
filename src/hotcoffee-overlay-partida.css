@@ -8,31 +8,16 @@
 /* Death Zones (solo visibles con &zones=1): referencia de lo que NO se puede pisar. */
 .ov2-zone { position: absolute; background: rgba(255, 0, 0, 0.16); border: 2px dashed rgba(255, 60, 60, 0.65); z-index: 50; pointer-events: none; }
 
-/* Paralelogramo base (sin transform: el texto no se inclina). */
-.ov2-slash { clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
-
 /* ——— Lados de jugador ——— */
 .ov2-side { position: absolute; top: 10px; display: flex; align-items: flex-start; gap: 12px; z-index: 10; }
 .ov2-p1 { left: 40px; max-width: 700px; }
 .ov2-p2 { right: 40px; max-width: 700px; }
 
-.ov2-portrait { width: 118px; height: 118px; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55)); flex: none; }
+.ov2-portrait { width: 118px; height: 118px; object-fit: cover; border-radius: 10px; border: 2px solid rgba(255, 231, 135, 0.4); filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55)); flex: none; }
+.ov2-portrait-fb { display: grid; place-items: center; font-size: 54px; background: rgba(24, 16, 11, 0.85); }
 
 .ov2-stack { display: grid; gap: 6px; flex: 1; min-width: 0; }
 .ov2-row { display: flex; align-items: stretch; gap: 8px; height: 46px; min-width: 0; }
-
-.ov2-fuse {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 16px;
-  font: 700 15px "Barlow Condensed", sans-serif;
-  letter-spacing: 0.1em;
-  color: #fff;
-  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
-  white-space: nowrap;
-}
-.ov2-fuse-p1 { background: linear-gradient(180deg, #9a4dff, #6c2bd9); }
-.ov2-fuse-p2 { background: linear-gradient(180deg, #f2b13c, #d97e1f); }
 
 .ov2-name {
   flex: 1;
@@ -63,40 +48,26 @@
 .ov2-score-p1 { background: linear-gradient(180deg, #f0554f, #c92f2f); }
 .ov2-score-p2 { background: linear-gradient(180deg, #4d8df0, #2456c9); }
 
-/* Personajes (point / assist) */
-.ov2-chars { display: grid; gap: 4px; justify-items: start; }
-.ov2-chars-right { justify-items: end; }
-.ov2-char {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 3px 14px;
-  font: 700 19px "Barlow Condensed", sans-serif;
-  letter-spacing: 0.06em;
-  clip-path: polygon(9px 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
-  white-space: nowrap;
-}
-.ov2-char i { font-style: normal; font-size: 13px; opacity: 0.8; }
-.ov2-char-p1 { background: linear-gradient(180deg, #35c4d4, #1d97a8); color: #05262b; }
-.ov2-char-p1 i { color: #05262b; }
-.ov2-char-p2 { background: linear-gradient(180deg, #8a5cd9, #6439b3); color: #f4edff; }
-.ov2-char-p2 i { color: #f4edff; }
-
-/* Píldoras de redes / pronombres */
+/* Píldoras de datos (rango, puntos, récord, aceptación) */
 .ov2-chips { display: flex; gap: 6px; }
 .ov2-chips-right { justify-content: flex-end; }
 .ov2-chip {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 4px 11px;
   border-radius: 5px;
   background: #e9e6df;
   color: #14120f;
-  font: 600 12px "Inter", sans-serif;
+  font: 600 13px "Inter", sans-serif;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
 .ov2-chip-dark { background: #0e0e12; color: #fff; }
+.ov2-chip-dark b { font-weight: 600; }
+.ov2-rank-ico { width: 20px; height: 20px; object-fit: contain; flex: none; }
+.ov2-chip-ok { background: #173d26; color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.5); }
+.ov2-chip-wait { background: #3d3417; color: #f2c94c; border: 1px solid rgba(242, 201, 76, 0.45); }
 
 /* ——— Centro: ronda + marcador grande ——— */
 .ov2-center { position: absolute; left: 760px; top: 10px; width: 400px; display: grid; justify-items: center; gap: 8px; z-index: 10; }
@@ -133,6 +104,10 @@
   color: #f2c94c;
   text-shadow: 0 3px 0 rgba(0, 0, 0, 0.65), 0 8px 22px rgba(0, 0, 0, 0.45);
 }
+.ov2-mid i { font-style: normal; color: rgba(255, 255, 255, 0.55); margin: 0 10px; }
+.ov2-mid.ov2-dim { color: #e9e6df; }
+.ov2-mid.ov2-live { animation: ov2-pulse 2s ease-in-out infinite; }
+@keyframes ov2-pulse { 50% { text-shadow: 0 3px 0 rgba(0, 0, 0, 0.65), 0 0 26px rgba(242, 201, 76, 0.65); } }
 
 /* ——— Banner inferior de evento (zona segura central) ——— */
 .ov2-event {
@@ -158,3 +133,44 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ——— Ayuda de configuración (solo en navegador, nunca en OBS) ——— */
+.ov2-setup {
+  position: absolute;
+  left: 50%;
+  top: 300px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  max-width: 860px;
+  padding: 18px 24px;
+  background: rgba(24, 16, 11, 0.94);
+  border: 1px solid rgba(255, 231, 135, 0.35);
+  border-radius: 12px;
+  z-index: 60;
+}
+.ov2-setup strong { font: 700 15px "Barlow Condensed", sans-serif; letter-spacing: 0.1em; color: var(--gold, #f2c94c); }
+.ov2-setup code {
+  display: block;
+  max-width: 800px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #0c0c10;
+  color: #e9e6df;
+  font: 500 12px "Inter", sans-serif;
+}
+.ov2-setup button {
+  padding: 8px 22px;
+  border: none;
+  border-radius: 6px;
+  background: var(--orange, #b44d1d);
+  color: #fff;
+  font: 700 14px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.ov2-setup small { color: #a8907c; font-size: 11px; }
