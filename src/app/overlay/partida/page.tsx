@@ -167,7 +167,7 @@ function OverlayInner() {
   const params = useSearchParams();
   const q = (k: string, d = "") => params.get(k) ?? d;
   const bg = q("bg");
-  const bgimg = q("bgimg");
+  const bgimg = q("bgimg") || "public/overlay/stage.png";
   const showZones = q("zones") === "1";
   const extra = Number(q("scale")) || 1;
 
