@@ -1,0 +1,160 @@
+/* ---------- Overlay de PARTIDA 1920×1080 para OBS (respeta las Death Zones del HUD de 2XKO) ---------- */
+
+.ov2-viewport { position: fixed; inset: 0; overflow: hidden; }
+.ov2-viewport.ov2-dark { background: #111; }
+
+.ov2-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+
+/* Death Zones (solo visibles con &zones=1): referencia de lo que NO se puede pisar. */
+.ov2-zone { position: absolute; background: rgba(255, 0, 0, 0.16); border: 2px dashed rgba(255, 60, 60, 0.65); z-index: 50; pointer-events: none; }
+
+/* Paralelogramo base (sin transform: el texto no se inclina). */
+.ov2-slash { clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
+
+/* ——— Lados de jugador ——— */
+.ov2-side { position: absolute; top: 10px; display: flex; align-items: flex-start; gap: 12px; z-index: 10; }
+.ov2-p1 { left: 40px; max-width: 700px; }
+.ov2-p2 { right: 40px; max-width: 700px; }
+
+.ov2-portrait { width: 118px; height: 118px; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55)); flex: none; }
+
+.ov2-stack { display: grid; gap: 6px; flex: 1; min-width: 0; }
+.ov2-row { display: flex; align-items: stretch; gap: 8px; height: 46px; min-width: 0; }
+
+.ov2-fuse {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  font: 700 15px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.1em;
+  color: #fff;
+  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  white-space: nowrap;
+}
+.ov2-fuse-p1 { background: linear-gradient(180deg, #9a4dff, #6c2bd9); }
+.ov2-fuse-p2 { background: linear-gradient(180deg, #f2b13c, #d97e1f); }
+
+.ov2-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  padding: 0 22px;
+  background: #0e0e12;
+  color: #fff;
+  font: 700 27px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.05em;
+  clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ov2-score {
+  width: 58px;
+  display: grid;
+  place-items: center;
+  font: 800 32px "Barlow Condensed", sans-serif;
+  color: #fff;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  flex: none;
+}
+.ov2-score-p1 { background: linear-gradient(180deg, #f0554f, #c92f2f); }
+.ov2-score-p2 { background: linear-gradient(180deg, #4d8df0, #2456c9); }
+
+/* Personajes (point / assist) */
+.ov2-chars { display: grid; gap: 4px; justify-items: start; }
+.ov2-chars-right { justify-items: end; }
+.ov2-char {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 14px;
+  font: 700 19px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.06em;
+  clip-path: polygon(9px 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+  white-space: nowrap;
+}
+.ov2-char i { font-style: normal; font-size: 13px; opacity: 0.8; }
+.ov2-char-p1 { background: linear-gradient(180deg, #35c4d4, #1d97a8); color: #05262b; }
+.ov2-char-p1 i { color: #05262b; }
+.ov2-char-p2 { background: linear-gradient(180deg, #8a5cd9, #6439b3); color: #f4edff; }
+.ov2-char-p2 i { color: #f4edff; }
+
+/* Píldoras de redes / pronombres */
+.ov2-chips { display: flex; gap: 6px; }
+.ov2-chips-right { justify-content: flex-end; }
+.ov2-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 5px;
+  background: #e9e6df;
+  color: #14120f;
+  font: 600 12px "Inter", sans-serif;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.ov2-chip-dark { background: #0e0e12; color: #fff; }
+
+/* ——— Centro: ronda + marcador grande ——— */
+.ov2-center { position: absolute; left: 760px; top: 10px; width: 400px; display: grid; justify-items: center; gap: 8px; z-index: 10; }
+.ov2-round {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 26px;
+  background: #0c0c10;
+  color: #fff;
+  font: 700 21px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov2-round::before,
+.ov2-round::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 11px;
+  height: 100%;
+  background: #39c0d0;
+  transform: skewX(-14deg);
+}
+.ov2-round::before { left: -16px; }
+.ov2-round::after { right: -16px; }
+
+.ov2-mid {
+  font: 800 86px "Barlow Condensed", sans-serif;
+  line-height: 1;
+  color: #f2c94c;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.65), 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+/* ——— Banner inferior de evento (zona segura central) ——— */
+.ov2-event {
+  position: absolute;
+  left: 50%;
+  top: 950px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 54px;
+  max-width: 900px;
+  padding: 0 46px;
+  background: #0c0c10;
+  clip-path: polygon(18px 0, 100% 0, calc(100% - 18px) 100%, 0 100%);
+  z-index: 10;
+}
+.ov2-event span {
+  font: 700 27px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.07em;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
