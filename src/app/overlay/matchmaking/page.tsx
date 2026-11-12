@@ -31,10 +31,28 @@ function OverlayInner() {
   const scale = Number(params.get("scale")) || 1;
   const flag = params.get("flag") ?? "";
   // En navegador (no OBS) con sesión: preparamos las URL listas para OBS.
+  // TODO se calcula tras montar (nunca durante el render) para no romper el
+  // prerender/hidratación ni fallar si localStorage está bloqueado.
   const isOBS = typeof navigator !== "undefined" && /OBS/i.test(navigator.userAgent);
-  const [me, setMe] = useState<MeResponse | null>(null);
+  const [setup, setSetup] = useState<{ cardUrl: string; partidaUrl: string } | null>(null);
   useEffect(() => {
-    if (!isOBS) fetchMe().then(setMe);
+    if (isOBS) return;
+    let alive = true;
+    (async () => {
+      try {
+        const base = window.location.origin;
+        const token = getToken();
+        const m = await fetchMe();
+        if (!alive) return;
+        setSetup({
+          cardUrl: m ? `${base}/overlay/matchmaking?id=${m.user.discordId}` : "",
+          partidaUrl: token ? `${base}/overlay/partida?token=${encodeURIComponent(token)}` : "",
+        });
+      } catch {
+        if (alive) setSetup({ cardUrl: "", partidaUrl: "" });
+      }
+    })();
+    return () => { alive = false; };
   }, [isOBS]);
 
   // Fondo transparente para el browser source de OBS. Se aplica inline (y se
@@ -57,10 +75,8 @@ function OverlayInner() {
   });
 
   if (!id) {
-    const token = getToken();
-    const base = typeof window !== "undefined" ? window.location.origin : "";
-    const cardUrl = me ? `${base}/overlay/matchmaking?id=${me.user.discordId}` : null;
-    const partidaUrl = token ? `${base}/overlay/partida?token=${encodeURIComponent(token)}` : null;
+    const cardUrl = setup?.cardUrl || null;
+    const partidaUrl = setup?.partidaUrl || null;
     return (
       <div className="ov-hint">
         <Coffee />
@@ -85,9 +101,10 @@ function OverlayInner() {
           </div>
         ) : (
           <p>
-            Inicia sesión en la web y vuelve a abrir esta página para obtener tu URL de OBS,
-            o añade <b>?id=tuIdDeDiscord</b> a la URL
+            Overlay de matchmaking de Hot Coffee. Añade <b>?id=tuIdDeDiscord</b> a la URL
             (y opcionalmente <b>&amp;bg=dark</b>, <b>&amp;scale=1.25</b>, <b>&amp;flag=🇻🇪</b>).
+            {typeof navigator !== "undefined" && !/OBS/i.test(navigator.userAgent) &&
+              " Inicia sesión en la web para que esta página te dé tu URL lista para OBS."}
           </p>
         )}
       </div>
