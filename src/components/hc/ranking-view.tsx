@@ -463,7 +463,7 @@ export default function RankingView({ mode }: { mode: "torneos" | "matchmaking" 
           <article className="panel rk-table" ref={boardRef}>
             {/* Cada ranking vive en su propia página: las pestañas enlazan. */}
             <div className="rk-tabs">
-              <Link href="/" className={mode === "torneos" ? "on" : ""}>RANKING TORNEOS</Link>
+              <Link href="/ranking" className={mode === "torneos" ? "on" : ""}>RANKING TORNEOS</Link>
               <Link href="/ranking-matchmaking" className={mode === "matchmaking" ? "on" : ""}>RANKING MATCHMAKING</Link>
               <span>
                 {mode === "torneos"

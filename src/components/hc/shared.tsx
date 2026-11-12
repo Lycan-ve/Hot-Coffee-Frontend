@@ -11,7 +11,7 @@ export const A = "/assets";
 
 function Brand() {
   return (
-    <Link href="/inicio" className="brand">
+    <Link href="/" className="brand">
       <div className="brand-mark">
         <img src={`${A}/5fb79.svg`} alt="" />
       </div>
@@ -29,10 +29,10 @@ function Header() {
     <header className="topbar">
       <Brand />
       <nav aria-label="Navegación principal">
-        <Link href="/inicio" className={`nav-item${pathname.startsWith("/inicio") ? " active" : ""}`}>
+        <Link href="/" className={`nav-item${pathname === "/" ? " active" : ""}`}>
           <small>01</small> Inicio
         </Link>
-        <Link href="/" className={`nav-item${pathname === "/" ? " active" : ""}`}>
+        <Link href="/ranking" className={`nav-item${pathname === "/ranking" ? " active" : ""}`}>
           <small>02</small> Ranking
         </Link>
         <Link href="/ranking-matchmaking" className={`nav-item${pathname.startsWith("/ranking-matchmaking") ? " active" : ""}`}>
