@@ -1,15 +1,17 @@
 'use client';
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Coffee } from "lucide-react";
 import {
   API_URL,
+  fetchMe,
   fetchUserProfile,
   fuseIconUrl,
   rankIconFallbackUrl,
   rankIconUrl,
+  type MeResponse,
 } from "@/lib/auth";
 import "../../../hotcoffee-overlay.css";
 
@@ -28,6 +30,12 @@ function OverlayInner() {
   const bg = params.get("bg") ?? "transparent";
   const scale = Number(params.get("scale")) || 1;
   const flag = params.get("flag") ?? "";
+  // En navegador (no OBS) con sesión: preparamos las URL listas para OBS.
+  const isOBS = typeof navigator !== "undefined" && /OBS/i.test(navigator.userAgent);
+  const [me, setMe] = useState<MeResponse | null>(null);
+  useEffect(() => {
+    if (!isOBS) fetchMe().then(setMe);
+  }, [isOBS]);
 
   // Fondo transparente para el browser source de OBS. Se aplica inline (y se
   // restaura al salir) para no tocar el fondo del resto de la web.
@@ -49,13 +57,39 @@ function OverlayInner() {
   });
 
   if (!id) {
+    const token = getToken();
+    const base = typeof window !== "undefined" ? window.location.origin : "";
+    const cardUrl = me ? `${base}/overlay/matchmaking?id=${me.user.discordId}` : null;
+    const partidaUrl = token ? `${base}/overlay/partida?token=${encodeURIComponent(token)}` : null;
     return (
       <div className="ov-hint">
         <Coffee />
-        <p>
-          Overlay de matchmaking de Hot Coffee. Añade <b>?id=tuIdDeDiscord</b> a la URL
-          (y opcionalmente <b>&amp;bg=dark</b>, <b>&amp;scale=1.25</b>, <b>&amp;flag=🇻🇪</b>).
-        </p>
+        {cardUrl ? (
+          <div className="ov-setup">
+            <b>TUS URL PARA OBS (fuente Navegador):</b>
+            <small>Tarjeta de jugador:</small>
+            <code>{cardUrl}</code>
+            {partidaUrl && (
+              <>
+                <small>Overlay de partida (1920×1080):</small>
+                <code>{partidaUrl}</code>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => navigator.clipboard?.writeText([cardUrl, partidaUrl].filter(Boolean).join("\n")).catch(() => {})}
+            >
+              Copiar
+            </button>
+            <small>La URL de partida lleva tu token de sesión: no la compartas ni la pegues en chats.</small>
+          </div>
+        ) : (
+          <p>
+            Inicia sesión en la web y vuelve a abrir esta página para obtener tu URL de OBS,
+            o añade <b>?id=tuIdDeDiscord</b> a la URL
+            (y opcionalmente <b>&amp;bg=dark</b>, <b>&amp;scale=1.25</b>, <b>&amp;flag=🇻🇪</b>).
+          </p>
+        )}
       </div>
     );
   }

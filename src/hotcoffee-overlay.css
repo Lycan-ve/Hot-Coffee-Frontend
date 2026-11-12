@@ -282,6 +282,38 @@
 .ov-hint svg { width: 24px; height: 24px; color: var(--hc-crema); flex: none; filter: drop-shadow(0 0 8px rgba(255, 190, 90, 0.6)); }
 .ov-hint b { color: var(--hc-crema); font-weight: 600; }
 
+/* ——— URLs para OBS (solo en navegador con sesión, nunca en OBS) ——— */
+.ov-setup { display: grid; gap: 8px; justify-items: start; }
+.ov-setup b { color: var(--hc-crema); font-weight: 600; letter-spacing: 0.06em; }
+.ov-setup small { color: var(--hc-latte); font-size: 12px; }
+.ov-setup code {
+  display: block;
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(13, 7, 4, 0.9);
+  border: 1px solid rgba(255, 210, 140, 0.14);
+  color: #f0e2cc;
+  font: 500 12px "Inter", sans-serif;
+}
+.ov-setup button {
+  padding: 8px 22px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff9a4d, #e0742c 55%, #b8461a);
+  color: #fffaf0;
+  font: 800 13px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.6), 0 6px 16px -4px rgba(224, 116, 44, 0.7);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.ov-setup button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
 @media (prefers-reduced-motion: reduce) {
   .ov-wrap *, .ov-wrap *::before, .ov-wrap *::after, .ov-bar::after { animation: none !important; }
 }
