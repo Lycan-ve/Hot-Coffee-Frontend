@@ -1,9 +1,10 @@
-/* ---------- Overlay de PARTIDA 1920×1080 — diseño TSH 2XKO ----------
-   Replica el template de TSH (barras skewX 12°, chips tintados, barra
-   superior central y banner inferior) respetando las Death Zones del HUD. */
+/* ---------- Overlay de PARTIDA 1920×1080 — estilo HOT COFFEE ----------
+   Geometría del template TSH 2XKO (skewX 12°, chips tintados, barra central,
+   banner inferior) con la paleta de la marca: café, crema, dorado y naranja.
+   Respeta las Death Zones del HUD. */
 
 .tsh-viewport { position: fixed; inset: 0; overflow: hidden; }
-.tsh-viewport.tsh-dark { background: #111; }
+.tsh-viewport.tsh-dark { background: #120b07; }
 
 .tsh-stage {
   position: absolute;
@@ -12,17 +13,19 @@
   width: 1920px;
   height: 1080px;
   transform-origin: 0 0;
-  --bg: #17171c;
-  --text: #ffffff;
+  --bg: #1d130c;          /* café profundo (paneles) */
+  --text: #f5e9d8;        /* crema */
+  --muted: #cbb08e;
+  --gold: #e8b23a;
   --radius: 10px;
-  --p1: #e23b3b;
-  --p2: #2f6fe4;
-  --p1-mix: #351c21; /* p1 15% sobre bg */
-  --p2-mix: #1b243a; /* p2 15% sobre bg */
-  --p1-tint: #5e2427; /* p1 35% sobre bg (chips) */
-  --p2-tint: #1f3662; /* p2 35% sobre bg (chips) */
-  --fuse1-tint: #402a64;
-  --fuse2-tint: #5b4023;
+  --p1: #b44d1d;          /* naranja Hot Coffee */
+  --p2: #c9922a;          /* dorado */
+  --p1-mix: #311b0f;      /* p1 15% sobre bg */
+  --p2-mix: #342511;      /* p2 15% sobre bg */
+  --p1-tint: #502a14;     /* p1 35% sobre bg (chips) */
+  --p2-tint: #574219;     /* p2 35% sobre bg (chips) */
+  --fuse1-tint: #5a3a16;  /* caramelo */
+  --fuse2-tint: #4a3520;  /* moca */
   font-family: "Barlow Condensed", sans-serif;
   color: var(--text);
 }
@@ -42,6 +45,7 @@
   border-radius: calc(var(--radius) / 2);
   overflow: hidden;
   z-index: 10;
+  box-shadow: inset 0 0 0 1px rgba(232, 178, 58, 0.22);
 }
 .tsh-p1 { left: 434px; background: var(--p1-mix); transform: skewX(12deg); }
 .tsh-p2 { right: 434px; background: var(--p2-mix); transform: skewX(-12deg); flex-direction: row-reverse; }
@@ -59,7 +63,8 @@
   flex: none;
   border-radius: calc(var(--radius) * 2 / 3);
   overflow: hidden;
-  background: #3f3f46;
+  background: #2a1c11;
+  border: 1px solid rgba(232, 178, 58, 0.4);
   display: grid;
   place-items: center;
   font-size: 18px;
@@ -78,6 +83,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.55);
 }
 
 .tsh-score {
@@ -90,7 +96,8 @@
   font-weight: 800;
 }
 .tsh-p1 .tsh-score { background: var(--p1); margin-right: -16px; margin-left: 16px; }
-.tsh-p2 .tsh-score { background: var(--p2); margin-left: -16px; margin-right: 16px; }
+.tsh-p2 .tsh-score { background: var(--p2); margin-left: -16px; margin-right: 16px; color: #241505; }
+.tsh-score span { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.35); }
 
 /* ——— Chips (rango, puntos, récord, equipo, fuse, redes) ——— */
 .tsh-chips {
@@ -120,6 +127,7 @@
   font-weight: 700;
   white-space: nowrap;
   flex: none;
+  color: var(--text);
 }
 .tsh-chip::before {
   content: "";
@@ -135,10 +143,10 @@
 .tsh-p2chips .tsh-chip::before { background: var(--p2-tint); transform: skewX(-12deg); }
 .tsh-chip-fuse1::before { background: var(--fuse1-tint) !important; }
 .tsh-chip-fuse2::before { background: var(--fuse2-tint) !important; }
-.tsh-chip-ok { color: #4ade80; }
-.tsh-chip-ok::before { background: #173d26 !important; }
+.tsh-chip-ok { color: #a3d977; }
+.tsh-chip-ok::before { background: #2f3d14 !important; }
 .tsh-chip-wait { color: #f2c94c; }
-.tsh-chip-wait::before { background: #3d3417 !important; }
+.tsh-chip-wait::before { background: #4a3a14 !important; }
 
 .tsh-rank-ico { width: 22px; height: 22px; object-fit: contain; flex: none; }
 
@@ -167,12 +175,13 @@
   border-radius: calc(var(--radius) / 2);
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+  box-shadow: inset 0 -1px 0 rgba(232, 178, 58, 0.35);
   z-index: 0;
 }
 .tsh-top-bg1 { left: 0; transform: skewX(12deg); transform-origin: top right; }
 .tsh-top-bg2 { right: 0; transform: skewX(-12deg); transform-origin: top left; }
-.tsh-match { position: relative; z-index: 1; font-size: 26px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; }
-.tsh-phase { position: relative; z-index: 1; font-size: 20px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; color: #e9e6df; }
+.tsh-match { position: relative; z-index: 1; font-size: 26px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; color: var(--gold); text-shadow: 0 2px 3px rgba(0, 0, 0, 0.55); }
+.tsh-phase { position: relative; z-index: 1; font-size: 20px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; color: var(--muted); }
 
 /* ——— Banner inferior: evento / sala (zona segura central) ——— */
 .tsh-bottom {
@@ -199,11 +208,12 @@
   border-radius: calc(var(--radius) / 2);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+  box-shadow: inset 0 1px 0 rgba(232, 178, 58, 0.35);
   z-index: 0;
 }
 .tsh-bottom-bg1 { right: 0; transform: skewX(12deg); transform-origin: bottom right; }
 .tsh-bottom-bg2 { left: 0; transform: skewX(-12deg); transform-origin: bottom left; }
-.tsh-tname { position: relative; z-index: 1; font-size: 24px; font-weight: 700; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.tsh-tname { position: relative; z-index: 1; font-size: 24px; font-weight: 700; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
 
 /* ——— Ayuda de configuración (solo en navegador, nunca en OBS) ——— */
 .tsh-setup {
@@ -217,7 +227,7 @@
   max-width: 860px;
   padding: 18px 24px;
   background: rgba(24, 16, 11, 0.94);
-  border: 1px solid rgba(255, 231, 135, 0.35);
+  border: 1px solid rgba(232, 178, 58, 0.35);
   border-radius: 12px;
   z-index: 60;
 }
@@ -230,7 +240,7 @@
   white-space: nowrap;
   padding: 8px 12px;
   border-radius: 6px;
-  background: #0c0c10;
+  background: #120b07;
   color: #e9e6df;
   font: 500 12px "Inter", sans-serif;
 }
@@ -238,7 +248,7 @@
   padding: 8px 22px;
   border: none;
   border-radius: 6px;
-  background: #b44d1d;
+  background: var(--p1);
   color: #fff;
   font: 700 14px "Barlow Condensed", sans-serif;
   letter-spacing: 0.08em;
