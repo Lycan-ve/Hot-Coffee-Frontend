@@ -32,34 +32,6 @@
 /* Chips en 2 columnas dentro de la columna estrecha. */
 .rk-layout .rk-tourneys .rk-tourneys-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-/* ---------- Rango de torneos (dentro de la columna de procesados) ---------- */
-
-/* Desde/Hasta viven aquí, no en una fila suelta sobre la tabla: así no se
-   desborda del panel y el filtro queda junto a los chips de serie. */
-.rk-tourneys-range {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-  color: var(--hc-muted);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-}
-.rk-tourneys-range span { color: var(--cream); font-weight: 700; }
-.rk-tourneys-range label { display: flex; align-items: center; gap: 6px; }
-.rk-tourneys-range select {
-  max-width: 76px;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  color: #fff;
-  padding: 4px 6px;
-  font-size: 12px;
-}
-.rk-tourneys-range select:disabled { opacity: 0.45; }
-
 /* ---------- Botón TODOS ---------- */
 .rk-tourneys .chip-all { border-color: rgba(180, 77, 29, 0.45); }
 .rk-tourneys .chip-all .badge-ini { color: var(--orange); font-size: 22px; }
@@ -201,13 +173,15 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-left: 20px;
   color: var(--hc-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
-.rk-scope::before { content: ""; align-self: center; flex: 0 0 auto; width: 22px; height: 2px; background: var(--orange); }
+/* .rk-scope::before { content: ""; align-self: center; flex: 0 0 auto; width: 22px; height: 2px; background: var(--orange); } */
 .rk-scope h1.rk-title {
   margin: 0;
   color: var(--gold);
@@ -217,6 +191,37 @@
 }
 .rk-scope .kind { color: #f5e9d8; opacity: 0.8; font-size: 13px; }
 .rk-scope em { font-style: normal; opacity: 0.5; }
+
+/* ---------- Botón "Filtrar torneos": estados claros ---------- */
+
+/* Este archivo se carga después de hotcoffee.css, así que estas reglas
+   ganan a las de "Real-data additions" sin tocarlas. */
+
+/* Transición suave y cursor de botón en todos los estados. */
+.rk-tools > button {
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Sin contorno "pegado" tras el clic: el anillo de foco solo aparece al
+   navegar con teclado (focus-visible), no al pulsar con el ratón. */
+.rk-tools > button:focus { outline: none; }
+.rk-tools > button:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+
+/* Activo (panel de filtros abierto): mismo lenguaje que los chips "on" de
+   torneos procesados: borde naranja, franja interior y texto dorado. */
+.rk-tools > button.on {
+  border-color: var(--orange);
+  background: rgba(180, 77, 29, 0.16);
+  box-shadow: inset 2px 0 var(--orange);
+  color: var(--gold);
+}
+.rk-tools > button.on svg { color: var(--gold); }
+.rk-tools > button.on:hover { background: rgba(180, 77, 29, 0.24); }
+
+/* Fila de filtros: selects consistentes con los botones de arriba. */
+.rk-filters select { cursor: pointer; height: 32px; }
+.rk-filters select:hover { border-color: var(--orange); }
 
 /* ---------- Ajustes por ancho de pantalla ---------- */
 @media (max-width: 1360px) {
@@ -235,4 +240,3 @@
   .rk-layout.with-tourneys .rk-side { order: 3; }
   .rk-layout .rk-tourneys .rk-tourneys-grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
 }
-
