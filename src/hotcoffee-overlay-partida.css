@@ -109,18 +109,21 @@
 .tsh-name {
   flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   padding: 0 8px;
   font-size: 30px;
+  line-height: 48px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55), 0 0 16px rgba(255, 170, 90, 0.25);
 }
+/* Nombres largos: letra más pequeña (data-len lo pone page.tsx). */
+.tsh-name[data-len="l"] { font-size: 25px; }
+.tsh-name[data-len="xl"] { font-size: 21px; letter-spacing: 0; }
 
 .tsh-score {
   position: relative;
@@ -232,8 +235,8 @@
   box-shadow: inset 0 -2px 0 var(--crema-2), 0 8px 20px -6px rgba(0, 0, 0, 0.75);
   z-index: 0;
 }
-.tsh-top-bg1 { left: 0; transform: skewX(12deg); transform-origin: top right; }
-.tsh-top-bg2 { right: 0; transform: skewX(-12deg); transform-origin: top left; }
+.tsh-top-bg1 { left: 0; transform: skewX(12deg); transform-origin: top right; border-bottom-right-radius: 0; }
+.tsh-top-bg2 { right: 0; transform: skewX(-12deg); transform-origin: top left; border-bottom-left-radius: 0; }
 /* Resplandor cálido bajo la barra superior */
 .tsh-top::after {
   content: "";
@@ -283,17 +286,15 @@
   bottom: 0;
   width: 60%;
   height: 100%;
-  background:
-    radial-gradient(80% 120% at 50% 0%, rgba(224, 116, 44, 0.22), transparent 60%),
-    linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  background: linear-gradient(180deg, #3a1f10 0%, var(--bg-2) 35%, var(--bg) 100%);
   border-radius: calc(var(--radius) / 2);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   box-shadow: inset 0 2px 0 var(--crema-2), 0 -8px 22px -8px rgba(0, 0, 0, 0.7);
   z-index: 0;
 }
-.tsh-bottom-bg1 { right: 0; transform: skewX(12deg); transform-origin: bottom right; }
-.tsh-bottom-bg2 { left: 0; transform: skewX(-12deg); transform-origin: bottom left; }
+.tsh-bottom-bg1 { right: 0; transform: skewX(12deg); transform-origin: bottom right; border-top-left-radius: 0; }
+.tsh-bottom-bg2 { left: 0; transform: skewX(-12deg); transform-origin: bottom left; border-top-right-radius: 0; }
 
 /* Vapor saliendo del banner (zona central libre del HUD) */
 .tsh-bottom::before,
@@ -331,23 +332,6 @@
   text-overflow: ellipsis;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
 }
-/* Granos de café a cada lado del banner (en el margen, sin quitar sitio al texto) */
-.tsh-bottom-bg::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 11px;
-  height: 15px;
-  margin-top: -7px;
-  border-radius: 50%;
-  background:
-    linear-gradient(110deg, transparent 44%, #1a0b04 46% 54%, transparent 56%),
-    radial-gradient(circle at 35% 30%, #b36a35, #5e2d12 70%);
-  box-shadow: 0 0 6px rgba(255, 150, 70, 0.45);
-}
-.tsh-bottom-bg2::after { left: 20px; transform: skewX(12deg) rotate(-25deg); }
-.tsh-bottom-bg1::after { right: 20px; transform: skewX(-12deg) rotate(25deg) scaleX(-1); }
-
 .tsh-bottom .tsh-phase { font-size: 15px; letter-spacing: 3px; color: var(--crema-2); }
 
 /* ——— Ayuda de configuración (solo en navegador, nunca en OBS) ——— */

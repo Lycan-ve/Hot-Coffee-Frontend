@@ -145,7 +145,7 @@ function PlayerBlock(props: {
             <span>☕</span>
           )}
         </div>
-        <div className="tsh-name">{name}</div>
+        <div className="tsh-name" data-len={name.length > 16 ? "xl" : name.length > 12 ? "l" : undefined}>{name}</div>
         <div className="tsh-score"><span>{score}</span></div>
       </div>
       {chips.some(Boolean) && (
