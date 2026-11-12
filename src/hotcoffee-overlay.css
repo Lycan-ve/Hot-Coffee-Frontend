@@ -1,52 +1,149 @@
-/* ---------- Overlay de matchmaking para OBS (browser source) ---------- */
+/* ---------- Overlay de matchmaking para OBS (browser source) ----------
+   Estilo HOT COFFEE: espresso tostado, crema dorada, caramelo quemado,
+   vapor que sube y un brillo cálido. Mismas clases que antes (drop-in). */
+
+/* Paleta propia (no depende de las variables globales de la web). */
+:where(.ov-wrap, .ov-bar, .ov-hint) {
+  --hc-espresso: #140b06;
+  --hc-roast: #2b170c;
+  --hc-mocha: #3d2314;
+  --hc-crema: #ffd98a;
+  --hc-crema-2: #f3b65a;
+  --hc-caramel: #e0742c;
+  --hc-ember: #b8461a;
+  --hc-milk: #fff4e2;
+  --hc-latte: #c9a688;
+  --hc-line: rgba(255, 210, 140, 0.22);
+  --hc-glass: linear-gradient(180deg, rgba(58, 33, 19, 0.94) 0%, rgba(24, 13, 7, 0.95) 100%);
+  --hc-pour: linear-gradient(90deg, var(--hc-ember), var(--hc-caramel) 30%, var(--hc-crema) 50%, var(--hc-caramel) 70%, var(--hc-ember));
+  --hc-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.35);
+  /* Compatibilidad con las variables de la web */
+  --gold: var(--hc-crema);
+  --orange: var(--hc-caramel);
+  --hc-muted: var(--hc-latte);
+}
 
 /* Todo el overlay se posiciona con .ov-wrap; el fondo se vuelve transparente
    por JS (inline) para no afectar al resto de la web. */
-
-.ov-wrap { display: grid; gap: 10px; justify-items: start; padding: 12px; }
-.ov-wrap.ov-dark { background: #18100b; }
+.ov-wrap { display: grid; gap: 10px; justify-items: start; padding: 22px 12px 12px; }
+.ov-wrap.ov-dark {
+  background:
+    radial-gradient(120% 140% at 0% 0%, #3a1f10 0%, transparent 55%),
+    #120a05;
+}
 
 /* ——— Píldoras superiores ——— */
 .ov-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .ov-pill {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 14px;
+  padding: 7px 16px 6px;
   font-family: "Barlow Condensed", sans-serif;
   font-size: 16px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #fff;
-  background: rgba(24, 16, 11, 0.88);
-  border: 1px solid rgba(255, 231, 135, 0.28);
+  letter-spacing: 0.1em;
+  color: var(--hc-milk);
+  background: var(--hc-glass);
+  border: 1px solid var(--hc-line);
   border-radius: 999px;
-  backdrop-filter: blur(4px);
+  box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.16), var(--hc-shadow);
+  backdrop-filter: blur(6px);
   white-space: nowrap;
 }
-.ov-pill svg { width: 14px; height: 14px; color: var(--gold); }
-.ov-placing {
-  background: var(--orange);
-  border-color: rgba(255, 231, 135, 0.5);
-  box-shadow: 0 4px 14px rgba(180, 77, 29, 0.45);
+.ov-pill svg { width: 15px; height: 15px; color: var(--hc-crema); filter: drop-shadow(0 0 6px rgba(255, 190, 90, 0.55)); }
+
+/* Marca: taza con vapor saliendo del icono */
+.ov-brand { padding-left: 14px; }
+.ov-brand::before,
+.ov-brand::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  bottom: 70%;
+  width: 4px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(to top, rgba(255, 240, 220, 0), rgba(255, 240, 220, 0.75) 45%, rgba(255, 240, 220, 0));
+  filter: blur(1.5px);
+  opacity: 0;
+  animation: ov-steam 2.8s ease-in-out infinite;
+  pointer-events: none;
 }
-.ov-opponent b { color: var(--gold); }
+.ov-brand::after { left: 24px; height: 14px; animation-delay: 1.4s; }
+@keyframes ov-steam {
+  0%   { transform: translateY(4px) scaleX(1) skewX(0deg); opacity: 0; }
+  35%  { opacity: 0.85; }
+  70%  { transform: translateY(-10px) scaleX(1.5) skewX(-14deg); opacity: 0.35; }
+  100% { transform: translateY(-16px) scaleX(2) skewX(10deg); opacity: 0; }
+}
+
+/* En clasificación: caramelo caliente con brillo que recorre la píldora */
+.ov-placing {
+  overflow: hidden;
+  color: #1c0d05;
+  background: linear-gradient(180deg, var(--hc-crema-2), var(--hc-caramel) 55%, var(--hc-ember));
+  border-color: rgba(255, 228, 160, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 245, 220, 0.6), 0 6px 18px -4px rgba(224, 116, 44, 0.65);
+  text-shadow: 0 1px 0 rgba(255, 235, 200, 0.35);
+}
+.ov-placing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 250, 235, 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: ov-shine 3.2s ease-in-out infinite;
+}
+@keyframes ov-shine { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+
+.ov-opponent { color: var(--hc-latte); }
+.ov-opponent b { color: var(--hc-crema); font-weight: 800; }
 
 /* ——— Barra principal ——— */
 .ov-bar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 22px;
-  padding: 12px 18px;
-  background: rgba(24, 16, 11, 0.88);
-  border: 1px solid rgba(255, 231, 135, 0.28);
-  border-radius: 14px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  padding: 14px 22px 16px 18px;
+  background:
+    radial-gradient(90% 160% at 0% 0%, rgba(224, 116, 44, 0.22) 0%, transparent 55%),
+    radial-gradient(60% 120% at 100% 100%, rgba(255, 217, 138, 0.08) 0%, transparent 60%),
+    var(--hc-glass);
+  border: 1px solid var(--hc-line);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, 0.18),
+    inset 0 -18px 30px -20px rgba(0, 0, 0, 0.6),
+    var(--hc-shadow);
 }
-.ov-skeleton { width: 640px; height: 86px; }
-.ov-skeleton:not(:has(*)) { animation: ov-pulse 1.2s ease-in-out infinite; }
-@keyframes ov-pulse { 50% { opacity: 0.45; } }
+/* Franja "crema" inferior (como el vertido del espresso) */
+.ov-bar::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--hc-pour);
+  background-size: 200% 100%;
+  box-shadow: 0 0 12px rgba(240, 150, 60, 0.7);
+  animation: ov-pour 6s linear infinite;
+}
+@keyframes ov-pour { to { background-position: -200% 0; } }
+
+.ov-skeleton { width: 640px; height: 86px; overflow: hidden; }
+.ov-skeleton:not(:has(*))::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 217, 138, 0.12) 50%, transparent 70%);
+  animation: ov-shine 1.6s ease-in-out infinite;
+}
 
 /* Jugador */
 .ov-player { display: flex; align-items: center; gap: 12px; min-width: 230px; }
@@ -55,70 +152,136 @@
   height: 10px;
   border-radius: 50%;
   flex: none;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(20, 11, 6, 0.9), 0 0 0 4px rgba(255, 210, 140, 0.18);
 }
-.ov-dot.online { background: #23a55a; }
-.ov-dot.idle { background: #f0b232; }
-.ov-dot.dnd { background: #f23f43; }
-.ov-dot.offline { background: #6b6b6b; }
+.ov-dot.online { background: #3ddc84; box-shadow: 0 0 0 3px rgba(20, 11, 6, 0.9), 0 0 10px rgba(61, 220, 132, 0.8); animation: ov-live 2s ease-in-out infinite; }
+.ov-dot.idle { background: #f5b83d; }
+.ov-dot.dnd { background: #f25550; }
+.ov-dot.offline { background: #6e5a4c; }
+@keyframes ov-live { 50% { box-shadow: 0 0 0 3px rgba(20, 11, 6, 0.9), 0 0 2px rgba(61, 220, 132, 0.3); } }
+
 .ov-avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   object-fit: cover;
-  border: 2px solid rgba(255, 231, 135, 0.45);
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--hc-roast), var(--hc-roast)) padding-box,
+    linear-gradient(160deg, var(--hc-crema), var(--hc-caramel) 50%, var(--hc-ember)) border-box;
+  box-shadow: 0 0 18px -4px rgba(224, 116, 44, 0.75), 0 4px 10px rgba(0, 0, 0, 0.5);
   flex: none;
 }
-.ov-avatar-fb { display: grid; place-items: center; font: 800 24px "Barlow Condensed", sans-serif; color: var(--gold); background: rgba(180, 77, 29, 0.3); }
-.ov-id { display: grid; gap: 3px; }
-.ov-id > strong { font: 700 22px "Barlow Condensed", sans-serif; letter-spacing: 0.04em; color: #fff; line-height: 1; }
+.ov-avatar-fb {
+  display: grid;
+  place-items: center;
+  font: 800 26px "Barlow Condensed", sans-serif;
+  color: var(--hc-crema);
+  background:
+    radial-gradient(circle at 30% 25%, var(--hc-mocha), var(--hc-espresso)) padding-box,
+    linear-gradient(160deg, var(--hc-crema), var(--hc-caramel) 50%, var(--hc-ember)) border-box;
+  text-shadow: 0 0 10px rgba(255, 190, 90, 0.6);
+}
+.ov-id { display: grid; gap: 4px; }
+.ov-id > strong {
+  font: 700 24px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.04em;
+  color: var(--hc-milk);
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 0 18px rgba(255, 180, 90, 0.25);
+}
 .ov-flag { margin-left: 8px; font-size: 18px; }
 
-.ov-mains { display: flex; align-items: center; gap: 8px; font: 600 12px "Inter", sans-serif; color: var(--hc-muted); }
+.ov-mains { display: flex; align-items: center; gap: 8px; font: 600 12px "Inter", sans-serif; letter-spacing: 0.02em; color: var(--hc-latte); text-transform: uppercase; }
 .ov-mains span { display: inline-flex; align-items: center; gap: 4px; }
-.ov-mains i { opacity: 0.5; }
-.ov-mains img { width: 18px; height: 18px; object-fit: contain; }
+.ov-mains i { opacity: 0.45; color: var(--hc-crema-2); font-style: normal; }
+.ov-mains img { width: 18px; height: 18px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
+.ov-fuse { padding: 1px; border-radius: 6px; background: rgba(255, 217, 138, 0.1); box-shadow: inset 0 0 0 1px rgba(255, 217, 138, 0.25); }
 .ov-fuse img { width: 20px; height: 20px; }
 
 /* Rango */
-.ov-rank { display: flex; align-items: center; gap: 10px; padding: 0 18px; border-left: 1px solid rgba(255, 231, 135, 0.22); border-right: 1px solid rgba(255, 231, 135, 0.22); }
-.ov-badge { width: 52px; height: 52px; object-fit: contain; flex: none; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5)); }
-.ov-rank-txt { display: grid; gap: 2px; }
-.ov-rank-txt > strong { font: 800 20px "Barlow Condensed", sans-serif; letter-spacing: 0.05em; line-height: 1; white-space: nowrap; }
-.ov-rank-txt small { font: 700 13px "Barlow Condensed", sans-serif; letter-spacing: 0.12em; color: var(--gold); }
-
-/* Récord */
-.ov-record { display: grid; gap: 4px; justify-items: end; }
-.ov-record > b { font: 800 24px "Barlow Condensed", sans-serif; color: #fff; line-height: 1; white-space: nowrap; }
-.ov-record > b i { font-style: normal; font-size: 15px; color: var(--hc-muted); margin: 0 2px; }
-.ov-sets { display: flex; gap: 4px; }
-.ov-sets em {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  font: 700 12px "Barlow Condensed", sans-serif;
-  font-style: normal;
-  border-radius: 4px;
-  border-bottom: 2px solid;
-}
-.ov-sets em.w { color: #4ade80; border-color: #4ade80; background: rgba(74, 222, 128, 0.12); }
-.ov-sets em.l { color: #f87171; border-color: #f87171; background: rgba(248, 113, 113, 0.12); }
-.ov-record > small { font: 700 11px "Barlow Condensed", sans-serif; letter-spacing: 0.14em; color: var(--hc-muted); }
-
-/* ——— Aviso de configuración (sin ?id=) ——— */
-.ov-hint {
+.ov-rank {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 0 20px;
+  border-left: 1px solid;
+  border-right: 1px solid;
+  border-image: linear-gradient(to bottom, transparent, rgba(255, 210, 140, 0.4), transparent) 1;
+}
+.ov-badge {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  flex: none;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 190, 90, 0.35));
+}
+.ov-rank-txt { display: grid; gap: 3px; }
+.ov-rank-txt > strong {
+  font: 800 21px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+.ov-rank-txt small {
+  font: 700 13px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.14em;
+  background: linear-gradient(180deg, var(--hc-crema), var(--hc-crema-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Récord */
+.ov-record { display: grid; gap: 5px; justify-items: end; }
+.ov-record > b {
+  font: 800 26px "Barlow Condensed", sans-serif;
+  color: var(--hc-milk);
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+.ov-record > b i { font-style: normal; font-size: 15px; color: var(--hc-crema-2); margin: 0 2px; }
+.ov-sets { display: flex; gap: 4px; }
+/* Cada set es un "grano de café" */
+.ov-sets em {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 22px;
+  font: 800 12px "Barlow Condensed", sans-serif;
+  font-style: normal;
+  border-radius: 50% / 46%;
+  border: 1px solid;
+  box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.35);
+}
+.ov-sets em.w { color: #8ef0b0; border-color: rgba(142, 240, 176, 0.7); background: radial-gradient(circle at 35% 30%, rgba(142, 240, 176, 0.3), rgba(22, 60, 36, 0.85)); }
+.ov-sets em.l { color: #ff9d8a; border-color: rgba(255, 157, 138, 0.65); background: radial-gradient(circle at 35% 30%, rgba(255, 140, 110, 0.28), rgba(70, 22, 14, 0.85)); }
+.ov-sets em:first-child { box-shadow: inset 0 -3px 4px rgba(0, 0, 0, 0.35), 0 0 8px currentColor; }
+.ov-record > small { font: 700 11px "Barlow Condensed", sans-serif; letter-spacing: 0.16em; color: var(--hc-latte); }
+
+/* ——— Aviso de configuración (sin ?id=) ——— */
+.ov-hint {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
   max-width: 560px;
   margin: 24px;
   padding: 16px 20px;
-  color: #fff;
-  background: rgba(24, 16, 11, 0.92);
-  border: 1px solid rgba(255, 231, 135, 0.3);
-  border-radius: 12px;
-  font: 400 14px "Inter", sans-serif;
+  color: var(--hc-milk);
+  background: var(--hc-glass);
+  border: 1px solid var(--hc-line);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.16), var(--hc-shadow);
+  font: 400 14px/1.5 "Inter", sans-serif;
 }
-.ov-hint svg { width: 22px; height: 22px; color: var(--gold); flex: none; }
-.ov-hint b { color: var(--gold); font-weight: 600; }
+.ov-hint svg { width: 24px; height: 24px; color: var(--hc-crema); flex: none; filter: drop-shadow(0 0 8px rgba(255, 190, 90, 0.6)); }
+.ov-hint b { color: var(--hc-crema); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-wrap *, .ov-wrap *::before, .ov-wrap *::after, .ov-bar::after { animation: none !important; }
+}

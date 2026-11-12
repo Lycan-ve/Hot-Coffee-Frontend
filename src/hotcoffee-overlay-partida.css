@@ -1,10 +1,10 @@
-/* ---------- Overlay de PARTIDA 1920×1080 — estilo HOT COFFEE ----------
-   Geometría del template TSH 2XKO (skewX 12°, chips tintados, barra central,
-   banner inferior) con la paleta de la marca: café, crema, dorado y naranja.
-   Respeta las Death Zones del HUD. */
+/* ---------- Overlay de PARTIDA 1920×1080 — estilo HOT COFFEE sobre TSH 2XKO ----------
+   Misma geometría que el template TSH (barras skewX 12°, chips, barra superior
+   central y banner inferior) y mismas posiciones: las Death Zones del HUD se
+   siguen respetando. Solo cambia el acabado: espresso, crema, caramelo y vapor. */
 
 .tsh-viewport { position: fixed; inset: 0; overflow: hidden; }
-.tsh-viewport.tsh-dark { background: #120b07; }
+.tsh-viewport.tsh-dark { background: radial-gradient(80% 80% at 50% 40%, #2a160b, #0d0704); }
 
 .tsh-stage {
   position: absolute;
@@ -13,19 +13,26 @@
   width: 1920px;
   height: 1080px;
   transform-origin: 0 0;
-  --bg: #1d130c;          /* café profundo (paneles) */
-  --text: #f5e9d8;        /* crema */
-  --muted: #cbb08e;
-  --gold: #e8b23a;
+  --bg: #1a0f08;           /* espresso */
+  --bg-2: #2e190d;         /* tostado */
+  --text: #fff4e2;         /* leche */
+  --muted: #d8bc9c;        /* latte */
+  --crema: #ffd98a;
+  --crema-2: #f3b65a;
+  --line: rgba(255, 210, 140, 0.28);
   --radius: 10px;
-  --p1: #b44d1d;          /* naranja Hot Coffee */
-  --p2: #c9922a;          /* dorado */
-  --p1-mix: #311b0f;      /* p1 15% sobre bg */
-  --p2-mix: #342511;      /* p2 15% sobre bg */
-  --p1-tint: #502a14;     /* p1 35% sobre bg (chips) */
-  --p2-tint: #574219;     /* p2 35% sobre bg (chips) */
-  --fuse1-tint: #5a3a16;  /* caramelo */
-  --fuse2-tint: #4a3520;  /* moca */
+  /* P1 = caramelo quemado · P2 = crema/latte */
+  --p1: #e0692a;
+  --p1-hi: #ff9a4d;
+  --p2: #f1d6a6;
+  --p2-hi: #fff1d6;
+  --p2-ink: #2a160a;       /* texto sobre el marcador de P2 */
+  --p1-mix: #3a1c0e;
+  --p2-mix: #2f2116;
+  --p1-tint: #5a2a12;
+  --p2-tint: #4a3622;
+  --fuse1-tint: #44295e;
+  --fuse2-tint: #5e4020;
   font-family: "Barlow Condensed", sans-serif;
   color: var(--text);
 }
@@ -45,15 +52,42 @@
   border-radius: calc(var(--radius) / 2);
   overflow: hidden;
   z-index: 10;
-  box-shadow: inset 0 0 0 1px rgba(232, 178, 58, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 225, 170, 0.22),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.35),
+    0 10px 24px -8px rgba(0, 0, 0, 0.75);
 }
-.tsh-p1 { left: 434px; background: var(--p1-mix); transform: skewX(12deg); }
-.tsh-p2 { right: 434px; background: var(--p2-mix); transform: skewX(-12deg); flex-direction: row-reverse; }
+.tsh-p1 {
+  left: 434px;
+  background:
+    linear-gradient(90deg, transparent 55%, rgba(224, 105, 42, 0.28)),
+    linear-gradient(180deg, #4a2412 0%, var(--p1-mix) 55%, #1c0d06 100%);
+  transform: skewX(12deg);
+}
+.tsh-p2 {
+  right: 434px;
+  background:
+    linear-gradient(270deg, transparent 55%, rgba(241, 214, 166, 0.2)),
+    linear-gradient(180deg, #3f2c1d 0%, var(--p2-mix) 55%, #160e08 100%);
+  transform: skewX(-12deg);
+  flex-direction: row-reverse;
+}
+/* Línea de crema bajo cada barra */
+.tsh-player::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  opacity: 0.9;
+}
+.tsh-p1::after { background: linear-gradient(90deg, transparent, var(--p1) 40%, var(--p1-hi)); }
+.tsh-p2::after { background: linear-gradient(270deg, transparent, var(--p2) 40%, var(--p2-hi)); }
 
 /* El contenido se contra-inclina para verse recto dentro de la barra. */
 .tsh-p1 > *:not(.tsh-score) { transform: skewX(-12deg); }
 .tsh-p2 > *:not(.tsh-score) { transform: skewX(12deg); }
-/* El número del marcador también se contra-inclina (la caja queda skewed). */
 .tsh-p1 .tsh-score > span { display: block; transform: skewX(-12deg); }
 .tsh-p2 .tsh-score > span { display: block; transform: skewX(12deg); }
 
@@ -63,12 +97,13 @@
   flex: none;
   border-radius: calc(var(--radius) * 2 / 3);
   overflow: hidden;
-  background: #2a1c11;
-  border: 1px solid rgba(232, 178, 58, 0.4);
+  background: radial-gradient(circle at 30% 25%, #5a3420, #1a0e07);
   display: grid;
   place-items: center;
   font-size: 18px;
+  box-shadow: 0 0 0 2px rgba(255, 217, 138, 0.55), 0 0 12px rgba(255, 160, 80, 0.45);
 }
+.tsh-p2 .tsh-avatar { box-shadow: 0 0 0 2px rgba(255, 241, 214, 0.6), 0 0 12px rgba(255, 230, 190, 0.35); }
 .tsh-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 .tsh-name {
@@ -80,24 +115,40 @@
   padding: 0 8px;
   font-size: 30px;
   font-weight: 700;
+  letter-spacing: 0.03em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55), 0 0 16px rgba(255, 170, 90, 0.25);
 }
 
 .tsh-score {
+  position: relative;
   width: 64px;
   height: 100%;
   flex: none;
   display: grid;
   place-items: center;
-  font-size: 34px;
+  font-size: 36px;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
-.tsh-p1 .tsh-score { background: var(--p1); margin-right: -16px; margin-left: 16px; }
-.tsh-p2 .tsh-score { background: var(--p2); margin-left: -16px; margin-right: 16px; color: #241505; }
-.tsh-score span { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.35); }
+.tsh-p1 .tsh-score {
+  margin-right: -16px;
+  margin-left: 16px;
+  background: linear-gradient(180deg, var(--p1-hi) 0%, var(--p1) 55%, #a8431a 100%);
+  color: #fffaf0;
+  text-shadow: 0 2px 0 rgba(90, 30, 5, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.6), -6px 0 16px -4px rgba(224, 105, 42, 0.8);
+}
+.tsh-p2 .tsh-score {
+  margin-left: -16px;
+  margin-right: 16px;
+  background: linear-gradient(180deg, var(--p2-hi) 0%, var(--p2) 55%, #caa77a 100%);
+  color: var(--p2-ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 6px 0 16px -4px rgba(241, 214, 166, 0.6);
+}
 
 /* ——— Chips (rango, puntos, récord, equipo, fuse, redes) ——— */
 .tsh-chips {
@@ -125,9 +176,10 @@
   padding: 0 16px;
   font-size: 20px;
   font-weight: 700;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   flex: none;
-  color: var(--text);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
 }
 .tsh-chip::before {
   content: "";
@@ -138,17 +190,19 @@
   height: 100%;
   border-radius: calc(var(--radius) / 4);
   z-index: -1;
+  box-shadow: inset 0 1px 0 rgba(255, 225, 170, 0.18), inset 0 0 0 1px rgba(255, 210, 140, 0.14);
 }
-.tsh-p1chips .tsh-chip::before { background: var(--p1-tint); transform: skewX(12deg); }
-.tsh-p2chips .tsh-chip::before { background: var(--p2-tint); transform: skewX(-12deg); }
-.tsh-chip-fuse1::before { background: var(--fuse1-tint) !important; }
-.tsh-chip-fuse2::before { background: var(--fuse2-tint) !important; }
-.tsh-chip-ok { color: #a3d977; }
-.tsh-chip-ok::before { background: #2f3d14 !important; }
-.tsh-chip-wait { color: #f2c94c; }
-.tsh-chip-wait::before { background: #4a3a14 !important; }
+.tsh-p1chips .tsh-chip::before { background: linear-gradient(180deg, #6a3216, var(--p1-tint)); transform: skewX(12deg); }
+.tsh-p2chips .tsh-chip::before { background: linear-gradient(180deg, #5a4129, var(--p2-tint)); transform: skewX(-12deg); }
+.tsh-chip-fuse1::before { background: linear-gradient(180deg, #553474, var(--fuse1-tint)) !important; }
+.tsh-chip-fuse2::before { background: linear-gradient(180deg, #74501f, var(--fuse2-tint)) !important; }
+.tsh-chip-ok { color: #8ef0b0; }
+.tsh-chip-ok::before { background: linear-gradient(180deg, #1f4a2e, #143220) !important; }
+.tsh-chip-wait { color: var(--crema); animation: tsh-wait 1.6s ease-in-out infinite; }
+.tsh-chip-wait::before { background: linear-gradient(180deg, #4d3a17, #33260f) !important; }
+@keyframes tsh-wait { 50% { opacity: 0.55; } }
 
-.tsh-rank-ico { width: 22px; height: 22px; object-fit: contain; flex: none; }
+.tsh-rank-ico { width: 22px; height: 22px; object-fit: contain; flex: none; filter: drop-shadow(0 0 6px rgba(255, 190, 90, 0.5)); }
 
 /* ——— Barra superior central: estado / ronda ——— */
 .tsh-top {
@@ -171,16 +225,41 @@
   top: 0;
   width: 60%;
   height: 100%;
-  background: var(--bg);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
   border-radius: calc(var(--radius) / 2);
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-  box-shadow: inset 0 -1px 0 rgba(232, 178, 58, 0.35);
+  box-shadow: inset 0 -2px 0 var(--crema-2), 0 8px 20px -6px rgba(0, 0, 0, 0.75);
   z-index: 0;
 }
 .tsh-top-bg1 { left: 0; transform: skewX(12deg); transform-origin: top right; }
 .tsh-top-bg2 { right: 0; transform: skewX(-12deg); transform-origin: top left; }
-.tsh-match { position: relative; z-index: 1; font-size: 26px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; color: var(--gold); text-shadow: 0 2px 3px rgba(0, 0, 0, 0.55); }
+/* Resplandor cálido bajo la barra superior */
+.tsh-top::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -6px;
+  height: 10px;
+  background: radial-gradient(50% 100% at 50% 0%, rgba(255, 170, 80, 0.55), transparent);
+  filter: blur(2px);
+  z-index: 0;
+  pointer-events: none;
+}
+.tsh-match {
+  position: relative;
+  z-index: 1;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #fff6e0 0%, var(--crema) 55%, var(--crema-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6));
+}
 .tsh-phase { position: relative; z-index: 1; font-size: 20px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; color: var(--muted); }
 
 /* ——— Banner inferior: evento / sala (zona segura central) ——— */
@@ -204,16 +283,72 @@
   bottom: 0;
   width: 60%;
   height: 100%;
-  background: var(--bg);
+  background:
+    radial-gradient(80% 120% at 50% 0%, rgba(224, 116, 44, 0.22), transparent 60%),
+    linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   border-radius: calc(var(--radius) / 2);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  box-shadow: inset 0 1px 0 rgba(232, 178, 58, 0.35);
+  box-shadow: inset 0 2px 0 var(--crema-2), 0 -8px 22px -8px rgba(0, 0, 0, 0.7);
   z-index: 0;
 }
 .tsh-bottom-bg1 { right: 0; transform: skewX(12deg); transform-origin: bottom right; }
 .tsh-bottom-bg2 { left: 0; transform: skewX(-12deg); transform-origin: bottom left; }
-.tsh-tname { position: relative; z-index: 1; font-size: 24px; font-weight: 700; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+
+/* Vapor saliendo del banner (zona central libre del HUD) */
+.tsh-bottom::before,
+.tsh-bottom::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  width: 14px;
+  height: 46px;
+  border-radius: 999px;
+  background: linear-gradient(to top, rgba(255, 244, 226, 0), rgba(255, 244, 226, 0.5) 45%, rgba(255, 244, 226, 0));
+  filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  animation: tsh-steam 4.2s ease-in-out infinite;
+}
+.tsh-bottom::before { left: 44%; }
+.tsh-bottom::after { left: 54%; height: 38px; animation-delay: 2.1s; }
+@keyframes tsh-steam {
+  0%   { transform: translateY(8px) scaleX(0.8) skewX(0deg); opacity: 0; }
+  30%  { opacity: 0.75; }
+  65%  { transform: translateY(-22px) scaleX(1.5) skewX(-16deg); opacity: 0.35; }
+  100% { transform: translateY(-40px) scaleX(2.1) skewX(12deg); opacity: 0; }
+}
+
+.tsh-tname {
+  position: relative;
+  z-index: 1;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
+}
+/* Granos de café a cada lado del banner (en el margen, sin quitar sitio al texto) */
+.tsh-bottom-bg::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 15px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background:
+    linear-gradient(110deg, transparent 44%, #1a0b04 46% 54%, transparent 56%),
+    radial-gradient(circle at 35% 30%, #b36a35, #5e2d12 70%);
+  box-shadow: 0 0 6px rgba(255, 150, 70, 0.45);
+}
+.tsh-bottom-bg2::after { left: 20px; transform: skewX(12deg) rotate(-25deg); }
+.tsh-bottom-bg1::after { right: 20px; transform: skewX(-12deg) rotate(25deg) scaleX(-1); }
+
+.tsh-bottom .tsh-phase { font-size: 15px; letter-spacing: 3px; color: var(--crema-2); }
 
 /* ——— Ayuda de configuración (solo en navegador, nunca en OBS) ——— */
 .tsh-setup {
@@ -222,36 +357,48 @@
   top: 300px;
   transform: translateX(-50%);
   display: grid;
-  gap: 8px;
+  gap: 10px;
   justify-items: center;
   max-width: 860px;
-  padding: 18px 24px;
-  background: rgba(24, 16, 11, 0.94);
-  border: 1px solid rgba(232, 178, 58, 0.35);
-  border-radius: 12px;
+  padding: 20px 26px;
+  background:
+    radial-gradient(90% 140% at 0% 0%, rgba(224, 116, 44, 0.2), transparent 55%),
+    linear-gradient(180deg, rgba(48, 27, 15, 0.97), rgba(20, 11, 6, 0.97));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.16), 0 20px 50px -12px rgba(0, 0, 0, 0.8);
   z-index: 60;
 }
-.tsh-setup strong { font: 700 15px "Barlow Condensed", sans-serif; letter-spacing: 0.1em; color: #f2c94c; }
+.tsh-setup strong { font: 700 15px "Barlow Condensed", sans-serif; letter-spacing: 0.12em; color: var(--crema); }
 .tsh-setup code {
   display: block;
   max-width: 800px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: #120b07;
-  color: #e9e6df;
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: #0d0704;
+  border: 1px solid rgba(255, 210, 140, 0.14);
+  color: #f0e2cc;
   font: 500 12px "Inter", sans-serif;
 }
 .tsh-setup button {
-  padding: 8px 22px;
+  padding: 9px 26px;
   border: none;
-  border-radius: 6px;
-  background: var(--p1);
-  color: #fff;
-  font: 700 14px "Barlow Condensed", sans-serif;
-  letter-spacing: 0.08em;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff9a4d, #e0692a 55%, #b8461a);
+  color: #fffaf0;
+  font: 800 14px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.6), 0 6px 16px -4px rgba(224, 105, 42, 0.7);
+  transition: transform 0.15s ease, filter 0.15s ease;
 }
-.tsh-setup small { color: #a8907c; font-size: 11px; }
+.tsh-setup button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.tsh-setup small { color: var(--muted); font-size: 11px; opacity: 0.8; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tsh-stage *, .tsh-stage *::before, .tsh-stage *::after { animation: none !important; }
+}
