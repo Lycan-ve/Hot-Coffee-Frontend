@@ -31,6 +31,7 @@ import "../../../hotcoffee-overlay-partida.css";
 //   &round=&event=    textos de la barra superior / banner inferior
 //   &zones=1          pinta las Death Zones (verificación)
 //   &bg=dark          fondo sólido de prueba
+//   &bgimg=<url>      imagen de fondo detrás del overlay (prueba o uso sin captura del juego)
 
 // Zonas "Death": el HUD del juego vive aquí. PROHIBIDO tocar.
 const DEATH_ZONES = [
@@ -166,6 +167,7 @@ function OverlayInner() {
   const params = useSearchParams();
   const q = (k: string, d = "") => params.get(k) ?? d;
   const bg = q("bg");
+  const bgimg = q("bgimg");
   const showZones = q("zones") === "1";
   const extra = Number(q("scale")) || 1;
 
@@ -352,6 +354,8 @@ function OverlayInner() {
           DEATH_ZONES.map((z, i) => (
             <div key={i} className="tsh-zone" style={{ left: z.x, top: z.y, width: z.w, height: z.h }} title="Death Zone" />
           ))}
+
+        {bgimg && <img className="tsh-bgimg" src={bgimg} alt="" />}
 
         {p1}
         {p2}
