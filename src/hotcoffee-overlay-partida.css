@@ -171,8 +171,8 @@
 /* ——— Chips (rango, puntos, récord, equipo, fuse, redes) ——— */
 .tsh-chips {
   position: absolute;
-  top: 170px;
-  width: 350px;
+  top: 130px;
+  width: 415px;
   height: 32px;
   display: flex;
   align-items: center;
@@ -181,7 +181,7 @@
   z-index: 10;
 }
 .tsh-p1chips { left: 172px; }
-.tsh-p2chips { right: 25px; }
+.tsh-p2chips { right: 65px; }
 
 .tsh-chip {
   position: relative;
