@@ -17,6 +17,8 @@ export interface RankInfo {
   progress: number;
   iconPath: string;
   color: string;
+  /** false mientras el jugador cumple sus 5 partidas de clasificación. */
+  placed?: boolean;
 }
 
 export interface ProfileCharacter {

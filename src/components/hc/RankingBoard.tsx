@@ -28,6 +28,9 @@ type MmPlayer = {
   wins: number;
   losses: number;
   ranking: number;
+  /** Sets terminados y si ya obtuvo rango (lo llena el backend). */
+  games?: number;
+  placed?: boolean;
 };
 
 const fallback: RankPlayer[] = [
@@ -118,6 +121,13 @@ const DEFAULT_RANGE = 10;
 // incluye la base, igual que la escalera de rangos que calcula el backend.
 const MM_BASE_POINTS = 1000;
 
+// Partidas de clasificación: sin las 5 primeras no hay rango; el backend lo
+// decide con el LP neto de esos 5 sets y la web muestra "Clasificando n/5".
+const PLACEMENT_GAMES = 5;
+const mmGames = (p: MmPlayer) => p.games ?? p.wins + p.losses;
+const mmPlaced = (p: MmPlayer) => p.placed ?? mmGames(p) >= PLACEMENT_GAMES;
+const rowGames = (r: Row) => (r.wins ?? 0) + (r.losses ?? 0);
+
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
 // Normaliza el nombre de un personaje para buscar su arte ("YASUO, ekko" -> "Yasuo").
@@ -147,6 +157,8 @@ type Row = {
   character?: string | undefined;
   wins?: number | undefined;
   losses?: number | undefined;
+  /** Solo matchmaking: false = sigue en clasificación (sin rango). */
+  placed?: boolean | undefined;
   points: number;
   profileId?: string | undefined;
 };
@@ -246,6 +258,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         avatar: p.avatarUrl,
         wins: p.wins,
         losses: p.losses,
+        placed: mmPlaced(p),
         points: MM_BASE_POINTS + p.points,
         profileId: p.discordId,
       }));
@@ -330,19 +343,22 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
           sub: sub ?? `${p.wins}V — ${p.losses}D en sets /ft`,
         });
       };
-      push("LÍDER DE LA LIGA", mmPlayers[0]);
-      push("N°2 DE LA LIGA", mmPlayers[1]);
-      push("N°3 DE LA LIGA", mmPlayers[2]);
-      const byWins = [...mmPlayers].sort((a, b) => b.wins - a.wins)[0];
+      // Solo jugadores ya clasificados: el rango de quien sigue en
+      // clasificación aún no está decidido (5 sets obligatorios).
+      const ranked = mmPlayers.filter(mmPlaced);
+      push("LÍDER DE LA LIGA", ranked[0]);
+      push("N°2 DE LA LIGA", ranked[1]);
+      push("N°3 DE LA LIGA", ranked[2]);
+      const byWins = [...ranked].sort((a, b) => b.wins - a.wins)[0];
       push("MÁS VICTORIAS", byWins, byWins ? `${byWins.wins} sets /ft ganados` : undefined);
-      const rated = mmPlayers.filter((p) => p.wins + p.losses >= 5);
+      const rated = ranked.filter((p) => p.wins + p.losses >= 5);
       const byWr = [...rated].sort((a, b) => b.wins / (b.wins + b.losses) - a.wins / (a.wins + a.losses))[0];
       push(
         "MEJOR WINRATE",
         byWr,
         byWr ? `${byWr.wins}V — ${byWr.losses}D · ${Math.round((100 * byWr.wins) / (byWr.wins + byWr.losses))}% de victorias` : undefined,
       );
-      const bySets = [...mmPlayers].sort((a, b) => b.wins + b.losses - (a.wins + a.losses))[0];
+      const bySets = [...ranked].sort((a, b) => b.wins + b.losses - (a.wins + a.losses))[0];
       push("MÁS ACTIVO", bySets, bySets ? `${bySets.wins + bySets.losses} sets jugados en la liga` : undefined);
       return out;
     }
@@ -661,7 +677,9 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                               <strong>{r.name} {r.sponsor ? <em>#{r.sponsor}</em> : null}</strong>
                               {mm && (
                                 <small className="rk-sub">
-                                  {lastTeam ? `${lastTeam.point.name} / ${lastTeam.assist.name}` : `${r.wins ?? 0}V — ${r.losses ?? 0}D`}
+                                  {!r.placed
+                                    ? `Clasificando · ${rowGames(r)}/5 sets`
+                                    : lastTeam ? `${lastTeam.point.name} / ${lastTeam.assist.name}` : `${r.wins ?? 0}V — ${r.losses ?? 0}D`}
                                 </small>
                               )}
                             </div>
@@ -669,7 +687,11 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                         </td>
                         {mm && (
                           <td>
-                            {prof?.rank ? (
+                            {!r.placed ? (
+                              <span className="rk-placing" title="El rango se obtiene al terminar las 5 partidas de clasificación">
+                                CLASIFICANDO {rowGames(r)}/5
+                              </span>
+                            ) : prof?.rank ? (
                               <div className="rk-rank">
                                 <RankBadge small rank={prof.rank} />
                                 <span style={{ color: prof.rank.color }}>{prof.rank.displayName}</span>
@@ -713,7 +735,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                           </td>
                         )}
                         <td>
-                          <span className={`pts ${top ? "top" : ""}`}>{fmt(r.points)}</span>
+                          <span className={`pts ${top ? "top" : ""}`}>{mm && !r.placed ? "—" : fmt(r.points)}</span>
                         </td>
                         <td className="r">
                           {r.profileId ? (

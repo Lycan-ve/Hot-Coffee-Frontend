@@ -107,6 +107,8 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
     : "DESCONECTADO";
   const activity = presenceStatus === "offline" ? "" : (me.presence?.activity ?? "").trim();
   const { stats, rank } = me;
+  // Clasificación: sin las 5 primeras partidas no hay rango (lo dice el backend).
+  const unplaced = rank.placed === false;
   const fights = me.fights ?? [];
   const tournaments = me.tournaments ?? [];
 
@@ -136,7 +138,10 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
     else break;
   }
   const streakWin = fights[0]?.result === "WIN";
-  const progress = Math.round(Math.min(1, Math.max(0, rank.progress > 1 ? rank.progress / 100 : rank.progress)) * 100);
+  // Sin clasificación completada, la barra muestra el avance de los 5 sets.
+  const progress = unplaced
+    ? Math.round((Math.min(games, 5) / 5) * 100)
+    : Math.round(Math.min(1, Math.max(0, rank.progress > 1 ? rank.progress / 100 : rank.progress)) * 100);
   const visible = showAll ? fights : fights.slice(0, 4);
 
   return (
@@ -190,10 +195,10 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
               <span>RANGO ACTUAL</span>
               <div className="player-name">{name}</div>
               <div className="rank-line">
-                <span>{rank.displayName.toUpperCase()}</span>
+                <span>{unplaced ? "CLASIFICANDO" : rank.displayName.toUpperCase()}</span>
                 <i />
                 <strong>
-                  {rank.isRp ? rank.rp : rank.lp} {rank.isRp ? "RP" : "LP"}
+                  {unplaced ? `${Math.min(games, 5)}/5 SETS` : `${rank.isRp ? rank.rp : rank.lp} ${rank.isRp ? "RP" : "LP"}`}
                 </strong>
                 {stats.rankingPosition > 0 && (
                   <>
@@ -203,14 +208,18 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                 )}
               </div>
               <div className="progress-head">
-                <small>PROGRESO DE DIVISIÓN</small>
+                <small>{unplaced ? "CLASIFICACIÓN" : "PROGRESO DE DIVISIÓN"}</small>
                 <b>{progress}%</b>
               </div>
               <div className="progress-bar">
                 <span style={{ width: String(progress) + "%" }} />
               </div>
               <p className="rank-next">
-                {rank.next ? (
+                {unplaced ? (
+                  <>
+                    TE FALTAN <strong>{Math.max(0, 5 - games)} SETS</strong> PARA OBTENER RANGO
+                  </>
+                ) : rank.next ? (
                   <>
                     FALTAN{" "}
                     <strong>
@@ -351,7 +360,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           <div className="zone-stats zone-stats-mm">
             <div>
               <small>PUNTOS DE LIGA</small>
-              <strong className="gold">{stats.points}</strong>
+              <strong className="gold">{unplaced ? "—" : stats.points}</strong>
             </div>
             <div>
               <small>POSICIÓN EN LA TABLA</small>
