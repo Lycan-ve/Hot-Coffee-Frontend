@@ -355,7 +355,7 @@ function OverlayInner() {
             <div key={i} className="tsh-zone" style={{ left: z.x, top: z.y, width: z.w, height: z.h }} title="Death Zone" />
           ))}
 
-        {bgimg && <img className="tsh-bgimg" src={bgimg} alt="" />}
+        {bgimg && <img className="tsh-bgimg" src={bgimg || "public/overlay/stage.png"} alt="" />}
 
         {p1}
         {p2}
