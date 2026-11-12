@@ -11,7 +11,7 @@ import {
   rankIconFallbackUrl,
   rankIconUrl,
 } from "@/lib/auth";
-import "../../hotcoffee-overlay.css";
+import "../../../hotcoffee-overlay.css";
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
