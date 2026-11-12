@@ -1,0 +1,175 @@
+/* ---------- Home / Inicio: presentación de Hot Coffee ---------- */
+
+.inicio-page { display: grid; gap: 28px; }
+
+/* ——— Portada ——— */
+.hm-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+  gap: 28px;
+  align-items: stretch;
+}
+.hm-hero .section-title h1 { font-size: clamp(40px, 5.2vw, 64px); }
+.hm-hero .section-title h1 em { color: var(--gold); font-style: normal; }
+.hm-hero-copy { display: grid; gap: 18px; align-content: center; }
+
+.hm-cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.hm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.hm-btn.primary {
+  background: var(--orange, #b44d1d);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(180, 77, 29, 0.35);
+}
+.hm-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(180, 77, 29, 0.45); }
+.hm-btn.ghost {
+  border-color: rgba(232, 178, 58, 0.4);
+  color: var(--cream, #f5e9d8);
+  background: rgba(255, 255, 255, 0.03);
+}
+.hm-btn.ghost:hover { border-color: var(--gold, #e8b23a); transform: translateY(-2px); }
+.hm-btn.link { color: var(--hc-muted, #a8907c); }
+.hm-btn.link:hover { color: var(--gold, #e8b23a); }
+
+/* Arte del hero: ilustración de la comunidad con marco y etiqueta. */
+.hm-art { position: relative; overflow: hidden; padding: 0; min-height: 320px; }
+.hm-art img:first-child {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  object-fit: cover;
+}
+.hm-art-fallback {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-height: 320px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(180, 77, 29, 0.35), transparent 55%),
+    radial-gradient(circle at 75% 80%, rgba(232, 178, 58, 0.22), transparent 55%);
+}
+.hm-art-fallback img { width: 84px; opacity: 0.9; }
+.hm-art-fallback span {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--hc-muted, #a8907c);
+}
+.hm-art-tag {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--gold, #e8b23a);
+  background: rgba(24, 16, 11, 0.82);
+  border: 1px solid rgba(232, 178, 58, 0.35);
+  backdrop-filter: blur(4px);
+}
+
+/* ——— Contadores en vivo ——— */
+.hm-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.hm-stat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--orange, #b44d1d);
+}
+.hm-stat svg { width: 26px; height: 26px; color: var(--gold, #e8b23a); flex: none; }
+.hm-stat small { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: var(--hc-muted, #a8907c); }
+.hm-stat strong { font-family: "Barlow Condensed", sans-serif; font-size: 30px; line-height: 1.1; }
+
+/* ——— Qué es ——— */
+.hm-about .panel ul { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.hm-about li { display: flex; gap: 10px; align-items: baseline; }
+.hm-about li::before { content: "◆"; color: var(--orange, #b44d1d); font-size: 11px; }
+.hm-about .lead { font-size: 16px; }
+
+/* ——— Cómo funciona ——— */
+.hm-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.hm-step { position: relative; display: grid; gap: 8px; align-content: start; }
+.hm-step b {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(232, 178, 58, 0.14);
+}
+.hm-step-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(180, 77, 29, 0.5);
+  background: rgba(180, 77, 29, 0.12);
+}
+.hm-step-icon svg { width: 22px; height: 22px; color: var(--orange, #b44d1d); }
+.hm-step h4 { margin: 4px 0 0; font-family: "Barlow Condensed", sans-serif; font-size: 20px; letter-spacing: 0.05em; }
+.hm-step p { margin: 0; font-size: 14px; color: var(--hc-muted, #a8907c); }
+
+/* ——— Puntos ——— */
+.hm-points { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.hm-points .lead { font-size: 16px; }
+.hm-inline { width: 15px; height: 15px; vertical-align: -2px; color: var(--gold, #e8b23a); }
+
+/* ——— CTA final ——— */
+.hm-final {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background:
+    radial-gradient(circle at 85% 30%, rgba(180, 77, 29, 0.25), transparent 55%),
+    rgba(255, 255, 255, 0.02);
+}
+.hm-final h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 4px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.06em;
+}
+.hm-final h3 svg { color: var(--gold, #e8b23a); }
+.hm-final p { margin: 0; color: var(--hc-muted, #a8907c); }
+
+/* ——— Responsive ——— */
+@media (max-width: 1100px) {
+  .hm-hero { grid-template-columns: 1fr; }
+  .hm-art { order: -1; min-height: 240px; }
+  .hm-art img:first-child { min-height: 240px; max-height: 340px; }
+  .hm-steps { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .hm-stats { grid-template-columns: 1fr; }
+  .hm-steps { grid-template-columns: 1fr; }
+  .hm-points { grid-template-columns: 1fr; }
+}
