@@ -1642,11 +1642,12 @@ a.discord, a.search-button, a.secondary-button { text-decoration: none; display:
 .hc-notice h2 { font: 700 40px/1 "Barlow Condensed", sans-serif; }
 .hc-notice p { color: var(--hc-muted); font-size: 15px; }
 .hc-empty { padding: 24px 18px; color: var(--hc-muted); font-size: 14px; }
-/* Botón de filtros activo: borde naranja + texto dorado, sin relleno sólido */
-.rk-tools > button.on { border-color: var(--orange); background: rgba(180,77,29,.08); color: var(--gold); }
-.rk-tools > button.on svg { color: var(--gold); }
+/* Botón de filtros activo: relleno naranja sólido (estado pulsado, como el pager) */
+.rk-tools > button.on { border-color: var(--orange); background: var(--orange); color: #fff; }
+.rk-tools > button.on svg { color: #fff; }
 .rk-tools > button:disabled { opacity: .6; }
-.rk-filters { display: flex; align-items: center; gap: 18px; padding: 0 20px 16px; color: var(--hc-muted); font-size: 13px; }
+.rk-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 18px; padding: 0 20px 16px; color: var(--hc-muted); font-size: 13px; }
+.rk-filters select { max-width: 180px; }
 .rk-filters span { color: var(--cream); letter-spacing: 1.5px; font-size: 11px; }
 .rk-filters label { display: flex; gap: 8px; align-items: center; }
 .rk-filters select { background: var(--panel-2); border: 1px solid var(--line); color: #fff; padding: 4px 8px; }
