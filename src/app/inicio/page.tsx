@@ -94,7 +94,7 @@ export default function InicioPage() {
           <div className="hm-art panel">
             {artOk ? (
               <img
-                src="/home/lycan-megaman.png"
+                src="/home/lycan-megaman.jpg"
                 alt="Lycan y Rockman con las banderas de Venezuela y Ecuador"
                 onError={() => setArtOk(false)}
               />
@@ -104,7 +104,7 @@ export default function InicioPage() {
                 <span>ARTE DE LA COMUNIDAD</span>
               </div>
             )}
-            <span className="hm-art-tag"><Coffee /> LYCAN & ROCKMAN</span>
+            <span className="hm-art-tag"><Coffee /> LYCAN & BANEADO SENSEI</span>
           </div>
         </section>
 
