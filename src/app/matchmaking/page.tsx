@@ -48,12 +48,13 @@ function VsCard({
   losses?: number;
   streak?: number;
 }) {
+  const unplaced = rank.placed === false;
   return (
     <div className={`hc-vs-card ${ok ? "ok" : ""}`}>
       {avatar ? <img className="av" src={avatar} alt="" /> : <span className="av">{name[0]}</span>}
       <strong>{name}</strong>
       <RankBadge small rank={rank} />
-      <span>{rank.displayName} · {points} pts</span>
+      <span>{unplaced ? "SIN RANGO · CLASIFICANDO" : `${rank.displayName} · ${points} pts`}</span>
       <small>
         <span className="success">{wins ?? 0}W</span> <span className="danger">{losses ?? 0}L</span>
         {(streak ?? 0) >= 3 ? ` · 🔥 racha de ${streak}` : ""}
@@ -158,9 +159,11 @@ export default function MatchmakingPage() {
                   <RankBadge small rank={me.rank} />
                   <div>
                     <span>{displayName(me)}</span>
-                    <strong>{me.rank.displayName.toUpperCase()}</strong>
+                    <strong>{me.rank.placed === false ? "SIN RANGO" : me.rank.displayName.toUpperCase()}</strong>
                     <p>
-                      {me.stats.points} PTS{me.stats.rankingPosition > 0 ? ` · #${me.stats.rankingPosition}` : ""}
+                      {me.rank.placed === false
+                        ? `CLASIFICANDO ${Math.min(games, 5)}/5`
+                        : `${me.stats.points} PTS${me.stats.rankingPosition > 0 ? ` · #${me.stats.rankingPosition}` : ""}`}
                     </p>
                   </div>
                 </div>
@@ -179,16 +182,26 @@ export default function MatchmakingPage() {
                 </div>
                 <div className="roster">
                   <small>PROGRESO DE RANGO</small>
-                  <div>
-                    <span>◆</span>
-                    <strong>{me.rank.isRp ? `${me.rank.rp} RP` : `${me.rank.lp} LP`}</strong>
-                    <b>{me.rank.isRp ? "" : `FALTAN ${me.rank.lpToNext}`}</b>
-                  </div>
-                  <div>
-                    <span>→</span>
-                    <strong>{me.rank.next?.toUpperCase()}</strong>
-                    <b>SIGUIENTE</b>
-                  </div>
+                  {me.rank.placed === false ? (
+                    <div>
+                      <span>◆</span>
+                      <strong>CLASIFICANDO</strong>
+                      <b>{Math.max(0, 5 - games)} SETS PARA RANGO</b>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <span>◆</span>
+                        <strong>{me.rank.isRp ? `${me.rank.rp} RP` : `${me.rank.lp} LP`}</strong>
+                        <b>{me.rank.isRp ? "" : `FALTAN ${me.rank.lpToNext}`}</b>
+                      </div>
+                      <div>
+                        <span>→</span>
+                        <strong>{me.rank.next?.toUpperCase()}</strong>
+                        <b>SIGUIENTE</b>
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             ) : (
@@ -340,8 +353,9 @@ export default function MatchmakingPage() {
               </div>
             </div>
             <p className="rule-note">
-              El emparejamiento es por rango (Gold I, II y III son el mismo nivel). Con racha de 3 victorias se te sube un rival
-              de rango superior, y vencer a un rango más alto paga más puntos. Si esperas demasiado, la búsqueda se amplía.
+              Nadie parte con rango: juegas 5 sets de clasificación y tu desempeño en ellos define tu rango inicial.
+              El emparejamiento es por rango (Gold I, II y III son el mismo nivel), con racha de 3 victorias se te sube
+              un rival de rango superior y vencer a un rango más alto paga más puntos. Si esperas demasiado, la búsqueda se amplía.
             </p>
           </aside>
         </section>

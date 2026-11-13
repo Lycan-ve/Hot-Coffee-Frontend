@@ -85,7 +85,9 @@ export function RankBadge({ small = false, rank }: { small?: boolean; rank?: Ran
   return (
     <div className={`rank-badge ${small ? "small" : ""}`}>
       <span className="rank-glow" />
-      {rank ? (
+      {/* Sin rango (clasificación incompleta) el backend no manda iconPath:
+          se muestra la insignia genérica y nunca la de una división. */}
+      {rank && rank.iconPath ? (
         <img
           src={rankIconUrl(rank.iconPath)}
           alt={`Insignia de rango ${rank.displayName}`}

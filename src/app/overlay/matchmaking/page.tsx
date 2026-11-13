@@ -193,18 +193,20 @@ function OverlayInner() {
         </div>
 
         <div className="ov-rank">
+          {/* Sin rango (clasificando): insignia genérica, nunca una división. */}
           <img
             className="ov-badge"
-            src={rankIconUrl(p.rank.iconPath)}
+            src={p.rank.iconPath ? rankIconUrl(p.rank.iconPath) : "/assets/34087.png"}
             alt={p.rank.displayName}
             onError={(e) => {
+              if (!p.rank.iconPath) return;
               const fb = rankIconFallbackUrl(p.rank.iconPath);
               if (e.currentTarget.src !== fb) e.currentTarget.src = fb;
             }}
           />
           <div className="ov-rank-txt">
             <strong style={{ color: p.rank.color || "#fff" }}>{p.rank.displayName}</strong>
-            <small>{fmt(points)} PTS</small>
+            <small>{placing ? "CLASIFICANDO" : `${fmt(points)} PTS`}</small>
           </div>
         </div>
 

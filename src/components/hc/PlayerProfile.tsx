@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
 import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
-import { SectionTitle } from "./shared";
+import { A, SectionTitle } from "./shared";
 import { MainsPanel } from "./MainsPanel";
 
 const fmtDate = (iso: string) => {
@@ -107,7 +107,8 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
     : "DESCONECTADO";
   const activity = presenceStatus === "offline" ? "" : (me.presence?.activity ?? "").trim();
   const { stats, rank } = me;
-  // Clasificación: sin las 5 primeras partidas no hay rango (lo dice el backend).
+  // Clasificación: nadie parte con rango; sin los 5 primeros sets el backend
+  // manda el display "SIN RANGO" (sin iconPath).
   const unplaced = rank.placed === false;
   const fights = me.fights ?? [];
   const tournaments = me.tournaments ?? [];
@@ -179,14 +180,19 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           </div>
           <div className="player-identity" style={{ "--rank-accent": rank.color } as CSSProperties}>
             <div className="rank-emblem" aria-label={"Rango " + rank.displayName}>
-              <img
-                alt=""
-                src={rankIconUrl(rank.iconPath)}
-                onError={(event) => {
-                  const fb = rankIconFallbackUrl(rank.iconPath);
-                  if (event.currentTarget.src !== fb) event.currentTarget.src = fb;
-                }}
-              />
+              {/* Sin rango aún: insignia genérica, nunca la de una división. */}
+              {rank.iconPath ? (
+                <img
+                  alt=""
+                  src={rankIconUrl(rank.iconPath)}
+                  onError={(event) => {
+                    const fb = rankIconFallbackUrl(rank.iconPath);
+                    if (event.currentTarget.src !== fb) event.currentTarget.src = fb;
+                  }}
+                />
+              ) : (
+                <img alt="" src={`${A}/34087.png`} />
+              )}
               {rank.isRp && stats.rankingPosition > 0 ? (
                 <span className="top-chip">TOP {String(stats.rankingPosition).padStart(2, "0")}</span>
               ) : null}
@@ -195,10 +201,10 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
               <span>RANGO ACTUAL</span>
               <div className="player-name">{name}</div>
               <div className="rank-line">
-                <span>{unplaced ? "CLASIFICANDO" : rank.displayName.toUpperCase()}</span>
+                <span>{unplaced ? "SIN RANGO" : rank.displayName.toUpperCase()}</span>
                 <i />
                 <strong>
-                  {unplaced ? `${Math.min(games, 5)}/5 SETS` : `${rank.isRp ? rank.rp : rank.lp} ${rank.isRp ? "RP" : "LP"}`}
+                  {unplaced ? `CLASIFICANDO ${Math.min(games, 5)}/5` : `${rank.isRp ? rank.rp : rank.lp} ${rank.isRp ? "RP" : "LP"}`}
                 </strong>
                 {stats.rankingPosition > 0 && (
                   <>
