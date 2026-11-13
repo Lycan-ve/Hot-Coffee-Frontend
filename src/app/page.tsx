@@ -73,23 +73,23 @@ const STEPS: Step[] = [
   {
     icon: UserPlus,
     title: "\u00daNETE A LA COMUNIDAD",
-    copy: "Para entrar a la liga hay que ser miembro de la comunidad Hot Coffee. \u00danete a nuestro servidor de Discord y pres\u00e9ntate: desde ah\u00ed entras a los torneos, al matchmaking y a todo lo dem\u00e1s.",
+    copy: "Todo empieza con un café y un Discord. Únete al servidor, preséntate y cuéntanos qué mains traes: ahí se cuecen los torneos, los retos y las bromas. Sin pasar por el servidor no hay liga, así que este es tu primer sorbo.",
     link: DISCORD_INVITE,
   },
   {
     icon: CalendarCheck,
     title: "JUEGA LOS TORNEOS",
-    copy: "Inscr\u00edbete en los torneos de la comunidad en Start.gg y juega tu bracket. Cada torneo se procesa uno a uno: cada puesto cuenta y m\u00e1s arriba suma m\u00e1s.",
+    copy: "Inscríbete en Start.gg, juega tu bracket y a disfrutar. Cuando el torneo termina, el bot lo procesa solito: no tienes que reclamar nada, tus puntos aparecen en la tabla. Tú solo juega.",
   },
   {
     icon: Trophy,
     title: "ENTRA AL RANKING (TOP 8)",
-    copy: "Solo el Top 8 de cada torneo entra al ranking. Si quedas entre los 8 mejores, tus puntos suman al acumulado de la temporada y apareces en la tabla oficial.",
+    copy: "Cada torneo premia a los 8 mejores: el 1º paga 100 pts y desde ahí baja la escalera hasta el 8º (y en series como TNS y Paragon también suma el Top 16). Es acumulativo: la temporada es una maratón, no un sprint.",
   },
   {
     icon: Swords,
     title: "RETA EN MATCHMAKING",
-    copy: "El matchmaking ya no va por el bot: ahora es directo desde esta p\u00e1gina. Busca rival, juega tus sets al mejor de 3 y reporta el resultado aqu\u00ed mismo, sin esperar al fin de semana.",
+    copy: "¿Ganas de competir un martes a media noche? No esperes al torneo: entra a la cola desde la web, te cruzamos con alguien de tu nivel y juegan un FT 3. El resultado se reporta aquí mismo y tu LP se mueve al instante.",
   },
 ];
 
@@ -254,7 +254,7 @@ export default function HomePage() {
             eyebrow="PASO A PASO"
             title="CÓMO"
             accent="FUNCIONA"
-            copy="Cuatro pasos y ya estás dentro de la liga: únete a la comunidad, juega los torneos, clasifica al Top 8 y reta desde la web."
+            copy="Entrar a la liga es más fácil de lo que parece: un Discord, unos torneos y muchas ganas de jugar. Toma un café, que te lo explicamos en cuatro pasos."
           />
           <div className="hm-steps">
             {STEPS.map((s, i) => (
@@ -277,26 +277,27 @@ export default function HomePage() {
         <section className="hm-points">
           <article className="panel">
             <div className="head"><h3>PUNTOS EN TORNEOS</h3><Trophy /></div>
-            <p className="lead">Cada torneo cuenta y cada puesto suma: más arriba en la tabla, más puntos para tu acumulado.</p>
+            <p className="lead">Cada torneo es una nueva oportunidad de sumar: cuanto más alto llegues en el bracket, más puntos caen en tu taza.</p>
             <p>
-              El ranking de torneos acumula toda la temporada y se actualiza solo cuando el bot procesa un evento.
-              ¿Solo te interesa una serie? Filtra por Hot Coffee, TNS, Frame KO, Tacos Tuesday y más, y verás la tabla
-              recalculada solo con esos torneos.
+              El ranking acumula toda la temporada y se actualiza cuando el bot termina de procesar cada evento:
+              tú solo juega, del resto nos encargamos. ¿Sigues una serie en particular? Filtra por Hot Coffee, TNS,
+              Frame KO, Tacos Tuesday y más, y la tabla se recalcula solo con esos torneos.
             </p>
           </article>
           <article className="panel">
             <div className="head"><h3>PUNTOS EN MATCHMAKING</h3><Swords /></div>
             <p className="lead">
-              Todos los sets son FT 3 y se juegan desde esta página: entras a la cola, el sistema te empareja con un
-              rival de tu nivel y cada set mueve tu LP.
+              Aquí todos los sets son FT 3 y nacen en esta misma página: entras a la cola, te cruzas con alguien de
+              tu nivel y cada set mueve tu LP.
             </p>
             <p>
-              Nadie parte con rango: juegas 5 sets de clasificación y tu desempeño en ellos define tu primer rango;
-              después, cada 100 LP subes una división, de Hierro a Challenger. Ganar a tu mismo nivel paga +15 LP y
-              vencer a un nivel superior suma +10 por nivel; perder contra uno inferior cuesta más. Con racha de 3
-              victorias te emparejan un nivel arriba y cada victoria en racha da +5 LP extra (tope +15), igual que un
-              set perfecto 3-0. El <ShieldCheck className="hm-inline" /> escudo anti-descenso te mantiene en la
-              división tras una derrota, y tienes 15 minutos para pedir la revancha.
+              Nadie empieza con rango: tus primeros 5 sets son de clasificación y con ellos te asignamos tu primer
+              rango. Desde ahí, cada 100 LP es una división nueva, de Hierro a Challenger. Vencer a alguien de tu
+              nivel paga +15 LP; ganarle a uno superior suma +10 por nivel de diferencia; y perder contra uno
+              inferior, eso sí, se siente más en la cartera. Las rachas se celebran: con 3 victorias seguidas te
+              emparejan un nivel arriba y cada victoria en racha da +5 LP extra (tope +15), lo mismo que un 3-0
+              perfecto. ¿Perdiste por poco? El <ShieldCheck className="hm-inline" /> escudo anti-descenso te guarda
+              el sitio en tu división, y tienes 15 minutos para pedir la revancha.
             </p>
           </article>
         </section>
