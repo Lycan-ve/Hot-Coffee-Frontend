@@ -32,21 +32,20 @@ function Header() {
         <Link href="/" className={`nav-item${pathname === "/" ? " active" : ""}`}>
           <small>01</small> Inicio
         </Link>
-        <Link href="/ranking" className={`nav-item${pathname === "/ranking" ? " active" : ""}`}>
-          <small>02</small> Ranking
-        </Link>
-        <Link href="/ranking-matchmaking" className={`nav-item${pathname.startsWith("/ranking-matchmaking") ? " active" : ""}`}>
-          <small>03</small> Ranking MM
+        <Link href="/matchmaking" className={`nav-item${pathname.startsWith("/matchmaking") ? " active" : ""}`}>
+          <small>02</small> Matchmaking
         </Link>
         <Link href="/perfil" className={`nav-item${pathname.startsWith("/perfil") ? " active" : ""}`}>
-          <small>04</small> Mi perfil
+          <small>03</small> Mi perfil
         </Link>
-        <Link href="/matchmaking" className={`nav-item${pathname.startsWith("/matchmaking") ? " active" : ""}`}>
-          <small>05</small> Matchmaking
+        <Link href="/ranking" className={`nav-item${pathname === "/ranking" ? " active" : ""}`}>
+          <small>04</small> Ranking
+        </Link>
+        <Link href="/ranking-matchmaking" className={`nav-item${pathname.startsWith("/ranking-matchmaking") ? " active" : ""}`}>
+          <small>05</small> Ranking MM
         </Link>
       </nav>
       <div className="top-actions">
-        <span>Competitivo · Comunidad</span>
         <DiscordLogin />
       </div>
     </header>

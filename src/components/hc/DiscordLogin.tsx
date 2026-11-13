@@ -9,7 +9,7 @@ export function displayName(me: MeResponse) {
   return me.user.guildNickname || me.user.globalName || me.user.username;
 }
 
-export function LoginLink({ label = "Iniciar sesión con Discord", className = "discord" }: { label?: string; className?: string }) {
+export function LoginLink({ label = "Iniciar sesión con Discord", className = "hm-btn primary" }: { label?: string; className?: string }) {
   return (
     <>
       <a href={loginUrl()} className={className} title="Inicia sesión con Discord. Debes ser miembro del servidor Hot Coffee 2XKO">
@@ -56,13 +56,8 @@ export function DiscordLogin() {
         onClick={() => {
           if (loggingOut) return;
           setLoggingOut(true);
-          // Pausa deliberada: que cerrar sesión se sienta como un proceso
-          // (revocar token, cerrar sesión) y no un parpadeo instantáneo.
           setTimeout(() => {
             clearToken();
-            // Recarga completa hacia la página principal: limpia todo el estado
-            // del cliente (perfil, paneles, cola) y aterriza en la home de
-            // invitado, como un cierre de sesión de verdad.
             window.location.href = "/";
           }, 900);
         }}

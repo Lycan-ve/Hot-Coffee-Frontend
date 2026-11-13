@@ -141,6 +141,34 @@
   color: var(--dim);
   font-size: 11px;
 }
+/* Estilo global para .hm-btn primary (fuera de .inicio-page) */
+.hm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0px 16px;
+  font:
+    600 12px "Inter",
+    sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.hm-btn.primary {
+  background: var(--hf-orange, #ff6b1a);
+  color: var(--white);
+  box-shadow: 0 6px 20px rgba(255, 107, 26, 0.28);
+}
+
+.hm-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(255, 107, 26, 0.4);
+}
+
 .discord {
   display: flex;
   align-items: center;
@@ -150,6 +178,7 @@
   color: #fff;
   background: var(--orange);
   border: 1px solid #d3642f;
+  border-radius: 5px;
   font:
     600 12px "Inter",
     sans-serif;
