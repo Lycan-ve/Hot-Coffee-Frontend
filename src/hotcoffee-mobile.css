@@ -1,4 +1,4 @@
-/* ============================================================
+successfully downloaded text file (SHA: ebe4c758fbe2e8637559431a88e5dc07ce2d6c63)/* ============================================================
    Modo teléfono — ajustes finales para pantallas pequeñas.
    Se importa al final de shared.tsx (AppShell) para quedar
    después de todas las hojas de la app en el orden de cascade.
@@ -306,5 +306,81 @@
   }
   .sx-stepper-ctrl strong {
     font-size: 44px;
+  }
+}
+
+/* ============================================================
+   Ronda 2 — correcciones con capturas reales de teléfono
+   ============================================================ */
+
+/* CAUSA RAÍZ del desborde en /ranking: el grid apilado usaba 1fr
+   (minmax(auto, 1fr)) y el min-width de la tabla ensanchaba la pista,
+   sacando TODOS los paneles (torneos, destacado, sidebar) del viewport.
+   minmax(0, 1fr) + min-width: 0 deja el scroll contenido en .rk-scroll. */
+@media (max-width: 1100px) {
+  .rk-layout,
+  .rk-layout.with-tourneys {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rk-layout > .rk-tourneys,
+  .rk-layout > .rk-table,
+  .rk-layout > .rk-side {
+    min-width: 0;
+  }
+}
+
+/* Historial de combates del perfil: los iconos de equipo y los tags
+   largos empujaban la fila más allá del borde. */
+@media (max-width: 470px) {
+  .match-row > .match-result,
+  .match-row > .opponent {
+    min-width: 0;
+  }
+  .match-row .hc-team {
+    display: none;
+  }
+  .opponent strong {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Tabla más compacta en phones: POS y PUNTOS casi sin scroll. */
+@media (max-width: 560px) {
+  .rk-table table {
+    min-width: 380px;
+  }
+  .rk-table .pos {
+    font-size: 22px;
+  }
+  .rk-table .pts {
+    font-size: 24px;
+  }
+  .rk-table th,
+  .rk-table td {
+    padding-inline: 12px;
+  }
+  .who {
+    gap: 10px;
+  }
+}
+
+/* Carrusel destacado: los controles no deben tapar el título,
+   y el nombre + puntos caben en una línea angosta. */
+@media (max-width: 640px) {
+  .rk-featured .tag {
+    max-width: calc(100% - 100px);
+    flex-wrap: wrap;
+  }
+  .rk-featured h2 {
+    font-size: 42px;
+  }
+  .rk-featured .row strong {
+    font-size: 30px;
+  }
+  .rk-featured .row {
+    gap: 10px;
   }
 }
