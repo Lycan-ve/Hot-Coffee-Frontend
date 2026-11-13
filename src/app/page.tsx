@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { API_URL } from "@/lib/auth";
 import { A, AppShell, SectionTitle } from "@/components/hc/shared";
+import HomeRankings from "@/components/hc/HomeRankings";
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
@@ -190,6 +191,9 @@ export default function HomePage() {
           </article>
         </section>
 
+        {/* ——— Rankings: torneos y online (sección 3, propuesta del admin) ——— */}
+        <HomeRankings />
+
         {/* ——— Arena: accesos rápidos (propuesta del admin) ——— */}
         <section className="hm-arena" id="arena">
           <SectionTitle
@@ -313,4 +317,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
