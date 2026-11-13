@@ -203,7 +203,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
               <span>RANGO ACTUAL</span>
               <div className="player-name-row">
                 <div className="player-name">{name}</div>
-                {own && me.user.countrySource !== "startgg" ? (
+                {own ? (
                   <button
                     type="button"
                     className="flag-edit"
@@ -490,7 +490,7 @@ function CountryPicker({ current, onClose }: { current: string; onClose: () => v
     <div className="country-backdrop" onClick={saving ? undefined : onClose}>
       <div className="country-modal" onClick={(e) => e.stopPropagation()}>
         <h3>TU NACIONALIDAD</h3>
-        <p>Tu nacionalidad se toma de tu perfil de Start.gg. Si aún no la tiene, elige tu país a mano: la bandera se muestra en tu perfil y en el matchmaking.</p>
+        <p>Elige tu país a mano: la bandera se muestra en tu perfil, en los rankings y en el matchmaking. Ojo: si tu perfil de Start.gg tiene ubicación, la sync la tomará de allí y sobrescribirá tu elección.</p>
         <select value={picked} onChange={(e) => setPicked(e.target.value)}>
           <option value="">— Sin país —</option>
           {COUNTRIES.map(([code, name]) => (
