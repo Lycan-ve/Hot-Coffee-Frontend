@@ -7,7 +7,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight, Crown, Download, Info, RefreshCw, Search, SlidersHorizontal, Swords, Trophy, Users, X } from "lucide-react";
 import { API_URL, fetchUserProfile, fuseIconUrl, getToken, type MeResponse } from "@/lib/auth";
-import { A, AppShell, RankBadge, SectionTitle } from "@/components/hc/shared";
+import { A, AppShell, PlayerFlag, RankBadge, SectionTitle } from "@/components/hc/shared";
 
 type RankPlayer = {
   id?: number | string;
@@ -17,6 +17,8 @@ type RankPlayer = {
   character?: string;
   avatarUrl?: string;
   discordId?: string;
+  country?: string;
+  state?: string;
   points: number;
 };
 
@@ -31,6 +33,8 @@ type MmPlayer = {
   /** Sets terminados y si ya obtuvo rango (lo llena el backend). */
   games?: number;
   placed?: boolean;
+  country?: string;
+  state?: string;
 };
 
 const fallback: RankPlayer[] = [
@@ -161,6 +165,8 @@ type Row = {
   placed?: boolean | undefined;
   points: number;
   profileId?: string | undefined;
+  country?: string | undefined;
+  state?: string | undefined;
 };
 
 // Diapositiva del carrusel de destacados: el sistema elige a los jugadores
@@ -260,6 +266,8 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         losses: p.losses,
         placed: mmPlaced(p),
         points: MM_BASE_POINTS + p.points,
+        country: p.country,
+        state: p.state,
         profileId: p.discordId,
       }));
     }
@@ -271,6 +279,8 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
       avatar: p.avatarUrl,
       character: p.character,
       points: p.points,
+      country: p.country,
+      state: p.state,
       profileId: p.discordId || (p.id != null ? String(p.id) : ""),
     }));
   }, [mode, players, mmPlayers]);
@@ -674,7 +684,11 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                               <span className={`ini ${top ? "top" : ""}`}>{r.name[0]}</span>
                             )}
                             <div>
-                              <strong>{r.name} {r.sponsor ? <em>#{r.sponsor}</em> : null}</strong>
+                              <strong>
+                                {r.name}
+                                <PlayerFlag country={r.country} state={r.state} className="rk-flag" />
+                                {r.sponsor ? <em> #{r.sponsor}</em> : null}
+                              </strong>
                               {mm && (
                                 <small className="rk-sub">
                                   {!r.placed

@@ -222,3 +222,10 @@
   .rk-layout.with-tourneys .rk-side { order: 3; }
   .rk-layout .rk-tourneys .rk-tourneys-grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
 }
+
+/* ---------- Bandera de nacionalidad junto al nombre (país + estado) ---------- */
+
+/* La tabla pinta las imágenes de /Nacionalidad y /Estados (PlayerFlag) entre
+   el nombre y el sponsor; solo se ajusta el espaciado y la línea de base. */
+.who .player-flag { margin: 0 5px 0 2px; vertical-align: -1px; }
+.who .player-flag img { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4); }
