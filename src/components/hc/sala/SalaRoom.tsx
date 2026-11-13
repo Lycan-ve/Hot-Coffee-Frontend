@@ -1780,13 +1780,18 @@ export function SalaFinishedScreen(props: { finished: SalaFinished; assets: Sala
       <div className="sx-result">
         {f.myScore} - {f.oppScore}
       </div>
-      {typeof f.myPoints === 'number' ? (
+      {/* Sin los 5 sets de clasificación no hay ceremonia de LP ni ícono de
+          división: el jugador aún no tiene rango. */}
+      {typeof f.myPoints === 'number' && f.rank?.placed !== false ? (
         <LpProgress after={f.myPoints} delta={delta} won={won} rank={f.rank} assets={assets} />
       ) : (
         <p>
           <span className={'sx-delta ' + (delta >= 0 ? 'is-up' : 'is-down')}>
             {delta >= 0 ? '+' + delta : delta} pts
           </span>
+          {f.rank?.placed === false
+            ? ' · Sigues en clasificación: tu rango se define al completar los 5 sets.'
+            : null}
         </p>
       )}
     </SalaScreen>
