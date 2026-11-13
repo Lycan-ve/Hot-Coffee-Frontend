@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import "./hotcoffee-ui.css";
+import "../../hotcoffee-mobile.css";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { DiscordLogin } from "./DiscordLogin";
@@ -123,4 +124,12 @@ export function Stat({ label, value, note, tone }: { label: string; value: strin
       </div>
     </div>
   );
+}
+
+/** Bandera emoji de un código ISO 3166-1 alpha-2 (vacío o inválido → null). */
+export function flagEmoji(cc?: string): string | null {
+  if (!cc) return null;
+  const code = cc.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return null;
+  return String.fromCodePoint(...[...code].map((ch) => 127397 + ch.charCodeAt(0)));
 }

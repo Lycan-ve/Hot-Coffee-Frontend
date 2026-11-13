@@ -1,0 +1,409 @@
+/* ============================================================
+   Modo teléfono — ajustes finales para pantallas pequeñas.
+   Se importa al final de shared.tsx (AppShell) para quedar
+   después de todas las hojas de la app en el orden de cascade.
+   Solo media queries y selectores ya existentes: sin riesgo
+   para desktop.
+   ============================================================ */
+
+/* Deslizamiento de tablas más agradable en pantalla táctil. */
+.rk-scroll,
+.hm-rank-table {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* ---------- Topbar ---------- */
+@media (max-width: 760px) {
+  /* El botón de sesión dejó de usar .discord: colapsar también
+     .hm-btn.primary a solo ícono para que no parta la topbar. */
+  .top-actions .hm-btn.primary {
+    font-size: 0;
+    gap: 0;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+  .top-actions .hm-btn.primary img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(1);
+  }
+  .hc-user span {
+    max-width: 96px;
+  }
+  .hc-user button {
+    font-size: 11px;
+  }
+  /* iOS hace zoom automático al enfocar inputs con font-size < 16px. */
+  .rk-search input,
+  .sx-input {
+    font-size: 16px;
+  }
+  .rk-search kbd {
+    display: none;
+  }
+}
+
+@media (max-width: 470px) {
+  .topbar {
+    padding: 10px 14px;
+    gap: 6px 14px;
+  }
+  /* Cinco secciones no caben en un teléfono: la nav se vuelve
+     una fila deslizable con el scroll oculto. */
+  .topbar nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+    gap: 18px;
+  }
+  .topbar nav::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-item {
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .brand strong {
+    font-size: 19px;
+  }
+  .hc-user span {
+    max-width: 80px;
+  }
+}
+
+/* ---------- Ranking (torneos y matchmaking) ---------- */
+@media (max-width: 760px) {
+  .rk-scope {
+    margin-left: 16px;
+  }
+  .rk-tools {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+  .rk-tools > button {
+    white-space: nowrap;
+    padding: 0 12px;
+  }
+  .rk-foot {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+@media (max-width: 640px) {
+  .rk-table table {
+    min-width: 560px;
+  }
+  /* La columna PERFIL sobra en un teléfono: manda el dato, no el enlace. */
+  .rk-table th:last-child,
+  .rk-table td:last-child {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  /* Tabla de matchmaking (7 columnas): fuera EQUIPO y ÚLTIMOS SETS.
+     La detectamos por su 6.ª cabecera, así no falla mientras carga. */
+  .rk-table:has(thead th:nth-child(6)) th:nth-child(4),
+  .rk-table:has(thead th:nth-child(6)) td:nth-child(4),
+  .rk-table:has(thead th:nth-child(6)) th:nth-child(5),
+  .rk-table:has(thead th:nth-child(6)) td:nth-child(5),
+  /* Tabla de torneos (5 columnas): fuera EQUIPO. */
+  .rk-table:not(:has(thead th:nth-child(6))) th:nth-child(3),
+  .rk-table:not(:has(thead th:nth-child(6))) td:nth-child(3) {
+    display: none;
+  }
+  .rk-table table {
+    min-width: 380px;
+  }
+  .rk-table .pos {
+    font-size: 22px;
+  }
+  .rk-table .pts {
+    font-size: 24px;
+  }
+  .rk-table th,
+  .rk-table td {
+    padding-inline: 12px;
+  }
+  .who {
+    gap: 10px;
+  }
+  /* Tabla de rankings de la portada: fuera la columna de equipo/récord. */
+  .inicio-page .hm-rank-table th:nth-child(3),
+  .inicio-page .hm-rank-table td:nth-child(3) {
+    display: none;
+  }
+  .hm-rank-table table {
+    min-width: 400px;
+  }
+}
+@media (max-width: 470px) {
+  .rk-stats {
+    gap: 10px;
+  }
+  .rk-stat {
+    min-height: 74px;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .rk-stat p strong {
+    font-size: 30px;
+  }
+  .rk-stat.leader b {
+    font-size: 30px;
+  }
+  .rk-featured h2 {
+    font-size: 38px;
+  }
+  .rk-featured .row strong {
+    font-size: 26px;
+  }
+  .rk-scope h1.rk-title {
+    font-size: 21px;
+  }
+  .rk-points h3,
+  .rk-cta h3 {
+    font-size: 22px;
+  }
+  .rk-points .line strong {
+    font-size: 20px;
+  }
+  .hc-notice {
+    padding: 26px 18px;
+  }
+  .hc-notice h2 {
+    font-size: 30px;
+  }
+}
+
+/* ---------- Portada ---------- */
+@media (max-width: 470px) {
+  /* Botones de la portada a ancho completo: mejor objetivo de toque. */
+  .inicio-page .hm-cta-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .inicio-page .hm-cta-row .hm-btn {
+    justify-content: center;
+  }
+}
+
+/* ---------- Perfil ---------- */
+@media (max-width: 470px) {
+  .stat-card {
+    padding: 0 14px;
+    gap: 10px;
+  }
+  .stat-card strong {
+    font-size: 26px;
+  }
+  .win-rate strong {
+    font-size: 52px;
+  }
+  .player-card-top {
+    padding: 0 12px;
+  }
+  .zone-stats div {
+    padding: 10px 12px;
+  }
+  .zone-stats strong {
+    font-size: 20px;
+  }
+  .presence-activity {
+    margin: 0 12px 12px;
+  }
+}
+
+/* ---------- Matchmaking ---------- */
+@media (max-width: 640px) {
+  .hc-vs {
+    width: 100%;
+    gap: 8px;
+  }
+  .hc-vs-card {
+    min-width: 0;
+    padding: 12px 8px;
+  }
+  /* Los tags largos de Discord no deben empujar la tarjeta. */
+  .hc-vs-card strong {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 19px;
+  }
+  .hc-vs .mid b {
+    font-size: 26px;
+  }
+}
+@media (max-width: 470px) {
+  .queue-console {
+    padding: 24px 14px 20px;
+  }
+  .queue-console h2 {
+    font-size: 38px;
+  }
+  .search-button {
+    font-size: 11px;
+  }
+  .mode-switch button strong {
+    font-size: 18px;
+  }
+  .queue-footer > div {
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .queue-footer > div > span {
+    font-size: 22px;
+  }
+}
+
+/* ---------- Sala del set ---------- */
+@media (max-width: 470px) {
+  .sx-top {
+    gap: 8px;
+  }
+  .sx-meta {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .sx-title h1 {
+    font-size: 20px;
+  }
+  .sx-side {
+    padding: 14px 12px;
+  }
+  .sx-side-name {
+    font-size: 18px;
+  }
+  .sx-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+  .sx-fighter {
+    height: 150px;
+    padding: 10px 12px;
+  }
+  .sx-fighter strong {
+    font-size: 20px;
+  }
+  .sx-fighter--empty b {
+    font-size: 30px;
+  }
+  .sx-score {
+    font-size: 52px;
+  }
+  .sx-center {
+    min-width: 0;
+    padding: 14px 12px;
+  }
+  .sx-pick {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  }
+  .sx-win strong {
+    font-size: 22px;
+  }
+  .sx-alert {
+    padding: 12px 12px 12px 18px;
+  }
+  .sx-final > span {
+    font-size: 22px;
+  }
+  .sx-stepper-ctrl strong {
+    font-size: 44px;
+  }
+}
+
+/* ============================================================
+   Ronda 2 — correcciones con capturas reales de teléfono
+   ============================================================ */
+
+/* CAUSA RAÍZ del desborde en /ranking: el grid apilado usaba 1fr
+   (minmax(auto, 1fr)) y el min-width de la tabla ensanchaba la pista,
+   sacando TODOS los paneles (torneos, destacado, sidebar) del viewport.
+   minmax(0, 1fr) + min-width: 0 deja el scroll contenido en .rk-scroll. */
+@media (max-width: 1100px) {
+  .rk-layout,
+  .rk-layout.with-tourneys {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rk-layout > .rk-tourneys,
+  .rk-layout > .rk-table,
+  .rk-layout > .rk-side {
+    min-width: 0;
+  }
+}
+
+/* Historial de combates del perfil: los iconos de equipo y los tags
+   largos empujaban la fila más allá del borde. */
+@media (max-width: 470px) {
+  .match-row > .match-result,
+  .match-row > .opponent {
+    min-width: 0;
+  }
+  .match-row .hc-team {
+    display: none;
+  }
+  .opponent strong {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Tabla más compacta en phones: POS y PUNTOS casi sin scroll. */
+@media (max-width: 560px) {
+  .rk-table table {
+    min-width: 380px;
+  }
+  .rk-table .pos {
+    font-size: 22px;
+  }
+  .rk-table .pts {
+    font-size: 24px;
+  }
+  .rk-table th,
+  .rk-table td {
+    padding-inline: 12px;
+  }
+  .who {
+    gap: 10px;
+  }
+}
+
+/* Carrusel destacado: los controles no deben tapar el título,
+   y el nombre + puntos caben en una línea angosta. */
+@media (max-width: 640px) {
+  .rk-featured .tag {
+    max-width: calc(100% - 100px);
+    flex-wrap: wrap;
+  }
+  .rk-featured h2 {
+    font-size: 42px;
+  }
+  .rk-featured .row strong {
+    font-size: 30px;
+  }
+  .rk-featured .row {
+    gap: 10px;
+  }
+}
+
+/* La regla original de 1360px (.rk-layout.with-tourneys .rk-table table,
+   min-width: 640px) tiene más especificidad que los ajustes de arriba:
+   la empatamos para que la tabla compacte de verdad en la página de torneos. */
+@media (max-width: 640px) {
+  .rk-layout.with-tourneys .rk-table table {
+    min-width: 560px;
+  }
+}
+@media (max-width: 560px) {
+  .rk-layout.with-tourneys .rk-table table {
+    min-width: 380px;
+  }
+}

@@ -65,6 +65,8 @@ export interface MeResponse {
     globalName: string;
     guildNickname: string;
     avatarUrl: string;
+    /** Nacionalidad (ISO 3166-1 alpha-2; la elige el jugador en su perfil). */
+    country?: string;
   };
   stats: {
     points: number;
@@ -180,4 +182,25 @@ export function rankIconFallbackUrl(iconPath: string): string {
 /** Icono de fuse servido por el backend desde sus assets de 2XKO. */
 export function fuseIconUrl(fuseId: string): string {
   return `${API_URL}/Fusion/file_${encodeURIComponent(fuseId)}V.png`;
+}
+
+/**
+ * Guarda la nacionalidad (código ISO 3166-1 alpha-2) del jugador autenticado.
+ * POST /api/auth/country { country } → null si OK, mensaje de error si falla.
+ */
+export async function saveCountry(country: string): Promise<string | null> {
+  const token = getToken();
+  if (!token) return 'Inicia sesión de nuevo para guardar tu país.';
+  try {
+    const res = await fetch(`${API_URL}/api/auth/country`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ country }),
+    });
+    if (res.ok) return null;
+    const data = await res.json().catch(() => null);
+    return data?.message || 'No se pudo guardar tu país. Intenta de nuevo.';
+  } catch {
+    return 'No se pudo conectar con el servidor.';
+  }
 }

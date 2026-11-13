@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { A, AppShell, RankBadge, SectionTitle } from "@/components/hc/shared";
+import { A, AppShell, RankBadge, SectionTitle, flagEmoji } from "@/components/hc/shared";
 import { displayName, LoginLink } from "@/components/hc/DiscordLogin";
 import { fetchMe, getToken, type MeResponse, type RankInfo } from "@/lib/auth";
 import {
@@ -38,6 +38,7 @@ function VsCard({
   wins,
   losses,
   streak,
+  country,
 }: {
   name: string;
   avatar?: string;
@@ -47,12 +48,17 @@ function VsCard({
   wins?: number;
   losses?: number;
   streak?: number;
+  country?: string;
 }) {
   const unplaced = rank.placed === false;
+  const flag = flagEmoji(country);
   return (
     <div className={`hc-vs-card ${ok ? "ok" : ""}`}>
       {avatar ? <img className="av" src={avatar} alt="" /> : <span className="av">{name[0]}</span>}
-      <strong>{name}</strong>
+      <strong>
+        {flag ? <span className="player-flag">{flag}</span> : null}
+        {name}
+      </strong>
       <RankBadge small rank={rank} />
       <span>{unplaced ? "SIN RANGO · CLASIFICANDO" : `${rank.displayName} · ${points} pts`}</span>
       <small>
@@ -158,7 +164,10 @@ export default function MatchmakingPage() {
                 <div className="fighter-rank">
                   <RankBadge small rank={me.rank} />
                   <div>
-                    <span>{displayName(me)}</span>
+                    <span>
+                      {flagEmoji(me.user.country) ? <span className="player-flag">{flagEmoji(me.user.country)}</span> : null}
+                      {displayName(me)}
+                    </span>
                     <strong>{me.rank.placed === false ? "SIN RANGO" : me.rank.displayName.toUpperCase()}</strong>
                     <p>
                       {me.rank.placed === false
@@ -224,12 +233,12 @@ export default function MatchmakingPage() {
             {found && revealFound && state?.proposal ? (
               <>
                 <div className="hc-vs">
-                  <VsCard name={state.proposal.me.tag} avatar={state.proposal.me.avatarUrl} points={state.proposal.me.points} rank={state.proposal.me.rank} ok={state.proposal.acceptedByMe} wins={state.proposal.me.wins} losses={state.proposal.me.losses} streak={state.proposal.me.streak} />
+                  <VsCard name={state.proposal.me.tag} avatar={state.proposal.me.avatarUrl} points={state.proposal.me.points} rank={state.proposal.me.rank} ok={state.proposal.acceptedByMe} wins={state.proposal.me.wins} losses={state.proposal.me.losses} streak={state.proposal.me.streak} country={state.proposal.me.country} />
                   <div className="mid">
                     <b>VS</b>
                     <span>{clock(remaining)}</span>
                   </div>
-                  <VsCard name={state.proposal.opponent.tag} avatar={state.proposal.opponent.avatarUrl} points={state.proposal.opponent.points} rank={state.proposal.opponent.rank} ok={state.proposal.acceptedByOpponent} wins={state.proposal.opponent.wins} losses={state.proposal.opponent.losses} streak={state.proposal.opponent.streak} />
+                  <VsCard name={state.proposal.opponent.tag} avatar={state.proposal.opponent.avatarUrl} points={state.proposal.opponent.points} rank={state.proposal.opponent.rank} ok={state.proposal.acceptedByOpponent} wins={state.proposal.opponent.wins} losses={state.proposal.opponent.losses} streak={state.proposal.opponent.streak} country={state.proposal.opponent.country} />
                 </div>
                 <p>
                   FT {state.proposal.ft} · <strong className="gold">{state.proposal.pointsAtStake} pts</strong> en juego

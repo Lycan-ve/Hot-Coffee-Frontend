@@ -6,6 +6,8 @@ export interface QueuePlayer {
   avatarUrl: string;
   points: number;
   rank: RankInfo;
+  /** Nacionalidad (ISO 3166-1 alpha-2) para la bandera del VS. */
+  country?: string;
   // Récord y racha del jugador (contexto del VS; 0 si nunca jugó).
   wins?: number;
   losses?: number;
