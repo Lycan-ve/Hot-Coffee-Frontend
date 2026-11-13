@@ -259,3 +259,85 @@
   .inicio-page .hm-points .panel { padding: 18px 16px; }
   .inicio-page .hm-final { padding: 20px 18px; }
 }
+
+/* ——— Detalles de la comunidad (caja del hero, propuesta del admin) ——— */
+.inicio-page .hm-details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(41, 30, 25, 0.7);
+  border: 1px solid var(--hf-line);
+  border-radius: var(--hf-radius);
+}
+.inicio-page .hm-details > div { display: flex; gap: 10px; align-items: flex-start; }
+.inicio-page .hm-details svg { width: 18px; height: 18px; color: var(--hf-yellow); flex: none; margin-top: 2px; }
+.inicio-page .hm-details strong { display: block; font-family: var(--hf-body); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: var(--hf-yellow); }
+.inicio-page .hm-details span { display: block; font-family: var(--hf-body); font-size: 12px; line-height: 1.45; color: var(--hf-dim); }
+
+/* ——— Arena: accesos rápidos (propuesta del admin, rutas reales) ——— */
+.inicio-page .hm-arena { display: grid; gap: 18px; scroll-margin-top: 16px; }
+.inicio-page .hm-arena-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.inicio-page .hm-arena-main {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #ff823d 0%, var(--hf-orange) 55%, #d9560f 100%);
+  border-radius: var(--hf-radius);
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(255, 107, 26, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.inicio-page .hm-arena-main:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(255, 107, 26, 0.42); }
+.inicio-page .hm-arena-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--hf-panel);
+  border: 1px solid var(--hf-line);
+  border-radius: var(--hf-radius);
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.inicio-page .hm-arena-card:hover { background: var(--hf-panel-2); border-color: rgba(246, 211, 101, 0.45); transform: translateY(-2px); }
+.inicio-page .hm-arena-ico {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 12px;
+  background: rgba(246, 211, 101, 0.12);
+  border: 1px solid rgba(246, 211, 101, 0.3);
+}
+.inicio-page .hm-arena-ico svg { width: 22px; height: 22px; color: var(--hf-yellow); }
+.inicio-page .hm-arena-main .hm-arena-ico { background: rgba(28, 13, 5, 0.25); border-color: rgba(28, 13, 5, 0.35); }
+.inicio-page .hm-arena-main .hm-arena-ico svg { color: var(--hf-ink); }
+.inicio-page .hm-arena-txt { display: grid; gap: 2px; min-width: 0; }
+.inicio-page .hm-arena-txt strong { font-family: var(--hf-display); font-size: 24px; font-weight: 600; letter-spacing: 0.03em; line-height: 1; color: #fff; }
+.inicio-page .hm-arena-main .hm-arena-txt strong { color: var(--hf-ink); }
+.inicio-page .hm-arena-txt small { font-family: var(--hf-body); font-size: 12px; color: var(--hf-dim); }
+.inicio-page .hm-arena-main .hm-arena-txt small { color: rgba(28, 13, 5, 0.78); font-weight: 600; }
+.inicio-page .hm-arena-arrow { margin-left: auto; width: 20px; height: 20px; color: var(--hf-dim); flex: none; }
+.inicio-page .hm-arena-main .hm-arena-arrow { color: var(--hf-ink); }
+.inicio-page .hm-motto {
+  margin: 0;
+  font-family: var(--hf-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--hf-yellow);
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .inicio-page .hm-details { grid-template-columns: 1fr; }
+  .inicio-page .hm-arena-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .inicio-page .hm-arena-grid { grid-template-columns: 1fr; }
+  .inicio-page .hm-arena-main { padding: 16px 18px; }
+}

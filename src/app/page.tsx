@@ -4,7 +4,23 @@ import Link from "next/link";
 import "../hotcoffee-home.css";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarCheck, ChevronDown, Coffee, Gamepad2, ShieldCheck, Swords, Trophy, UserPlus, Users } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  CalendarCheck,
+  ChevronDown,
+  Coffee,
+  Gamepad2,
+  Globe,
+  HeartHandshake,
+  Languages,
+  ShieldCheck,
+  Swords,
+  Trophy,
+  User,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { API_URL } from "@/lib/auth";
 import { A, AppShell, SectionTitle } from "@/components/hc/shared";
 
@@ -48,7 +64,7 @@ const STEPS = [
   {
     icon: UserPlus,
     title: "CONECTA TU DISCORD",
-    copy: "Entra en “Mi perfil” con tu cuenta de Discord y deja listo tu ficha: mains, fuse y gamertag. Es tu identidad en toda la liga.",
+    copy: "Entra en \u201cMi perfil\u201d con tu cuenta de Discord y deja listo tu ficha: mains, fuse y gamertag. Es tu identidad en toda la liga.",
   },
   {
     icon: CalendarCheck,
@@ -90,6 +106,30 @@ export default function HomePage() {
               <Link href="/matchmaking" className="hm-btn ghost"><Swords /> Buscar partida</Link>
               <a href="#como-funciona" className="hm-btn link"><ChevronDown /> Cómo funciona</a>
             </div>
+            {/* Sobre la comunidad (propuesta del admin) */}
+            <div className="hm-details">
+              <div>
+                <Globe />
+                <div>
+                  <strong>ALCANCE</strong>
+                  <span>Abierta a jugadores de todo el continente americano.</span>
+                </div>
+              </div>
+              <div>
+                <Languages />
+                <div>
+                  <strong>IDIOMAS</strong>
+                  <span>Español como base, con espacio para inglés y portugués.</span>
+                </div>
+              </div>
+              <div>
+                <HeartHandshake />
+                <div>
+                  <strong>FILOSOFÍA</strong>
+                  <span>No somos un equipo: mantenemos viva la escena jugando.</span>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="hm-art panel">
             {artOk ? (
@@ -104,7 +144,7 @@ export default function HomePage() {
                 <span>ARTE DE LA COMUNIDAD</span>
               </div>
             )}
-            <span className="hm-art-tag"><Coffee /> LYCAN & BANEADO SENSEI</span>
+            <span className="hm-art-tag"><Coffee /> LYCAN &amp; BANEADO SENSEI</span>
           </div>
         </section>
 
@@ -148,6 +188,51 @@ export default function HomePage() {
               <li><strong>Matchmaking.</strong> Encuentra rival al instante y reporta el resultado desde Discord.</li>
             </ul>
           </article>
+        </section>
+
+        {/* ——— Arena: accesos rápidos (propuesta del admin) ——— */}
+        <section className="hm-arena" id="arena">
+          <SectionTitle
+            eyebrow="CENTRAL DE ACCESO RÁPIDO"
+            title="ENTRA A LA"
+            accent="ARENA"
+            copy="Todo Hot Coffee a un clic: busca rival al instante, revisa tu ficha o consulta las tablas oficiales."
+          />
+          <div className="hm-arena-grid">
+            <Link href="/matchmaking" className="hm-arena-main">
+              <span className="hm-arena-ico"><Swords /></span>
+              <span className="hm-arena-txt">
+                <strong>Buscar partida</strong>
+                <small>Ingresa a la cola de Online Matchmaking y juega tus sets /ft</small>
+              </span>
+              <ArrowRight className="hm-arena-arrow" />
+            </Link>
+            <Link href="/perfil" className="hm-arena-card">
+              <span className="hm-arena-ico"><User /></span>
+              <span className="hm-arena-txt">
+                <strong>Ver mi perfil</strong>
+                <small>Historial, mains y estadísticas</small>
+              </span>
+              <ArrowRight className="hm-arena-arrow" />
+            </Link>
+            <Link href="/ranking" className="hm-arena-card">
+              <span className="hm-arena-ico"><Trophy /></span>
+              <span className="hm-arena-txt">
+                <strong>Rank de torneos</strong>
+                <small>Acumulado de la temporada, filtrable por serie</small>
+              </span>
+              <ArrowRight className="hm-arena-arrow" />
+            </Link>
+            <Link href="/ranking-matchmaking" className="hm-arena-card">
+              <span className="hm-arena-ico"><BarChart3 /></span>
+              <span className="hm-arena-txt">
+                <strong>Rank matchmaking</strong>
+                <small>Escalera de sets con rangos y divisiones</small>
+              </span>
+              <ArrowRight className="hm-arena-arrow" />
+            </Link>
+          </div>
+          <p className="hm-motto">SEGUIMOS JUGANDO, SEGUIMOS COMPITIENDO.</p>
         </section>
 
         {/* ——— Cómo funciona ——— */}
