@@ -286,11 +286,17 @@ export default function HomePage() {
           </article>
           <article className="panel">
             <div className="head"><h3>PUNTOS EN MATCHMAKING</h3><Swords /></div>
-            <p className="lead">Cada set /ft confirmado mueve tu puntuación: ganarle a un rival mejor posicionado suma más.</p>
+            <p className="lead">
+              Todos los sets son FT 3 y se juegan desde esta página: entras a la cola, el sistema te empareja con un
+              rival de tu nivel y cada set mueve tu LP.
+            </p>
             <p>
-              La escalera de matchmaking tiene rangos y divisiones propias, con <ShieldCheck className="hm-inline" /> escudo
-              anti-descenso para que una mala racha no te tire de golpe, y revancha rápida: si acabas de perder, tienes
-              15 minutos para pedir la revancha con un toque. Todo se juega y se reporta desde esta página.
+              Empiezas en Oro I y juegas 5 sets de clasificación para obtener tu rango; después, cada 100 LP subes una
+              división, de Hierro a Challenger. Ganar a tu mismo nivel paga +15 LP y vencer a un nivel superior suma
+              +10 por nivel; perder contra uno inferior cuesta más. Con racha de 3 victorias te emparejan un nivel
+              arriba y cada victoria en racha da +5 LP extra (tope +15), igual que un set perfecto 3-0. El{" "}
+              <ShieldCheck className="hm-inline" /> escudo anti-descenso te mantiene en la división tras una derrota,
+              y tienes 15 minutos para pedir la revancha.
             </p>
           </article>
         </section>
