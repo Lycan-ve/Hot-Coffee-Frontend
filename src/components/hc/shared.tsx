@@ -3,7 +3,7 @@
 import Link from "next/link";
 import "./hotcoffee-ui.css";
 import "../../hotcoffee-mobile.css";
-import "./hotcoffee-flags.css";
+import "../../hotcoffee-flags.css";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { DiscordLogin } from "./DiscordLogin";
