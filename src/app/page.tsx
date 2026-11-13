@@ -3,6 +3,7 @@
 import Link from "next/link";
 import "../hotcoffee-home.css";
 import "../hotcoffee-home-steps.css";
+import "../hotcoffee-home-credits.css";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
