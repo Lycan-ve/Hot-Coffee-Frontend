@@ -42,13 +42,17 @@ type Row = {
   name: string;
   sponsor?: string;
   sub?: string;
-  points: number;
+  // null = jugador aún en clasificación (sin rango): se muestra "—".
+  points: number | null;
   profileId?: string;
 };
 
 const TOP = 8;
-// El ladder de matchmaking parte de Oro I (1.000 pts), igual que en /ranking-matchmaking.
+// Puntos base que el ladder de matchmaking suma a los puntos ganados
+// (mismo criterio que /ranking-matchmaking). Los jugadores en clasificación
+// (menos de 5 sets) no muestran puntos todavía.
 const MM_BASE_POINTS = 1000;
+const PLACEMENT_GAMES = 5;
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
@@ -201,16 +205,20 @@ export default function HomeRankings() {
     }
   } else {
     loading = mmLoading;
-    (mm ?? []).slice(0, TOP).forEach((p) =>
+    (mm ?? []).slice(0, TOP).forEach((p) => {
+      // Nadie parte con rango: con menos de 5 sets sigue en clasificación
+      // y todavía no muestra puntos en la tabla.
+      const games = p.wins + p.losses;
+      const placing = games < PLACEMENT_GAMES;
       rows.push({
         key: p.discordId,
         pos: p.ranking,
         name: p.username,
-        sub: `${p.wins}V · ${p.losses}D`,
-        points: MM_BASE_POINTS + p.points,
+        sub: placing ? `Clasificando ${games}/${PLACEMENT_GAMES}` : `${p.wins}V · ${p.losses}D`,
+        points: placing ? null : MM_BASE_POINTS + p.points,
         profileId: p.discordId,
-      }),
-    );
+      });
+    });
   }
 
   const isSeason = mode === "torneos" && tournView === "season";
@@ -319,7 +327,7 @@ export default function HomeRankings() {
                   <td className="hm-col-sub">
                     {r.sub ? <span className="hm-rank-sub">{r.sub}</span> : <span className="hm-rank-none">—</span>}
                   </td>
-                  <td className="hm-col-pts">{fmt(r.points)} pts</td>
+                  <td className="hm-col-pts">{r.points == null ? "—" : `${fmt(r.points)} pts`}</td>
                 </tr>
               ))}
             </tbody>

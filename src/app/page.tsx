@@ -291,12 +291,12 @@ export default function HomePage() {
               rival de tu nivel y cada set mueve tu LP.
             </p>
             <p>
-              Empiezas en Oro I y juegas 5 sets de clasificación para obtener tu rango; después, cada 100 LP subes una
-              división, de Hierro a Challenger. Ganar a tu mismo nivel paga +15 LP y vencer a un nivel superior suma
-              +10 por nivel; perder contra uno inferior cuesta más. Con racha de 3 victorias te emparejan un nivel
-              arriba y cada victoria en racha da +5 LP extra (tope +15), igual que un set perfecto 3-0. El{" "}
-              <ShieldCheck className="hm-inline" /> escudo anti-descenso te mantiene en la división tras una derrota,
-              y tienes 15 minutos para pedir la revancha.
+              Nadie parte con rango: juegas 5 sets de clasificación y tu desempeño en ellos define tu primer rango;
+              después, cada 100 LP subes una división, de Hierro a Challenger. Ganar a tu mismo nivel paga +15 LP y
+              vencer a un nivel superior suma +10 por nivel; perder contra uno inferior cuesta más. Con racha de 3
+              victorias te emparejan un nivel arriba y cada victoria en racha da +5 LP extra (tope +15), igual que un
+              set perfecto 3-0. El <ShieldCheck className="hm-inline" /> escudo anti-descenso te mantiene en la
+              división tras una derrota, y tienes 15 minutos para pedir la revancha.
             </p>
           </article>
         </section>
