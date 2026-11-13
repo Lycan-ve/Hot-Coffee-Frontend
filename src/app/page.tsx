@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import "../hotcoffee-home.css";
+import "../hotcoffee-home-steps.css";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   BarChart3,
@@ -24,6 +26,9 @@ import {
 import { API_URL } from "@/lib/auth";
 import { A, AppShell, SectionTitle } from "@/components/hc/shared";
 import HomeRankings from "@/components/hc/HomeRankings";
+
+// Invitación a la comunidad Hot Coffee (regla del admin: para entrar a la liga hay que ser miembro).
+const DISCORD_INVITE = "https://discord.com/invite/8NbFuJcSCH";
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
@@ -61,26 +66,29 @@ async function fetchSetCount(): Promise<number | null> {
   }
 }
 
-const STEPS = [
+type Step = { icon: LucideIcon; title: string; copy: string; link?: string };
+
+const STEPS: Step[] = [
   {
     icon: UserPlus,
-    title: "CONECTA TU DISCORD",
-    copy: "Entra en \u201cMi perfil\u201d con tu cuenta de Discord y deja listo tu ficha: mains, fuse y gamertag. Es tu identidad en toda la liga.",
+    title: "\u00daNETE A LA COMUNIDAD",
+    copy: "Para entrar a la liga hay que ser miembro de la comunidad Hot Coffee. \u00danete a nuestro servidor de Discord y pres\u00e9ntate: desde ah\u00ed entras a los torneos, al matchmaking y a todo lo dem\u00e1s.",
+    link: DISCORD_INVITE,
   },
   {
     icon: CalendarCheck,
     title: "JUEGA LOS TORNEOS",
-    copy: "Inscríbete en los torneos de la comunidad. Cada torneo procesado suma: cada puesto cuenta, y más arriba suma más.",
+    copy: "Inscr\u00edbete en los torneos de la comunidad en Start.gg y juega tu bracket. Cada torneo se procesa uno a uno: cada puesto cuenta y m\u00e1s arriba suma m\u00e1s.",
   },
   {
     icon: Trophy,
-    title: "SUBE EN EL RANKING",
-    copy: "El bot procesa cada torneo y actualiza el acumulado de la temporada solo. Puedes ver el total o filtrar por serie: TNS, Frame KO, Tacos Tuesday...",
+    title: "ENTRA AL RANKING (TOP 8)",
+    copy: "Solo el Top 8 de cada torneo entra al ranking. Si quedas entre los 8 mejores, tus puntos suman al acumulado de la temporada y apareces en la tabla oficial.",
   },
   {
     icon: Swords,
     title: "RETA EN MATCHMAKING",
-    copy: "Busca rival desde la web o Discord y juega tus sets al mejor de 3. Cada set mueve tus puntos y tu rango, sin esperar al fin de semana.",
+    copy: "El matchmaking ya no va por el bot: ahora es directo desde esta p\u00e1gina. Busca rival, juega tus sets al mejor de 3 y reporta el resultado aqu\u00ed mismo, sin esperar al fin de semana.",
   },
 ];
 
@@ -100,12 +108,12 @@ export default function HomePage() {
               eyebrow="COMUNIDAD 2XKO · TEMPORADA 2026"
               title="BIENVENIDOS A"
               accent="HOT COFFEE"
-              copy="La liga competitiva de 2XKO de nuestra comunidad: torneos procesados uno a uno, ranking por puntos y matchmaking directo desde Discord. Sin humo: cada puesto suma."
+              copy="La liga competitiva de 2XKO de nuestra comunidad: torneos procesados uno a uno, ranking por puntos y matchmaking directo desde la web. Sin humo: cada puesto suma."
             />
             <div className="hm-cta-row">
               <Link href="/ranking" className="hm-btn primary"><Trophy /> Ver el ranking</Link>
               <Link href="/matchmaking" className="hm-btn ghost"><Swords /> Buscar partida</Link>
-              <a href="#como-funciona" className="hm-btn link"><ChevronDown /> Cómo funciona</a>
+              <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="hm-btn link"><UserPlus /> Unirme al Discord</a>
             </div>
             {/* Sobre la comunidad (propuesta del admin) */}
             <div className="hm-details">
@@ -183,10 +191,10 @@ export default function HomePage() {
               de la temporada.
             </p>
             <ul>
-              <li><strong>Ranking de torneos.</strong> El acumulado de puntos de toda la temporada, torneo a torneo y por serie.</li>
+              <li><strong>Ranking de torneos.</strong> El acumulado de la temporada: solo el Top 8 de cada torneo suma puntos.</li>
               <li><strong>Ranking de matchmaking.</strong> La escalera de sets /ft entre miembros, con rangos y divisiones propias.</li>
               <li><strong>Perfiles.</strong> Tu ficha con mains, fuse, historial de sets y posición en ambas tablas.</li>
-              <li><strong>Matchmaking.</strong> Encuentra rival al instante y reporta el resultado desde Discord.</li>
+              <li><strong>Matchmaking.</strong> Encuentra rival al instante y reporta el resultado desde la web.</li>
             </ul>
           </article>
         </section>
@@ -245,7 +253,7 @@ export default function HomePage() {
             eyebrow="PASO A PASO"
             title="CÓMO"
             accent="FUNCIONA"
-            copy="Cuatro pasos y ya estás dentro de la liga. El bot hace el trabajo sucio; tú solo juega."
+            copy="Cuatro pasos y ya estás dentro de la liga: únete a la comunidad, juega los torneos, clasifica al Top 8 y reta desde la web."
           />
           <div className="hm-steps">
             {STEPS.map((s, i) => (
@@ -254,6 +262,11 @@ export default function HomePage() {
                 <span className="hm-step-icon"><s.icon /></span>
                 <h4>{s.title}</h4>
                 <p>{s.copy}</p>
+                {s.link ? (
+                  <a className="hm-step-link" href={s.link} target="_blank" rel="noopener noreferrer">
+                    Unirme al Discord <ArrowRight />
+                  </a>
+                ) : null}
               </article>
             ))}
           </div>
@@ -276,7 +289,7 @@ export default function HomePage() {
             <p>
               La escalera de matchmaking tiene rangos y divisiones propias, con <ShieldCheck className="hm-inline" /> escudo
               anti-descenso para que una mala racha no te tire de golpe, y revancha rápida: si acabas de perder, tienes
-              15 minutos para pedir la revancha con un toque.
+              15 minutos para pedir la revancha con un toque. Todo se juega y se reporta desde esta página.
             </p>
           </article>
         </section>

@@ -1,0 +1,22 @@
+/* ——— Paso a paso: ajustes de "Cómo funciona" (reglas del admin) ——— */
+
+.inicio-page .hm-step-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  color: var(--hf-yellow);
+  font-family: var(--hf-body);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.inicio-page .hm-step-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+.inicio-page .hm-step-link:hover {
+  text-decoration: underline;
+}
