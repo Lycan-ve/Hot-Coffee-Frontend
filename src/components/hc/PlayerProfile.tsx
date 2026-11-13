@@ -5,7 +5,7 @@ import { useMemo, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, saveCountry, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
-import { A, SectionTitle, flagEmoji } from "./shared";
+import { A, PlayerFlag, SectionTitle, flagEmoji } from "./shared";
 import { MainsPanel } from "./MainsPanel";
 
 const fmtDate = (iso: string) => {
@@ -203,19 +203,17 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
               <span>RANGO ACTUAL</span>
               <div className="player-name-row">
                 <div className="player-name">{name}</div>
-                {own ? (
+                {own && me.user.countrySource !== "startgg" ? (
                   <button
                     type="button"
                     className="flag-edit"
                     title={me.user.country ? "Cambiar tu nacionalidad" : "Elegir tu nacionalidad"}
                     onClick={() => setPickerOpen(true)}
                   >
-                    {flagEmoji(me.user.country) ?? "🌍+"}
+                    {me.user.country ? <PlayerFlag country={me.user.country} state={me.user.state} /> : "🌍+"}
                   </button>
-                ) : flagEmoji(me.user.country) ? (
-                  <span className="player-flag" title="Nacionalidad">
-                    {flagEmoji(me.user.country)}
-                  </span>
+                ) : me.user.country ? (
+                  <PlayerFlag country={me.user.country} state={me.user.state} />
                 ) : null}
               </div>
               <div className="rank-line">
@@ -492,7 +490,7 @@ function CountryPicker({ current, onClose }: { current: string; onClose: () => v
     <div className="country-backdrop" onClick={saving ? undefined : onClose}>
       <div className="country-modal" onClick={(e) => e.stopPropagation()}>
         <h3>TU NACIONALIDAD</h3>
-        <p>Elige tu país: la bandera se muestra en tu perfil y en el matchmaking.</p>
+        <p>Tu nacionalidad se toma de tu perfil de Start.gg. Si aún no la tiene, elige tu país a mano: la bandera se muestra en tu perfil y en el matchmaking.</p>
         <select value={picked} onChange={(e) => setPicked(e.target.value)}>
           <option value="">— Sin país —</option>
           {COUNTRIES.map(([code, name]) => (

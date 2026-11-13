@@ -65,8 +65,12 @@ export interface MeResponse {
     globalName: string;
     guildNickname: string;
     avatarUrl: string;
-    /** Nacionalidad (ISO 3166-1 alpha-2; la elige el jugador en su perfil). */
+    /** Nacionalidad (ISO 3166-1 alpha-2; Start.gg o elección manual). */
     country?: string;
+    /** Estado/provincia (ISO 3166-2) si el país lo define (p. ej. VE, US). */
+    state?: string;
+    /** "startgg" si la nacionalidad vino del perfil de Start.gg; "manual" si la eligió a mano. */
+    countrySource?: string;
   };
   stats: {
     points: number;

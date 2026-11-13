@@ -3,6 +3,7 @@
 import Link from "next/link";
 import "./hotcoffee-ui.css";
 import "../../hotcoffee-mobile.css";
+import "./hotcoffee-flags.css";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { DiscordLogin } from "./DiscordLogin";
@@ -132,4 +133,22 @@ export function flagEmoji(cc?: string): string | null {
   const code = cc.trim().toUpperCase();
   if (!/^[A-Z]{2}$/.test(code)) return null;
   return String.fromCodePoint(...[...code].map((ch) => 127397 + ch.charCodeAt(0)));
+}
+
+/** Bandera (imagen) de nacionalidad: país ISO 3166-1 alpha-2 y, opcionalmente,
+ *  estado/provincia (ISO 3166-2) con las imágenes de /public/Nacionalidad y
+ *  /public/Estados. Código inválido o vacío → no renderiza nada. */
+export function PlayerFlag({ country, state, className }: { country?: string; state?: string; className?: string }) {
+  const cc = (country ?? "").trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return null;
+  const st = (state ?? "").trim().toUpperCase();
+  const hasState = /^[A-Z0-9]{1,3}$/.test(st);
+  return (
+    <span className={`player-flag${className ? ` ${className}` : ""}`}>
+      <img src={`/Nacionalidad/${cc.toLowerCase()}.png`} alt={cc} title={cc} loading="lazy" />
+      {hasState ? (
+        <img className="player-flag-state" src={`/Estados/${cc}/${st}.png`} alt={st} title={st} loading="lazy" />
+      ) : null}
+    </span>
+  );
 }
