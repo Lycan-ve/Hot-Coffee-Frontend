@@ -288,7 +288,29 @@ export default function HomePage() {
             <Link href="/ranking" className="hm-btn ghost"><Trophy /> Ver el ranking</Link>
           </div>
         </section>
+
+        {/* ——— Créditos (imágenes y arte, propuesta del admin) ——— */}
+        <section className="hm-credits panel">
+          <div className="head"><h3>CRÉDITOS</h3><Coffee /></div>
+          <ul className="hm-credits-list">
+            <li>
+              <strong>Arte de portada.</strong> Ilustración de la comunidad: Lycan &amp; Baneado Sensei.
+            </li>
+            <li>
+              <strong>2XKO.</strong> Personajes, nombres e imágenes © Riot Games. Sitio hecho por fans, sin
+              afiliación ni respaldo oficial.
+            </li>
+            <li>
+              <strong>Torneos.</strong> Brackets e inscripción en{" "}
+              <a href="https://start.gg" target="_blank" rel="noopener noreferrer">Start.gg</a>.
+            </li>
+            <li>
+              <strong>Concepto del sitio.</strong> Estructura del home: Miguel “Baneado Sensei”.
+            </li>
+          </ul>
+        </section>
       </main>
     </AppShell>
   );
 }
+

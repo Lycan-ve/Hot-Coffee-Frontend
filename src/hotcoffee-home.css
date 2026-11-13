@@ -341,3 +341,36 @@
   .inicio-page .hm-arena-grid { grid-template-columns: 1fr; }
   .inicio-page .hm-arena-main { padding: 16px 18px; }
 }
+
+
+/* ——— Créditos (imágenes y arte) ——— */
+.inicio-page .hm-credits { padding: 22px 24px; }
+.inicio-page .hm-credits .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.inicio-page .hm-credits .head h3 {
+  font-family: var(--hf-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+.inicio-page .hm-credits .head svg { width: 16px; height: 16px; color: var(--hf-yellow); }
+.inicio-page .hm-credits-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 28px;
+}
+.inicio-page .hm-credits-list li { color: var(--hf-dim); font-size: 13px; line-height: 1.6; }
+.inicio-page .hm-credits-list strong { color: var(--hf-yellow); font-weight: 600; }
+.inicio-page .hm-credits-list a {
+  color: var(--hf-yellow);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(246, 211, 101, 0.35);
+}
+.inicio-page .hm-credits-list a:hover { border-bottom-color: var(--hf-yellow); }
+@media (max-width: 720px) {
+  .inicio-page .hm-credits { padding: 18px 16px; }
+  .inicio-page .hm-credits-list { grid-template-columns: 1fr; }
+}
