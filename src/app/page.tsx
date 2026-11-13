@@ -306,23 +306,31 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ——— Créditos (imágenes y arte, propuesta del admin) ——— */}
+        {/* ——— Créditos: desarrollador y admin (con avatar de Discord) ——— */}
         <section className="hm-credits panel">
           <div className="head"><h3>CRÉDITOS</h3><Coffee /></div>
-          <ul className="hm-credits-list">
+          <ul className="hm-credits-people">
             <li>
-              <strong>Arte de portada.</strong> Ilustración de la comunidad: Lycan &amp; Baneado Sensei.
+              <img
+                className="hm-credit-avatar"
+                src="https://cdn.discordapp.com/avatars/1067139507922681978/85145fc1cf5b160564d2dea9c48551d5.png?size=128"
+                alt="Avatar de Discord de Lycan"
+              />
+              <div>
+                <strong>Lycan</strong>
+                <small>Desarrollador del sitio</small>
+              </div>
             </li>
             <li>
-              <strong>2XKO.</strong> Personajes, nombres e imágenes © Riot Games. Sitio hecho por fans, sin
-              afiliación ni respaldo oficial.
-            </li>
-            <li>
-              <strong>Torneos.</strong> Brackets e inscripción en{" "}
-              <a href="https://start.gg" target="_blank" rel="noopener noreferrer">Start.gg</a>.
-            </li>
-            <li>
-              <strong>Concepto del sitio.</strong> Estructura del home: Miguel “Baneado Sensei”.
+              <img
+                className="hm-credit-avatar"
+                src="https://cdn.discordapp.com/avatars/391306186831691778/6ac60d95b933d94e2f0b09448e71b7dc.png?size=128"
+                alt="Avatar de Discord de Baneado Sensei"
+              />
+              <div>
+                <strong>Baneado Sensei</strong>
+                <small>Admin de la comunidad de Discord</small>
+              </div>
             </li>
           </ul>
         </section>
