@@ -1,0 +1,455 @@
+/* =====================================================================
+   RANK FX — auras animadas por rango (Iron → Challenger)
+   Cada rango define sus colores y su "potencia" con variables.
+   Las capas extra (rayos, órbitas, llamas, rayos eléctricos…) las añade
+   RankFx.tsx según el nivel, así cada rango es más fuerte que el anterior.
+   ===================================================================== */
+
+@property --rfx-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ---------- Paleta + potencia por rango ---------- */
+[data-rfx] {
+  --rfx-c1: #8a8580; /* color principal */
+  --rfx-c2: #5d5753; /* color profundo */
+  --rfx-c3: #d8d2cc; /* brillo */
+  --rfx-c4: var(--rfx-c3); /* acento extra */
+  --rfx-glow-op: 0.25;
+  --rfx-glow-scale: 1;
+  --rfx-breathe: 4.5s;
+  --rfx-ring-d: 3.6s;
+  --rfx-spin: 22s;
+  --rfx-shine-d: 6s;
+  --rfx-tint-op: 0.12;
+  --rfx-sweep-d: 7s;
+}
+[data-rfx="iron"] {
+  --rfx-c1: #9a948e; --rfx-c2: #4e4945; --rfx-c3: #cfc8c1;
+  --rfx-glow-op: 0.22; --rfx-breathe: 5s; --rfx-tint-op: 0.08;
+}
+[data-rfx="bronze"] {
+  --rfx-c1: #d08a50; --rfx-c2: #8a4d26; --rfx-c3: #f6bd8a;
+  --rfx-glow-op: 0.32; --rfx-breathe: 4.2s; --rfx-ring-d: 3.4s; --rfx-tint-op: 0.1;
+}
+[data-rfx="silver"] {
+  --rfx-c1: #cfd8e2; --rfx-c2: #7d8a97; --rfx-c3: #ffffff;
+  --rfx-glow-op: 0.38; --rfx-breathe: 3.8s; --rfx-ring-d: 3.1s; --rfx-shine-d: 5s;
+  --rfx-tint-op: 0.12; --rfx-sweep-d: 6.5s;
+}
+[data-rfx="gold"] {
+  --rfx-c1: #f5d060; --rfx-c2: #c08a1c; --rfx-c3: #fff3b8;
+  --rfx-glow-op: 0.48; --rfx-glow-scale: 1.05; --rfx-breathe: 3.4s; --rfx-ring-d: 2.9s;
+  --rfx-spin: 18s; --rfx-shine-d: 4.4s; --rfx-tint-op: 0.15; --rfx-sweep-d: 6s;
+}
+[data-rfx="platinum"] {
+  --rfx-c1: #78d8f0; --rfx-c2: #2a9bbd; --rfx-c3: #e0fbff;
+  --rfx-glow-op: 0.55; --rfx-glow-scale: 1.1; --rfx-breathe: 3.1s; --rfx-ring-d: 2.7s;
+  --rfx-spin: 14s; --rfx-shine-d: 4s; --rfx-tint-op: 0.17; --rfx-sweep-d: 5.4s;
+}
+[data-rfx="emerald"] {
+  --rfx-c1: #60e090; --rfx-c2: #139a50; --rfx-c3: #d2ffe0;
+  --rfx-glow-op: 0.62; --rfx-glow-scale: 1.15; --rfx-breathe: 2.8s; --rfx-ring-d: 2.5s;
+  --rfx-spin: 12s; --rfx-shine-d: 3.6s; --rfx-tint-op: 0.19; --rfx-sweep-d: 5s;
+}
+[data-rfx="diamond"] {
+  --rfx-c1: #90b8ff; --rfx-c2: #3f66e0; --rfx-c3: #eef4ff; --rfx-c4: #b8f3ff;
+  --rfx-glow-op: 0.7; --rfx-glow-scale: 1.2; --rfx-breathe: 2.5s; --rfx-ring-d: 2.3s;
+  --rfx-spin: 10s; --rfx-shine-d: 3.2s; --rfx-tint-op: 0.21; --rfx-sweep-d: 4.4s;
+}
+[data-rfx="master"] {
+  --rfx-c1: #d080f8; --rfx-c2: #7f22cc; --rfx-c3: #f6dcff; --rfx-c4: #ff7ad9;
+  --rfx-glow-op: 0.78; --rfx-glow-scale: 1.28; --rfx-breathe: 2.2s; --rfx-ring-d: 2.1s;
+  --rfx-spin: 8s; --rfx-shine-d: 2.9s; --rfx-tint-op: 0.24; --rfx-sweep-d: 4s;
+}
+[data-rfx="grandmaster"] {
+  --rfx-c1: #ff6a5a; --rfx-c2: #b8141f; --rfx-c3: #ffd08a; --rfx-c4: #ff9a3c;
+  --rfx-glow-op: 0.88; --rfx-glow-scale: 1.36; --rfx-breathe: 1.6s; --rfx-ring-d: 1.8s;
+  --rfx-spin: 6s; --rfx-shine-d: 2.5s; --rfx-tint-op: 0.28; --rfx-sweep-d: 3.4s;
+}
+[data-rfx="challenger"] {
+  --rfx-c1: #ffe787; --rfx-c2: #f09a1a; --rfx-c3: #ffffff; --rfx-c4: #7fdcff;
+  --rfx-glow-op: 1; --rfx-glow-scale: 1.48; --rfx-breathe: 1.3s; --rfx-ring-d: 1.5s;
+  --rfx-spin: 4.5s; --rfx-shine-d: 2s; --rfx-tint-op: 0.32; --rfx-sweep-d: 2.8s;
+}
+
+/* ---------- Contenedores ---------- */
+.rfx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: block;
+}
+.rfx > span {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+.rfx--back { z-index: 0; }
+.rfx--front { z-index: 2; }
+/* El <img> de la insignia queda entre back y front */
+.rfx-host { position: relative; }
+.rfx-host > img { position: relative; z-index: 1; }
+
+/* ---------- Insignia: capas traseras ---------- */
+.rfx-glow {
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--rfx-c1) 0%, color-mix(in oklab, var(--rfx-c2) 70%, transparent) 45%, transparent 70%);
+  filter: blur(14px);
+  opacity: var(--rfx-glow-op);
+  transform: translate(-50%, -50%) scale(var(--rfx-glow-scale));
+  animation: rfx-breathe var(--rfx-breathe) ease-in-out infinite;
+}
+.rfx-ring {
+  left: 50%;
+  top: 50%;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid var(--rfx-c1);
+  box-shadow: 0 0 12px var(--rfx-c1), inset 0 0 10px color-mix(in oklab, var(--rfx-c1) 50%, transparent);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.6);
+  animation: rfx-ring var(--rfx-ring-d) cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+.rfx-ring--2 { animation-delay: calc(var(--rfx-ring-d) / -3); }
+.rfx-ring--3 { animation-delay: calc(var(--rfx-ring-d) / -1.5); border-color: var(--rfx-c4); }
+.rfx-rays {
+  left: 50%;
+  top: 50%;
+  width: 165%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in oklab, var(--rfx-c3) 75%, transparent) 0deg 4deg,
+    transparent 4deg 22deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 12%, transparent 62%);
+  opacity: calc(var(--rfx-glow-op) * 0.75);
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  animation: rfx-spin var(--rfx-spin) linear infinite;
+}
+.rfx-rays--rev {
+  width: 190%;
+  background: repeating-conic-gradient(
+    from 11deg,
+    color-mix(in oklab, var(--rfx-c4) 70%, transparent) 0deg 2deg,
+    transparent 2deg 15deg
+  );
+  animation-direction: reverse;
+  animation-duration: calc(var(--rfx-spin) * 1.6);
+}
+.rfx-flame {
+  left: 50%;
+  top: 50%;
+  width: 98%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--rfx-c1), var(--rfx-c2), var(--rfx-c4), var(--rfx-c3), var(--rfx-c1), var(--rfx-c2), var(--rfx-c1));
+  -webkit-mask-image: radial-gradient(circle, transparent 38%, #000 52%, transparent 70%);
+  mask-image: radial-gradient(circle, transparent 38%, #000 52%, transparent 70%);
+  filter: blur(7px);
+  opacity: 0.85;
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  animation:
+    rfx-spin calc(var(--rfx-spin) * 0.5) linear infinite,
+    rfx-flicker 0.9s steps(2, jump-none) infinite alternate;
+}
+.rfx-orbit {
+  left: 50%;
+  top: 50%;
+  width: 92%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: var(--rfx-c3);
+  border-right-color: color-mix(in oklab, var(--rfx-c1) 60%, transparent);
+  filter: drop-shadow(0 0 4px var(--rfx-c1));
+  transform: translate(-50%, -50%) rotateX(68deg);
+  animation: rfx-orbit calc(var(--rfx-spin) * 0.28) linear infinite;
+}
+.rfx-orbit::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rfx-c3);
+  box-shadow: 0 0 8px 2px var(--rfx-c1);
+}
+.rfx-orbit--2 {
+  width: 104%;
+  border-top-color: var(--rfx-c4);
+  transform: translate(-50%, -50%) rotateX(68deg) rotateY(40deg);
+  animation-name: rfx-orbit-2;
+  animation-direction: reverse;
+  animation-duration: calc(var(--rfx-spin) * 0.36);
+}
+
+/* ---------- Insignia: capas frontales ---------- */
+.rfx-shine {
+  inset: 12% 14%;
+  overflow: hidden;
+  border-radius: 40%;
+  -webkit-mask-image: radial-gradient(ellipse, #000 45%, transparent 72%);
+  mask-image: radial-gradient(ellipse, #000 45%, transparent 72%);
+  mix-blend-mode: screen;
+}
+.rfx-shine::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  width: 34%;
+  left: -60%;
+  background: linear-gradient(100deg, transparent, color-mix(in oklab, var(--rfx-c3) 85%, transparent), transparent);
+  transform: skewX(-18deg);
+  animation: rfx-shine var(--rfx-shine-d) ease-in-out infinite;
+}
+.rfx-p {
+  left: var(--x);
+  bottom: 18%;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: var(--rfx-c3);
+  box-shadow: 0 0 6px 1px var(--rfx-c1);
+  opacity: 0;
+  animation: rfx-rise var(--d) ease-out var(--delay) infinite;
+}
+.rfx-star {
+  left: var(--x);
+  top: var(--y);
+  width: calc(var(--s) * 3.2);
+  aspect-ratio: 1;
+  background: var(--rfx-c3);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  filter: drop-shadow(0 0 3px var(--rfx-c1));
+  opacity: 0;
+  animation: rfx-twinkle calc(var(--d) * 1.1) ease-in-out var(--delay) infinite;
+}
+.rfx-crown {
+  left: 50%;
+  top: 2%;
+  width: 62%;
+  height: 16%;
+  border-radius: 50%;
+  border: 2px solid var(--rfx-c3);
+  box-shadow: 0 0 10px 2px var(--rfx-c1), 0 0 22px 4px color-mix(in oklab, var(--rfx-c4) 60%, transparent), inset 0 0 8px var(--rfx-c1);
+  transform: translateX(-50%);
+  animation: rfx-crown 2.2s ease-in-out infinite;
+}
+.rfx-bolt {
+  top: 4%;
+  width: 18%;
+  height: 58%;
+  background: linear-gradient(180deg, var(--rfx-c3), var(--rfx-c4));
+  clip-path: polygon(55% 0, 20% 52%, 46% 52%, 30% 100%, 82% 38%, 54% 38%, 72% 0);
+  filter: drop-shadow(0 0 6px var(--rfx-c4)) drop-shadow(0 0 2px #fff);
+  opacity: 0;
+}
+.rfx-bolt--a { left: 0; transform: rotate(-14deg); animation: rfx-bolt 3.1s linear infinite; }
+.rfx-bolt--b { right: 0; transform: rotate(14deg) scaleX(-1); animation: rfx-bolt 3.1s linear -1.55s infinite; }
+
+/* ---------- Icono (img) ---------- */
+[data-rfx-icon="diamond"],
+[data-rfx-icon="master"] { animation: rfx-float 3.2s ease-in-out infinite; }
+[data-rfx-icon="grandmaster"] { animation: rfx-float 2.4s ease-in-out infinite, rfx-heat 1.6s ease-in-out infinite; }
+[data-rfx-icon="challenger"] { animation: rfx-float 2s ease-in-out infinite, rfx-divine 1.3s ease-in-out infinite; }
+
+/* ---------- Mini (icono pequeño junto al nombre) ---------- */
+.rfx-mini-host {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+.rfx-mini-host > img { position: relative; z-index: 1; }
+.rfx--mini { inset: -45%; z-index: 0; }
+.rfx--mini .rfx-glow { filter: blur(5px); }
+.rfx--mini .rfx-rays { width: 140%; opacity: calc(var(--rfx-glow-op) * 0.55); }
+.rfx--mini .rfx-orbit::after { width: 4px; height: 4px; top: -2px; }
+.rfx--mini .rfx-flame { filter: blur(3px); }
+
+/* ---------- Tarjeta de jugador ---------- */
+.rfx-card-host { position: relative; isolation: isolate; overflow: hidden; }
+.rfx--card {
+  z-index: -1;
+  overflow: hidden;
+  --rfx-origin: 18% 50%;
+}
+.rfx-tint {
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 90% at var(--rfx-origin), color-mix(in oklab, var(--rfx-c1) 60%, transparent), transparent 70%),
+    linear-gradient(180deg, transparent 55%, color-mix(in oklab, var(--rfx-c2) 45%, transparent));
+  opacity: var(--rfx-tint-op);
+  animation: rfx-tint var(--rfx-breathe) ease-in-out infinite;
+}
+[data-lvl="8"] .rfx-tint,
+[data-lvl="9"] .rfx-tint { animation: rfx-tint var(--rfx-breathe) ease-in-out infinite, rfx-fire 0.25s steps(2, jump-none) infinite alternate; }
+.rfx-sweep {
+  top: -30%;
+  bottom: -30%;
+  left: -40%;
+  width: 28%;
+  background: linear-gradient(100deg, transparent, color-mix(in oklab, var(--rfx-c3) 22%, transparent), transparent);
+  transform: skewX(-20deg);
+  mix-blend-mode: screen;
+  animation: rfx-sweep var(--rfx-sweep-d) ease-in-out infinite;
+}
+.rfx-border {
+  inset: 0;
+  padding: 2px;
+  background: conic-gradient(from var(--rfx-angle), transparent 0deg, var(--rfx-c1) 40deg, var(--rfx-c3) 60deg, transparent 100deg, transparent 180deg, var(--rfx-c4) 220deg, var(--rfx-c1) 240deg, transparent 280deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: rfx-angle calc(var(--rfx-spin) * 0.45) linear infinite;
+}
+.rfx-floor {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 45%;
+  background: linear-gradient(0deg, color-mix(in oklab, var(--rfx-c1) 30%, transparent), transparent);
+  mix-blend-mode: screen;
+  animation: rfx-tint calc(var(--rfx-breathe) * 0.8) ease-in-out infinite;
+}
+.rfx-ember {
+  left: var(--x);
+  bottom: -6px;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: var(--rfx-c3);
+  box-shadow: 0 0 6px 2px var(--rfx-c1);
+  opacity: 0;
+  animation: rfx-ember calc(var(--d) * 1.5) ease-in var(--delay) infinite;
+}
+.rfx-beam {
+  left: -30%;
+  top: 0;
+  width: 30%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--rfx-c3), var(--rfx-c4), transparent);
+  box-shadow: 0 0 10px var(--rfx-c1);
+  animation: rfx-beam 2.2s linear infinite;
+}
+.rfx--card .rfx-bolt { top: 6%; width: 7%; height: 70%; }
+.rfx--card .rfx-bolt--a { left: 38%; }
+.rfx--card .rfx-bolt--b { right: 12%; }
+
+/* ---------- Keyframes ---------- */
+@keyframes rfx-breathe {
+  0%, 100% { opacity: calc(var(--rfx-glow-op) * 0.7); transform: translate(-50%, -50%) scale(calc(var(--rfx-glow-scale) * 0.92)); }
+  50% { opacity: var(--rfx-glow-op); transform: translate(-50%, -50%) scale(calc(var(--rfx-glow-scale) * 1.08)); }
+}
+@keyframes rfx-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.55); }
+  15% { opacity: 0.85; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.55); }
+}
+@keyframes rfx-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes rfx-orbit {
+  from { transform: translate(-50%, -50%) rotateX(68deg) rotateZ(0deg); }
+  to { transform: translate(-50%, -50%) rotateX(68deg) rotateZ(360deg); }
+}
+@keyframes rfx-orbit-2 {
+  from { transform: translate(-50%, -50%) rotateX(68deg) rotateY(40deg) rotateZ(0deg); }
+  to { transform: translate(-50%, -50%) rotateX(68deg) rotateY(40deg) rotateZ(360deg); }
+}
+@keyframes rfx-flicker {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
+@keyframes rfx-shine {
+  0%, 55% { left: -60%; }
+  85%, 100% { left: 130%; }
+}
+@keyframes rfx-rise {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--drift), -90px) scale(1); }
+}
+@keyframes rfx-twinkle {
+  0%, 60%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  75% { opacity: 1; transform: scale(1) rotate(45deg); }
+  90% { opacity: 0.4; transform: scale(0.5) rotate(90deg); }
+}
+@keyframes rfx-crown {
+  0%, 100% { opacity: 0.75; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 1; transform: translateX(-50%) translateY(-3px); }
+}
+@keyframes rfx-bolt {
+  0%, 62%, 70%, 100% { opacity: 0; }
+  64%, 68% { opacity: 1; }
+  66% { opacity: 0.3; }
+}
+@keyframes rfx-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -5px; }
+}
+@keyframes rfx-heat {
+  0%, 100% { filter: drop-shadow(0 0 6px #ff6a5a) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5)); }
+  50% { filter: drop-shadow(0 0 16px #ff9a3c) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5)); }
+}
+@keyframes rfx-divine {
+  0%, 100% { filter: drop-shadow(0 0 8px #ffe787) drop-shadow(0 0 2px #fff) brightness(1); }
+  50% { filter: drop-shadow(0 0 22px #ffe787) drop-shadow(0 0 10px #7fdcff) brightness(1.18); }
+}
+@keyframes rfx-tint {
+  0%, 100% { opacity: calc(var(--rfx-tint-op) * 0.75); }
+  50% { opacity: var(--rfx-tint-op); }
+}
+@keyframes rfx-fire {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.25); }
+}
+@keyframes rfx-sweep {
+  0%, 40% { left: -40%; }
+  100% { left: 120%; }
+}
+@keyframes rfx-angle {
+  to { --rfx-angle: 360deg; }
+}
+@keyframes rfx-ember {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--drift), -210px) scale(1.1); }
+}
+@keyframes rfx-beam {
+  to { left: 110%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rfx *,
+  .rfx *::before,
+  .rfx *::after,
+  [data-rfx-icon] {
+    animation: none !important;
+  }
+}
+
+/* ---------- Integración Hot Coffee ---------- */
+/* Con aura activa, el brillo estático original sobra */
+.rank-badge.rfx-host .rank-glow { display: none; }
+/* En la sala el rival está a la derecha: el resplandor sale de su lado */
+.sx-side--opp .rfx--card { --rfx-origin: 82% 50%; }
+/* La tarjeta del VS necesita su propio contexto para las capas */
+.hc-vs-card.rfx-card-host > :not(.rfx) { position: relative; }
+.fighter-summary.rfx-card-host > :not(.rfx) { position: relative; }

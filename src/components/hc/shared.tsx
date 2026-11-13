@@ -7,6 +7,7 @@ import "../../hotcoffee-flags.css";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { DiscordLogin } from "./DiscordLogin";
+import { RankFx, rankKey } from "./RankFx";
 import { rankIconFallbackUrl, rankIconUrl, type RankInfo } from "@/lib/auth";
 
 export const A = "/assets";
@@ -82,16 +83,20 @@ export function SectionTitle({ eyebrow, title, accent, copy, note }: { eyebrow: 
   );
 }
 
-export function RankBadge({ small = false, rank }: { small?: boolean; rank?: RankInfo }) {
+export function RankBadge({ small = false, rank, fx = false }: { small?: boolean; rank?: RankInfo; fx?: boolean }) {
+  // fx: aura animada según el rango (Iron → Challenger). Solo se activa donde se pide (matchmaking).
+  const key = fx ? rankKey(rank) : null;
   return (
-    <div className={`rank-badge ${small ? "small" : ""}`}>
+    <div className={`rank-badge ${small ? "small" : ""} ${key ? "rfx-host" : ""}`}>
       <span className="rank-glow" />
+      {key ? <RankFx rank={key} layer="back" /> : null}
       {/* Sin rango (clasificación incompleta) el backend no manda iconPath:
           se muestra la insignia genérica y nunca la de una división. */}
       {rank && rank.iconPath ? (
         <img
           src={rankIconUrl(rank.iconPath)}
           alt={`Insignia de rango ${rank.displayName}`}
+          data-rfx-icon={key ?? undefined}
           onError={(e) => {
             const fb = rankIconFallbackUrl(rank.iconPath);
             if (e.currentTarget.src !== fb) e.currentTarget.src = fb;
@@ -100,6 +105,7 @@ export function RankBadge({ small = false, rank }: { small?: boolean; rank?: Ran
       ) : (
         <img src={`${A}/34087.png`} alt="Insignia de rango" />
       )}
+      {key ? <RankFx rank={key} layer="front" /> : null}
     </div>
   );
 }

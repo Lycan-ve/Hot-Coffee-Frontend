@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { A, AppShell, PlayerFlag, RankBadge, SectionTitle } from "@/components/hc/shared";
 import { displayName, LoginLink } from "@/components/hc/DiscordLogin";
+import { RankFx } from "@/components/hc/RankFx";
 import { fetchMe, getToken, type MeResponse, type RankInfo } from "@/lib/auth";
 import {
   acceptProposal,
@@ -54,13 +55,14 @@ function VsCard({
 }) {
   const unplaced = rank.placed === false;
   return (
-    <div className={`hc-vs-card ${ok ? "ok" : ""}`}>
+    <div className={`hc-vs-card rfx-card-host ${ok ? "ok" : ""}`}>
+      <RankFx rank={rank} variant="card" />
       {avatar ? <img className="av" src={avatar} alt="" /> : <span className="av">{name[0]}</span>}
       <strong>
         <PlayerFlag country={country} state={state} />
         {name}
       </strong>
-      <RankBadge small rank={rank} />
+      <RankBadge small fx rank={rank} />
       <span>{unplaced ? "SIN RANGO · CLASIFICANDO" : `${rank.displayName} · ${points} pts`}</span>
       <small>
         <span className="success">{wins ?? 0}W</span> <span className="danger">{losses ?? 0}L</span>
@@ -149,7 +151,8 @@ export default function MatchmakingPage() {
         </section>
 
         <section className="queue-layout">
-          <aside className="fighter-summary panel">
+          <aside className={`fighter-summary panel ${me ? "rfx-card-host" : ""}`}>
+            {me ? <RankFx rank={me.rank} variant="card" /> : null}
             <div className="panel-heading">
               <h3>TU PERFIL</h3>
               {me ? (
@@ -163,7 +166,7 @@ export default function MatchmakingPage() {
             {me ? (
               <>
                 <div className="fighter-rank">
-                  <RankBadge small rank={me.rank} />
+                  <RankBadge small fx rank={me.rank} />
                   <div>
                     <span>
                       <PlayerFlag country={me.user.country} state={me.user.state} />

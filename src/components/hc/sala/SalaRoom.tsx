@@ -28,6 +28,7 @@ import type {
   SalaTeam,
 } from '@/lib/sala';
 import './sala.css';
+import { RankFx } from '../RankFx';
 
 // ---------------------------------------------------------------------------
 // Tipos públicos
@@ -311,6 +312,7 @@ function PlayerSide({ player, side, ft, assets }: { player: SalaPlayer; side: 'm
   const art = player.team.complete && player.team.char1 ? assets.fighterArt(player.team.char1) : null;
   return (
     <div className={`sx-side sx-side--${side}`}>
+      <RankFx rank={player.rank} variant="card" />
       {art ? <img alt="" aria-hidden="true" className="sx-side-art" src={art} /> : null}
       <div className="sx-side-body">
         {player.avatarUrl ? (
@@ -327,13 +329,16 @@ function PlayerSide({ player, side, ft, assets }: { player: SalaPlayer; side: 'm
           </strong>
           <span className="sx-side-rank">
             {player.rank?.iconPath ? (
-              <img
-                alt=""
-                src={assets.rankIcon(player.rank.iconPath)}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
+              <span className="rfx-mini-host">
+                <RankFx rank={player.rank} variant="mini" />
+                <img
+                  alt=""
+                  src={assets.rankIcon(player.rank.iconPath)}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </span>
             ) : null}
             {player.rank?.displayName ? <b>{player.rank.displayName}</b> : null}
             <span>{player.points} pts</span>
