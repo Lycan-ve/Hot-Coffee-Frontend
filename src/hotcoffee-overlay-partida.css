@@ -171,15 +171,22 @@
 .tsh-chips {
   position: absolute;
   top: 145px;
-  width: 380px;
+  width: auto;
+  min-width: 380px;
+  max-width: 480px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
   z-index: 10;
+  /* Nada se sale: si los chips no caben, se recortan con un fundido. */
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 28px);
+  mask-image: linear-gradient(90deg, transparent 0, #000 28px);
 }
-.tsh-p1chips { left: 172px; }
+/* Anclados al extremo del jugador: crecen hacia fuera, nunca cruzan el centro. */
+.tsh-p1chips { right: 1368px; }
 .tsh-p2chips { right: 125px; }
 
 .tsh-chip {
@@ -275,8 +282,11 @@
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6));
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.tsh-phase { position: relative; z-index: 1; font-size: 20px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; color: var(--muted); }
+.tsh-phase { position: relative; z-index: 1; font-size: 20px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; max-width: 380px; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 
 /* ——— Banner inferior: evento / sala (zona segura central) ——— */
 .tsh-bottom {
@@ -399,3 +409,51 @@
 @media (prefers-reduced-motion: reduce) {
   .tsh-stage *, .tsh-stage *::before, .tsh-stage *::after { animation: none !important; }
 }
+
+/* ---------- Animaciones suaves (entrada escalonada y micro-vida) ---------- */
+
+@keyframes tsh-in-p1 {
+  from { opacity: 0; transform: skewX(12deg) translateX(-28px); }
+  to   { opacity: 1; transform: skewX(12deg); }
+}
+@keyframes tsh-in-p2 {
+  from { opacity: 0; transform: skewX(-12deg) translateX(28px); }
+  to   { opacity: 1; transform: skewX(-12deg); }
+}
+@keyframes tsh-chip-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes tsh-drop {
+  from { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes tsh-rise {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes tsh-pop {
+  from { opacity: 0; transform: scale(0.55); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes tsh-fade {
+  from { opacity: 0; }
+}
+
+/* Barras de jugador desde los lados, avatares con rebote suave. */
+.tsh-p1 { animation: tsh-in-p1 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.tsh-p2 { animation: tsh-in-p2 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s backwards; }
+.tsh-avatar { animation: tsh-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s backwards; }
+
+/* Chips uno a uno (los de "ESPERANDO…" ya tienen su propio pulso). */
+.tsh-chips .tsh-chip:not(.tsh-chip-wait) { animation: tsh-chip-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.tsh-chips .tsh-chip:nth-child(1) { animation-delay: 0.3s; }
+.tsh-chips .tsh-chip:nth-child(2) { animation-delay: 0.38s; }
+.tsh-chips .tsh-chip:nth-child(3) { animation-delay: 0.46s; }
+.tsh-chips .tsh-chip:nth-child(4) { animation-delay: 0.54s; }
+.tsh-chips .tsh-chip:nth-child(5) { animation-delay: 0.62s; }
+
+/* HUD: barra superior cae, banner inferior sube, marcadores aparecen. */
+.tsh-top { animation: tsh-drop 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s backwards; }
+.tsh-bottom { animation: tsh-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.25s backwards; }
+.tsh-score > span { animation: tsh-fade 0.5s ease 0.4s backwards; }
