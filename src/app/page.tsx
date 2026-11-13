@@ -72,7 +72,7 @@ type Step = { icon: LucideIcon; title: string; copy: string; link?: string };
 const STEPS: Step[] = [
   {
     icon: UserPlus,
-    title: "\u00daNETE A LA COMUNIDAD",
+    title: "ÚNETE A LA COMUNIDAD",
     copy: "Todo empieza con un café y un Discord. Únete al servidor, preséntate y cuéntanos qué mains traes: ahí se cuecen los torneos, los retos y las bromas. Sin pasar por el servidor no hay liga, así que este es tu primer sorbo.",
     link: DISCORD_INVITE,
   },
@@ -116,7 +116,7 @@ export default function HomePage() {
               <Link href="/matchmaking" className="hm-btn ghost"><Swords /> Buscar partida</Link>
               <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="hm-btn link"><UserPlus /> Unirme al Discord</a>
             </div>
-            {/* Sobre la comunidad (propuesta del admin) */}
+            {/* Sobre la comunidad */}
             <div className="hm-details">
               <div>
                 <Globe />
@@ -200,10 +200,10 @@ export default function HomePage() {
           </article>
         </section>
 
-        {/* ——— Rankings: torneos y online (sección 3, propuesta del admin) ——— */}
+        {/* ——— Rankings ——— */}
         <HomeRankings />
 
-        {/* ——— Arena: accesos rápidos (propuesta del admin) ——— */}
+        {/* ——— Arena ——— */}
         <section className="hm-arena" id="arena">
           <SectionTitle
             eyebrow="CENTRAL DE ACCESO RÁPIDO"
@@ -296,14 +296,17 @@ export default function HomePage() {
               nivel paga +15 LP; ganarle a uno superior suma +10 por nivel de diferencia; y perder contra uno
               inferior, eso sí, se siente más en la cartera. Las rachas se celebran: con 3 victorias seguidas te
               emparejan un nivel arriba y cada victoria en racha da +5 LP extra (tope +15), lo mismo que un 3-0
-              perfecto. ¿Perdiste por poco? El <ShieldCheck className="hm-inline" /> escudo anti-descenso te guarda
-              el sitio en tu división, y tienes 15 minutos para pedir la revancha.
+              perfecto. ¿Perdiste por poco?{" "}
+              <span className="inline-flex items-center gap-1 align-middle whitespace-nowrap">
+                <ShieldCheck className="hm-inline" /> El escudo anti-descenso
+              </span>{" "}
+              te guarda el sitio en tu división y tienes 15 minutos para pedir la revancha.
             </p>
           </article>
         </section>
 
         {/* ——— CTA final ——— */}
-        <section className="hm-final panel">
+        {/* <section className="hm-final panel">
           <div>
             <h3><Gamepad2 /> TU PRÓXIMO RIVAL ESTÁ AQUÍ.</h3>
             <p>Entra al Discord, lanza tu reto y sube de rango. El café ya se está sirviendo.</p>
@@ -312,9 +315,9 @@ export default function HomePage() {
             <Link href="/matchmaking" className="hm-btn primary"><Swords /> Buscar partida</Link>
             <Link href="/ranking" className="hm-btn ghost"><Trophy /> Ver el ranking</Link>
           </div>
-        </section>
+        </section> */}
 
-        {/* ——— Créditos: desarrollador y admin (con avatar de Discord) ——— */}
+        {/* ——— Créditos ——— */}
         <section className="hm-credits panel">
           <div className="head"><h3>CRÉDITOS</h3><Coffee /></div>
           <ul className="hm-credits-people">
