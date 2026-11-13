@@ -1,4 +1,4 @@
-successfully downloaded text file (SHA: ebe4c758fbe2e8637559431a88e5dc07ce2d6c63)/* ============================================================
+successfully downloaded text file (SHA: 061626354dd05d83ea9592c9993a167c2fcdf2e6)successfully downloaded text file (SHA: ebe4c758fbe2e8637559431a88e5dc07ce2d6c63)/* ============================================================
    Modo teléfono — ajustes finales para pantallas pequeñas.
    Se importa al final de shared.tsx (AppShell) para quedar
    después de todas las hojas de la app en el orden de cascade.
@@ -382,5 +382,19 @@ successfully downloaded text file (SHA: ebe4c758fbe2e8637559431a88e5dc07ce2d6c63
   }
   .rk-featured .row {
     gap: 10px;
+  }
+}
+
+/* La regla original de 1360px (.rk-layout.with-tourneys .rk-table table,
+   min-width: 640px) tiene más especificidad que los ajustes de arriba:
+   la empatamos para que la tabla compacte de verdad en la página de torneos. */
+@media (max-width: 640px) {
+  .rk-layout.with-tourneys .rk-table table {
+    min-width: 560px;
+  }
+}
+@media (max-width: 560px) {
+  .rk-layout.with-tourneys .rk-table table {
+    min-width: 380px;
   }
 }
