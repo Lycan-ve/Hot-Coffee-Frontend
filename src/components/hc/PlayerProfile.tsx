@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
-import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
+import { createPortal } from "react-dom";
+import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, saveCountry, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
-import { A, SectionTitle } from "./shared";
+import { A, SectionTitle, flagEmoji } from "./shared";
 import { MainsPanel } from "./MainsPanel";
 
 const fmtDate = (iso: string) => {
@@ -97,6 +98,7 @@ function TournamentLink({ t, featured }: { t: ProfileTournament; featured?: bool
 
 export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
   const [showAll, setShowAll] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const name = displayName(me);
   // Estado de Discord en vivo: punto de color, etiqueta y JUGANDO X.
   const presenceStatus = me.presence?.status ?? "offline";
@@ -199,7 +201,23 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
             </div>
             <div className="rank-copy">
               <span>RANGO ACTUAL</span>
-              <div className="player-name">{name}</div>
+              <div className="player-name-row">
+                <div className="player-name">{name}</div>
+                {own ? (
+                  <button
+                    type="button"
+                    className="flag-edit"
+                    title={me.user.country ? "Cambiar tu nacionalidad" : "Elegir tu nacionalidad"}
+                    onClick={() => setPickerOpen(true)}
+                  >
+                    {flagEmoji(me.user.country) ?? "🌍+"}
+                  </button>
+                ) : flagEmoji(me.user.country) ? (
+                  <span className="player-flag" title="Nacionalidad">
+                    {flagEmoji(me.user.country)}
+                  </span>
+                ) : null}
+              </div>
               <div className="rank-line">
                 <span>{unplaced ? "SIN RANGO" : rank.displayName.toUpperCase()}</span>
                 <i />
@@ -255,6 +273,8 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
             </div>
           </div>
         </article>
+
+        {pickerOpen ? <CountryPicker current={me.user.country ?? ""} onClose={() => setPickerOpen(false)} /> : null}
 
         <MainsPanel me={me} own={own} />
 
@@ -427,5 +447,71 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
         </article>
       </section>
     </main>
+  );
+}
+
+// Países disponibles (ISO 3166-1 alpha-2) — misma lista que valida el backend.
+const COUNTRIES: Array<[string, string]> = [
+  ["AR", "Argentina"], ["BO", "Bolivia"], ["BR", "Brasil"], ["CA", "Canadá"],
+  ["CL", "Chile"], ["CO", "Colombia"], ["CR", "Costa Rica"], ["CU", "Cuba"],
+  ["DO", "República Dominicana"], ["EC", "Ecuador"], ["SV", "El Salvador"],
+  ["GT", "Guatemala"], ["HN", "Honduras"], ["MX", "México"], ["NI", "Nicaragua"],
+  ["PA", "Panamá"], ["PY", "Paraguay"], ["PE", "Perú"], ["US", "Estados Unidos"],
+  ["UY", "Uruguay"], ["VE", "Venezuela"],
+  ["AG", "Antigua y Barbuda"], ["BS", "Bahamas"], ["BB", "Barbados"],
+  ["BZ", "Belice"], ["DM", "Dominica"], ["GD", "Granada"], ["GY", "Guyana"],
+  ["HT", "Haití"], ["JM", "Jamaica"], ["KN", "San Cristóbal y Nieves"],
+  ["LC", "Santa Lucía"], ["VC", "San Vicente y las Granadinas"],
+  ["SR", "Surinam"], ["TT", "Trinidad y Tobago"],
+  ["ES", "España"], ["PT", "Portugal"], ["FR", "Francia"], ["GB", "Reino Unido"],
+  ["DE", "Alemania"], ["IT", "Italia"], ["NL", "Países Bajos"], ["PL", "Polonia"],
+  ["RO", "Rumanía"], ["JP", "Japón"], ["KR", "Corea del Sur"], ["CN", "China"],
+  ["PH", "Filipinas"], ["AU", "Australia"], ["NZ", "Nueva Zelanda"],
+];
+
+// CountryPicker: modal para elegir la nacionalidad (bandera en perfil y
+// matchmaking). Al guardar recarga la ficha para traer el dato del backend.
+function CountryPicker({ current, onClose }: { current: string; onClose: () => void }) {
+  const [picked, setPicked] = useState(current);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const save = async () => {
+    setSaving(true);
+    setErr(null);
+    const problem = await saveCountry(picked);
+    setSaving(false);
+    if (problem) {
+      setErr(problem);
+      return;
+    }
+    window.location.reload();
+  };
+
+  return createPortal(
+    <div className="country-backdrop" onClick={saving ? undefined : onClose}>
+      <div className="country-modal" onClick={(e) => e.stopPropagation()}>
+        <h3>TU NACIONALIDAD</h3>
+        <p>Elige tu país: la bandera se muestra en tu perfil y en el matchmaking.</p>
+        <select value={picked} onChange={(e) => setPicked(e.target.value)}>
+          <option value="">— Sin país —</option>
+          {COUNTRIES.map(([code, name]) => (
+            <option key={code} value={code}>
+              {flagEmoji(code)} {name}
+            </option>
+          ))}
+        </select>
+        {err ? <span className="country-err">{err}</span> : null}
+        <div className="row">
+          <button type="button" className="country-save" disabled={saving} onClick={save}>
+            {saving ? "GUARDANDO…" : "GUARDAR"}
+          </button>
+          <button type="button" className="country-cancel" disabled={saving} onClick={onClose}>
+            CANCELAR
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
