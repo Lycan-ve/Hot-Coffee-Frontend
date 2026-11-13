@@ -1,4 +1,4 @@
-successfully downloaded text file (SHA: 061626354dd05d83ea9592c9993a167c2fcdf2e6)successfully downloaded text file (SHA: ebe4c758fbe2e8637559431a88e5dc07ce2d6c63)/* ============================================================
+/* ============================================================
    Modo teléfono — ajustes finales para pantallas pequeñas.
    Se importa al final de shared.tsx (AppShell) para quedar
    después de todas las hojas de la app en el orden de cascade.
@@ -116,11 +116,20 @@ successfully downloaded text file (SHA: 061626354dd05d83ea9592c9993a167c2fcdf2e6
     display: none;
   }
   .rk-table table {
-    min-width: 420px;
+    min-width: 380px;
+  }
+  .rk-table .pos {
+    font-size: 22px;
+  }
+  .rk-table .pts {
+    font-size: 24px;
   }
   .rk-table th,
   .rk-table td {
-    padding-inline: 14px;
+    padding-inline: 12px;
+  }
+  .who {
+    gap: 10px;
   }
   /* Tabla de rankings de la portada: fuera la columna de equipo/récord. */
   .inicio-page .hm-rank-table th:nth-child(3),
