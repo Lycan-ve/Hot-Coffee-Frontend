@@ -1,5 +1,11 @@
 /* ——— Paso a paso: ajustes de "Cómo funciona" (reglas del admin) ——— */
 
+/* Espacio entre el título/subtítulo de la sección y las tarjetas. */
+.inicio-page .hm-how {
+  display: grid;
+  gap: 22px;
+}
+
 .inicio-page .hm-step-link {
   display: inline-flex;
   align-items: center;
