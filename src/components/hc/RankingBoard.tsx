@@ -19,6 +19,9 @@ type RankPlayer = {
   discordId?: string;
   country?: string;
   state?: string;
+  /** Fusión del equipo principal del perfil (la llena el backend). */
+  fuse?: string;
+  fuseName?: string;
   points: number;
 };
 
@@ -167,6 +170,8 @@ type Row = {
   profileId?: string | undefined;
   country?: string | undefined;
   state?: string | undefined;
+  fuse?: string | undefined;
+  fuseName?: string | undefined;
 };
 
 // Diapositiva del carrusel de destacados: el sistema elige a los jugadores
@@ -182,6 +187,8 @@ type FeaturedSlide = {
   losses?: number | undefined;
   points: number;
   profileId?: string | undefined;
+  fuse?: string | undefined;
+  fuseName?: string | undefined;
   sub: string;
 };
 
@@ -278,6 +285,8 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
       sponsor: p.sponsor,
       avatar: p.avatarUrl,
       character: p.character,
+      fuse: p.fuse,
+      fuseName: p.fuseName,
       points: p.points,
       country: p.country,
       state: p.state,
@@ -382,6 +391,8 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         sponsor: p.sponsor,
         avatar: p.avatarUrl,
         character: p.character,
+        fuse: p.fuse,
+        fuseName: p.fuseName,
         points: p.points,
         profileId: p.discordId || (p.id != null ? String(p.id) : ""),
         // Paréntesis obligatorios: no se puede mezclar ?? y || sin ellos.
@@ -732,7 +743,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                               </div>
                             ) : <span className="dim">—</span>
                           ) : (
-                            <Team value={r.character} />
+                            <Team value={r.character} fuse={r.fuse} fuseName={r.fuseName} />
                           )}
                         </td>
                         {mm && (
@@ -852,7 +863,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                     ) : null}
                   </div>
                 )}
-                {!mm && cur?.character ? <Team value={cur.character} /> : null}
+                {!mm && (cur?.character || cur?.fuse) ? <Team value={cur?.character} fuse={cur?.fuse} fuseName={cur?.fuseName} /> : null}
                 {cur?.profileId ? (
                   <div className="meta">
                     <Link href={`/perfil/${String(cur.profileId)}`}>Ver ficha completa →</Link>
@@ -906,9 +917,13 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
   );
 }
 
-function Team({ value }: { value?: string | undefined }) {
-  if (!value) return <span className="dim">—</span>;
-  const names = value.split(/[,+]/).map((n) => n.trim()).filter(Boolean);
+function Team({ value, fuse, fuseName }: { value?: string | undefined; fuse?: string | undefined; fuseName?: string | undefined }) {
+  // "2XKO_FIGHTER" es el placeholder que la sync guarda sin datos: se ignora.
+  const names = (value ?? "")
+    .split(/[,+]/)
+    .map((n) => n.trim())
+    .filter((n) => n && n.toUpperCase() !== "2XKO_FIGHTER");
+  if (names.length === 0 && !fuse) return <span className="dim">—</span>;
   return (
     <div className="rk-team">
       {names.map((n) => {
@@ -920,8 +935,12 @@ function Team({ value }: { value?: string | undefined }) {
           </span>
         );
       })}
+      {fuse ? (
+        <span className="fuse" title={`Fuse: ${fuseName ?? fuse}`}>
+          <img src={fuseIconUrl(fuse)} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
+          {fuseName ?? fuse}
+        </span>
+      ) : null}
     </div>
   );
 }
-
-
