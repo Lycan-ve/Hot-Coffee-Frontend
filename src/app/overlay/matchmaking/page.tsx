@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Coffee } from "lucide-react";
@@ -9,9 +9,9 @@ import {
   fetchMe,
   fetchUserProfile,
   fuseIconUrl,
+  loginUrl,
   rankIconFallbackUrl,
   rankIconUrl,
-  type MeResponse,
 } from "@/lib/auth";
 import "../../../hotcoffee-overlay.css";
 
@@ -34,26 +34,36 @@ function OverlayInner() {
   // TODO se calcula tras montar (nunca durante el render) para no romper el
   // prerender/hidratación ni fallar si localStorage está bloqueado.
   const isOBS = typeof navigator !== "undefined" && /OBS/i.test(navigator.userAgent);
-  const [setup, setSetup] = useState<{ cardUrl: string; partidaUrl: string } | null>(null);
-  useEffect(() => {
+  const [setup, setSetup] = useState<{ cardUrl: string; partidaUrl: string; checked: boolean } | null>(null);
+  // Verificación de sesión re-ejecutable (botón Reintentar / volver a la pestaña).
+  const check = useCallback(() => {
     if (isOBS) return;
-    let alive = true;
     (async () => {
       try {
         const base = window.location.origin;
         const token = getToken();
         const m = await fetchMe();
-        if (!alive) return;
         setSetup({
           cardUrl: m ? `${base}/overlay/matchmaking?id=${m.user.discordId}` : "",
           partidaUrl: token ? `${base}/overlay/partida?token=${encodeURIComponent(token)}` : "",
+          checked: true,
         });
       } catch {
-        if (alive) setSetup({ cardUrl: "", partidaUrl: "" });
+        setSetup({ cardUrl: "", partidaUrl: "", checked: true });
       }
     })();
-    return () => { alive = false; };
   }, [isOBS]);
+  useEffect(() => {
+    check();
+    // Si inicia sesión en otra pestaña, al volver aquí se re-verifica solo.
+    const onFocus = () => check();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [check]);
 
   // Fondo transparente para el browser source de OBS. Se aplica inline (y se
   // restaura al salir) para no tocar el fondo del resto de la web.
@@ -100,12 +110,22 @@ function OverlayInner() {
             <small>La URL de partida lleva tu token de sesión: no la compartas ni la pegues en chats.</small>
           </div>
         ) : (
-          <p>
-            Overlay de matchmaking de Hot Coffee. Añade <b>?id=tuIdDeDiscord</b> a la URL
-            (y opcionalmente <b>&amp;bg=dark</b>, <b>&amp;scale=1.25</b>, <b>&amp;flag=🇻🇪</b>).
-            {typeof navigator !== "undefined" && !/OBS/i.test(navigator.userAgent) &&
-              " Inicia sesión en la web para que esta página te dé tu URL lista para OBS."}
-          </p>
+          <div className="ov-setup">
+            <p>
+              Overlay de matchmaking de Hot Coffee. Añade <b>?id=tuIdDeDiscord</b> a la URL
+              (y opcionalmente <b>&amp;bg=dark</b>, <b>&amp;scale=1.25</b>, <b>&amp;flag=🇻🇪</b>).
+            </p>
+            {setup?.checked && !isOBS && (
+              <>
+                <p>Inicia sesión con Discord y esta página te da tu URL lista para OBS:</p>
+                <div className="ov-setup-actions">
+                  <a className="ov-btn" href={loginUrl()}>☕ INICIAR SESIÓN</a>
+                  <button type="button" className="ov-btn" onClick={check}>Reintentar</button>
+                </div>
+                <small>Tras iniciar sesión, vuelve a esta pestaña: la URL aparece sola.</small>
+              </>
+            )}
+          </div>
         )}
       </div>
     );
