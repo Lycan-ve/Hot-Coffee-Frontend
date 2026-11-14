@@ -198,7 +198,7 @@ function OverlayInner() {
           <img
             key={p.rank.iconPath}
             className="ov-badge"
-            src={p.rank.iconPath ? rankIconUrl(p.rank.iconPath) : "/assets/34087.png"}
+            src={p.rank.iconPath ? rankIconUrl(p.rank.iconPath) : "/assets/Aspirant_icon.png"}
             alt={p.rank.displayName}
             onError={(e) => {
               if (!p.rank.iconPath) return;
