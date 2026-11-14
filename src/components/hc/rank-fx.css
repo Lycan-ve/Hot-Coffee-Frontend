@@ -1,5 +1,5 @@
 /* =====================================================================
-   RANK FX — auras animadas por rango (Iron → Challenger)
+   RANK FX — auras animadas por rango (Aspirant → Challenger)
    Cada rango define sus colores y su "potencia" con variables.
    Las capas extra (rayos, órbitas, llamas, rayos eléctricos…) las añade
    RankFx.tsx según el nivel, así cada rango es más fuerte que el anterior.
@@ -25,6 +25,10 @@
   --rfx-shine-d: 6s;
   --rfx-tint-op: 0.12;
   --rfx-sweep-d: 7s;
+}
+[data-rfx="aspirant"] {
+  --rfx-c1: #b0a89e; --rfx-c2: #5d5753; --rfx-c3: #e8e2da;
+  --rfx-glow-op: 0.14; --rfx-breathe: 6s; --rfx-tint-op: 0.05;
 }
 [data-rfx="iron"] {
   --rfx-c1: #9a948e; --rfx-c2: #4e4945; --rfx-c3: #cfc8c1;
@@ -298,8 +302,8 @@
   opacity: var(--rfx-tint-op);
   animation: rfx-tint var(--rfx-breathe) ease-in-out infinite;
 }
-[data-lvl="8"] .rfx-tint,
-[data-lvl="9"] .rfx-tint { animation: rfx-tint var(--rfx-breathe) ease-in-out infinite, rfx-fire 0.25s steps(2, jump-none) infinite alternate; }
+[data-lvl="9"] .rfx-tint,
+[data-lvl="10"] .rfx-tint { animation: rfx-tint var(--rfx-breathe) ease-in-out infinite, rfx-fire 0.25s steps(2, jump-none) infinite alternate; }
 .rfx-sweep {
   top: -30%;
   bottom: -30%;

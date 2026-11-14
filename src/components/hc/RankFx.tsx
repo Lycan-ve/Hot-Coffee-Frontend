@@ -4,11 +4,12 @@ import "./rank-fx.css";
 import type { CSSProperties } from "react";
 
 /**
- * Auras animadas por rango (Iron → Challenger).
+ * Auras animadas por rango (Aspirant → Challenger).
  * Cada nivel suma capas sobre el anterior: más brillo, más velocidad, más partículas.
  * Todo es CSS puro (ver rank-fx.css); este componente solo pinta las capas.
  */
 export const RANK_ORDER = [
+  "aspirant",
   "iron",
   "bronze",
   "silver",
@@ -32,15 +33,15 @@ export function rankKey(rank: RankLike): RankKey | null {
   return (RANK_ORDER as readonly string[]).includes(first) ? (first as RankKey) : null;
 }
 
-/** 0 = Iron … 9 = Challenger. */
+/** 0 = Aspirant … 10 = Challenger. */
 export function rankLevel(key: RankKey): number {
   return RANK_ORDER.indexOf(key);
 }
 
 // Cuántas partículas / destellos lleva cada nivel (índice = nivel).
-const PARTICLES = [0, 0, 0, 3, 5, 8, 10, 13, 16, 22];
-const STARS = [0, 0, 0, 0, 2, 3, 5, 6, 7, 9];
-const EMBERS = [0, 0, 0, 0, 0, 6, 8, 12, 18, 26];
+const PARTICLES = [0, 0, 0, 0, 3, 5, 8, 10, 13, 16, 22];
+const STARS = [0, 0, 0, 0, 0, 2, 3, 5, 6, 7, 9];
+const EMBERS = [0, 0, 0, 0, 0, 0, 6, 8, 12, 18, 26];
 
 // Pseudo-aleatorio determinista (entero, sin Math.sin): idéntico en servidor y cliente,
 // así no hay "hydration mismatch" en SSR.
