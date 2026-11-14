@@ -103,7 +103,7 @@ export function RankBadge({ small = false, rank, fx = false }: { small?: boolean
           }}
         />
       ) : (
-        <img src={`${A}/34087.png`} alt="Insignia de rango" />
+        <img src={`${A}/rank-generic.svg`} alt="Insignia de rango" />
       )}
       {key ? <RankFx rank={key} layer="front" /> : null}
     </div>
