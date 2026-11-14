@@ -200,8 +200,13 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   <RankFx rank={rank} variant="badge" layer="front" />
                 </>
               ) : (
-                <img alt="" src={`${A}/34087.png`} />
+                <img alt="" src="/rankings/rank-placeholder.png" />
               )}
+              {rank.isRp && rank.divisionIndex !== undefined ? (
+                <span className="division-badge" aria-label={"División " + rank.divisionIndex}>
+                  {rank.divisionIndex}
+                </span>
+              ) : null}
               {rank.isRp && stats.rankingPosition > 0 ? (
                 <span className="top-chip">TOP {String(stats.rankingPosition).padStart(2, "0")}</span>
               ) : null}
