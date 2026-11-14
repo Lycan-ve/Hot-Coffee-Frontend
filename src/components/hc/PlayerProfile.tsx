@@ -7,6 +7,7 @@ import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, saveCountry, type MeResp
 import { displayName } from "./DiscordLogin";
 import { A, PlayerFlag, SectionTitle, flagEmoji } from "./shared";
 import { MainsPanel } from "./MainsPanel";
+import { RankFx } from "./RankFx";
 
 const fmtDate = (iso: string) => {
   const d = new Date(iso);
@@ -181,17 +182,23 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
             </div>
           </div>
           <div className="player-identity" style={{ "--rank-accent": rank.color } as CSSProperties}>
-            <div className="rank-emblem" aria-label={"Rango " + rank.displayName}>
+            <div className="rank-emblem rfx-host" aria-label={"Rango " + rank.displayName}>
               {/* Sin rango aún: insignia genérica, nunca la de una división. */}
               {rank.iconPath ? (
-                <img
-                  alt=""
-                  src={rankIconUrl(rank.iconPath)}
-                  onError={(event) => {
-                    const fb = rankIconFallbackUrl(rank.iconPath);
-                    if (event.currentTarget.src !== fb) event.currentTarget.src = fb;
-                  }}
-                />
+                <>
+                  {/* Aura Rank FX: capas detrás y delante de la insignia, */}
+                  {/* con los colores y la potencia del rango actual. */}
+                  <RankFx rank={rank} variant="badge" layer="back" />
+                  <img
+                    alt=""
+                    src={rankIconUrl(rank.iconPath)}
+                    onError={(event) => {
+                      const fb = rankIconFallbackUrl(rank.iconPath);
+                      if (event.currentTarget.src !== fb) event.currentTarget.src = fb;
+                    }}
+                  />
+                  <RankFx rank={rank} variant="badge" layer="front" />
+                </>
               ) : (
                 <img alt="" src={`${A}/34087.png`} />
               )}
@@ -493,9 +500,9 @@ function CountryPicker({ current, onClose }: { current: string; onClose: () => v
         <p>Elige tu país a mano: la bandera se muestra en tu perfil, en los rankings y en el matchmaking. Ojo: si tu perfil de Start.gg tiene ubicación, la sync la tomará de allí y sobrescribirá tu elección.</p>
         <select value={picked} onChange={(e) => setPicked(e.target.value)}>
           <option value="">— Sin país —</option>
-          {COUNTRIES.map(([code, name]) => (
+          {COUNTRIES.map(([code, cname]) => (
             <option key={code} value={code}>
-              {flagEmoji(code)} {name}
+              {flagEmoji(code)} {cname}
             </option>
           ))}
         </select>

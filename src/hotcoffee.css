@@ -2466,3 +2466,10 @@ button.flag-edit:hover {
 .hc-vs-card strong .player-flag {
   font-size: 0.9em;
 }
+
+/* ---------- Aura Rank FX en el emblema del perfil ---------- */
+/* Con el aura animada por rango, el resplandor dorado genérico sobra:
+   dejamos solo el flotado y el color lo pone el rango. */
+.rank-emblem.rfx-host {
+  animation: trophy-foat 3.5s ease-in-out infinite;
+}
