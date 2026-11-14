@@ -367,6 +367,8 @@ function OverlayInner() {
     );
   }
 
+  const visualState = finished ? "done" : live ? "live" : st === "found" || st === "confirmed" ? "found" : st === "searching" ? "searching" : "idle";
+
   // URL lista para OBS (solo visible en navegador con sesión).
   const obsUrl =
     typeof window !== "undefined" && token && !isOBS
@@ -375,7 +377,7 @@ function OverlayInner() {
 
   return (
     <div className={`tsh-viewport ${bg === "dark" ? "tsh-dark" : ""}`}>
-      <div className="tsh-stage" style={{ transform: `scale(${k})` }}>
+      <div className="tsh-stage" data-state={visualState} style={{ transform: `scale(${k})` }}>
         {showZones &&
           DEATH_ZONES.map((z, i) => (
             <div key={i} className="tsh-zone" style={{ left: z.x, top: z.y, width: z.w, height: z.h }} title="Death Zone" />

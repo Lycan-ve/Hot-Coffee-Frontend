@@ -156,12 +156,12 @@ function OverlayInner() {
       {/* Píldoras superiores: estado de clasificación / último rival */}
       <div className="ov-pills">
         {placing ? (
-          <span key="placing" className="ov-pill ov-placing">EN CLASIFICACIÓN {played}/5 PARTIDAS</span>
+          <span key={`placing-${played}`} className="ov-pill ov-placing">EN CLASIFICACIÓN {played}/5 PARTIDAS</span>
         ) : (
-          <span key="brand" className="ov-pill ov-brand"><Coffee /> HOT COFFEE · 2XKO</span>
+          <span key="classified" className="ov-pill ov-brand"><Coffee /> HOT COFFEE · 2XKO</span>
         )}
         {last && (
-          <span key={last.id} className="ov-pill ov-opponent" title={`Set a ${last.targetFT}`}>
+          <span key={`${last.id}-${last.scoreFor}-${last.scoreAgainst}`} className="ov-pill ov-opponent" title={`Set a ${last.targetFT}`}>
             ÚLTIMO RIVAL · <b>{last.opponentTag}</b> {last.scoreFor}–{last.scoreAgainst}
           </span>
         )}
@@ -179,7 +179,7 @@ function OverlayInner() {
           <div className="ov-id">
             <FitText as="strong" min={16} watch={name + flag}>{name}{flag ? <span className="ov-flag">{flag}</span> : null}</FitText>
             {p.mains && (
-              <small className="ov-mains">
+              <small key={`${p.mains.point.id}-${p.mains.assist.id}-${p.mains.fuse?.id ?? ""}`} className="ov-mains">
                 <span><img src={`/fighters/${encodeURIComponent(p.mains.point.id)}.png`} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />{p.mains.point.name}</span>
                 <i>/</i>
                 <span><img src={`/fighters/${encodeURIComponent(p.mains.assist.id)}.png`} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />{p.mains.assist.name}</span>
@@ -206,7 +206,7 @@ function OverlayInner() {
               if (e.currentTarget.src !== fb) e.currentTarget.src = fb;
             }}
           />
-          <div className="ov-rank-txt">
+          <div key={`${p.rank.displayName}-${points}`} className="ov-rank-txt">
             <strong style={{ color: p.rank.color || "#fff" }}>{p.rank.displayName}</strong>
             <small key={placing ? "clasificando" : points}>{placing ? "CLASIFICANDO" : `${fmt(points)} PTS`}</small>
           </div>
@@ -221,7 +221,7 @@ function OverlayInner() {
               </em>
             ))}
           </div>
-          <small>#{p.stats.rankingPosition ?? "—"} DE LA LIGA</small>
+          <small key={p.stats.rankingPosition}>#{p.stats.rankingPosition ?? "—"} DE LA LIGA</small>
         </div>
       </div>
     </div>
