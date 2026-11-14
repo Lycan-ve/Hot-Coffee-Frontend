@@ -324,7 +324,7 @@
 /* ——— Banner inferior: evento / sala (zona segura central) ——— */
 .tsh-bottom {
   position: absolute;
-  top: 946px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 760px;
