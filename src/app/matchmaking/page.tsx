@@ -172,7 +172,7 @@ export default function MatchmakingPage() {
                       <PlayerFlag country={me.user.country} state={me.user.state} />
                       {displayName(me)}
                     </span>
-                    <strong>{me.rank.placed === false ? "SIN RANGO" : me.rank.displayName.toUpperCase()}</strong>
+                    <strong>{me.rank.placed === false ? "Aspirant" : me.rank.displayName.toUpperCase()}</strong>
                     <p>
                       {me.rank.placed === false
                         ? `CLASIFICANDO ${Math.min(games, 5)}/5`
