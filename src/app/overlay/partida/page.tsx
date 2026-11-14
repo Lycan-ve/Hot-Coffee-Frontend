@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -11,6 +11,7 @@ import {
   rankIconUrl,
   type RankInfo,
 } from "@/lib/auth";
+import { ChipRow, FitText } from "@/components/overlay-fit";
 import "../../../hotcoffee-overlay-partida.css";
 
 // Overlay de PARTIDA 1920×1080 para OBS — diseño TSH 2XKO (barras skewX 12°,
@@ -78,16 +79,18 @@ interface SalaMatch {
 }
 interface SalaState { match: SalaMatch | null }
 
-async function fetchQueue(token: string): Promise<QueueState | null> {
-  try {
-    const res = await fetch(`${API_URL}/api/matchmaking/queue/state`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
-    return res.ok ? ((await res.json()) as QueueState) : null;
-  } catch {
-    return null;
-  }
+// El token de sesión puede caducar: lo distinguimos de un error de red para
+// poder avisar en pantalla en vez de quedarnos mudos.
+class TokenExpiredError extends Error {}
+
+async function fetchQueue(token: string): Promise<QueueState> {
+  const res = await fetch(`${API_URL}/api/matchmaking/queue/state`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (res.status === 401) throw new TokenExpiredError();
+  if (!res.ok) throw new Error(`queue/state ${res.status}`);
+  return (await res.json()) as QueueState;
 }
 
 async function fetchSala(token: string): Promise<SalaState | null> {
@@ -96,8 +99,10 @@ async function fetchSala(token: string): Promise<SalaState | null> {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
+    if (res.status === 401) throw new TokenExpiredError();
     return res.ok ? ((await res.json()) as SalaState) : null;
-  } catch {
+  } catch (e) {
+    if (e instanceof TokenExpiredError) throw e;
     return null;
   }
 }
@@ -145,18 +150,19 @@ function PlayerBlock(props: {
             <span>☕</span>
           )}
         </div>
-        <div className="tsh-name" data-len={name.length > 16 ? "xl" : name.length > 12 ? "l" : undefined}>{name}</div>
-        <div className="tsh-score"><span>{score}</span></div>
+        <FitText key={name} className="tsh-name" min={16} data-len={name.length > 16 ? "xl" : name.length > 12 ? "l" : undefined}>{name}</FitText>
+        {/* key={score}: cada punto nuevo vuelve a lanzar la animación del marcador */}
+        <div className="tsh-score"><span key={score}>{score}</span></div>
       </div>
       {chips.some(Boolean) && (
-        <div className={`tsh-chips ${right ? "tsh-p2chips" : "tsh-p1chips"}`}>
-          {chips.filter(Boolean).map((c, i) => (
-            <span key={i} className={`tsh-chip ${c?.tone ? `tsh-chip-${c.tone}` : ""}`}>
-              {c?.rank && <RankIcon rank={c.rank} />}
-              {c?.text}
-            </span>
-          ))}
-        </div>
+        <ChipRow
+          className={`tsh-chips ${right ? "tsh-p2chips" : "tsh-p1chips"}`}
+          chips={chips.filter((c): c is NonNullable<Chip> => !!c && !!c.text).map((c) => ({
+            text: c.text,
+            tone: c.tone,
+            icon: c.rank ? <RankIcon rank={c.rank} /> : null,
+          }))}
+        />
       )}
     </>
   );
@@ -166,8 +172,6 @@ function OverlayInner() {
   const params = useSearchParams();
   const q = (k: string, d = "") => params.get(k) ?? d;
   const bg = q("bg");
-  // Fondo fijo del overlay (maqueta): imagen del repo, siempre activa.
-  const bgimg = "/overlay/stage.png";
   const showZones = q("zones") === "1";
   const extra = Number(q("scale")) || 1;
 
@@ -208,7 +212,9 @@ function OverlayInner() {
     queryKey: ["ov2-queue", token],
     queryFn: () => fetchQueue(token),
     enabled: !!token,
-    refetchInterval: 3_000,
+    // Durante un set en vivo la cola no cambia: pausamos el polling y lo
+    // retomamos en cuanto la sala reporta el resultado.
+    refetchInterval: (query) => (query.state.data?.status === "matched" ? false : 3_000),
     refetchIntervalInBackground: true,
   });
   const st = queue.data?.status;
@@ -224,6 +230,12 @@ function OverlayInner() {
   const match = sala.data?.match ?? null;
   const live = !!match && match.status !== "FINISHED" && match.status !== "CANCELLED";
   const finished = !!match && (match.status === "FINISHED" || match.status === "CANCELLED");
+  // Token caducado: la API responde 401.
+  const expired = queue.error instanceof TokenExpiredError;
+  // Partida nueva en la cola mientras la sala aún devuelve la anterior:
+  // no enseñemos el marcador viejo ni un instante.
+  const queueMatchId = queue.data?.match?.id ?? null;
+  const salaStale = !!match && queueMatchId !== null && match.id !== queueMatchId;
 
   // Tarjeta personal en espera (modo manual, con &id1=).
   const id1 = q("id1");
@@ -236,8 +248,8 @@ function OverlayInner() {
   });
 
   // ——— Estado → contenido ———
-  let p1: React.ReactNode = null;
-  let p2: React.ReactNode = null;
+  let p1: ReactNode = null;
+  let p2: ReactNode = null;
   let matchTxt = q("round", "HOT COFFEE · 2XKO").toUpperCase();
   let phaseTxt = "";
   let bottomTxt = q("event", "HOT COFFEE · MATCHMAKING").toUpperCase();
@@ -249,7 +261,11 @@ function OverlayInner() {
     typeof p.wins === "number" ? { text: `${p.wins}W — ${p.losses ?? 0}L` } : null,
   ];
 
-  if (token && st === "searching") {
+  if (token && expired) {
+    matchTxt = "SESIÓN EXPIRADA";
+    phaseTxt = "GENERA UNA URL NUEVA EN LA WEB";
+    bottomTxt = q("event", "HOT COFFEE · MATCHMAKING").toUpperCase();
+  } else if (token && st === "searching") {
     const since = queue.data?.queue?.since ? new Date(queue.data.queue.since).getTime() : now;
     matchTxt = "BUSCANDO RIVAL";
     phaseTxt = `EN COLA ${clock(now - since)} · FT ${queue.data?.queue?.ft ?? 3}`;
@@ -277,6 +293,11 @@ function OverlayInner() {
     matchTxt = st === "confirmed" ? "CREANDO EL SET…" : "¡RIVAL ENCONTRADO!";
     phaseTxt = st === "confirmed" ? `FT ${prop.ft}` : `ACEPTA EN ${clock(remaining)}`;
     bottomTxt = `FT ${prop.ft} · ${prop.pointsAtStake} PTS EN JUEGO`;
+  } else if (token && st === "matched" && (!match || salaStale)) {
+    // La sala todavía no confirma la partida nueva (o aún devuelve la vieja).
+    matchTxt = "PREPARANDO EL SET…";
+    phaseTxt = "UN MOMENTO…";
+    bottomTxt = q("event", "HOT COFFEE · MATCHMAKING").toUpperCase();
   } else if (token && live && match) {
     const teamChip = (t: SalaTeam): Chip =>
       t?.complete ? { text: `${t.char1Name} / ${t.char2Name}${t.fuseName ? ` · ${t.fuseName}` : ""}` } : null;
@@ -306,18 +327,23 @@ function OverlayInner() {
     matchTxt = match.status === "CANCELLED" ? "SET CANCELADO" : "SET TERMINADO";
     phaseTxt = `MARCADOR FINAL ${match.me.score} — ${match.opponent.score}`;
     bottomTxt = "GRACIAS POR JUGAR · HOT COFFEE";
+  } else if (token && st === "failed") {
+    matchTxt = "ERROR AL BUSCAR RIVAL";
+    phaseTxt = "REINTENTA DESDE LA WEB";
+    bottomTxt = q("event", "HOT COFFEE · MATCHMAKING").toUpperCase();
   } else if (!token) {
     // Modo manual (o tarjeta personal con &id1=).
     const me = meCard.data;
     const chars = (key: string, fallback?: string) =>
       (q(key) || fallback || "").split(",").map((c) => c.trim()).filter(Boolean).join(" / ");
+    const p1charsTxt = chars("p1chars", [me?.mains?.point?.name, me?.mains?.assist?.name].filter(Boolean).join(","));
     p1 = (
       <PlayerBlock
         name={q("p1") || me?.user.globalName || me?.user.username || "PLAYER 1"}
         avatar={me?.user.avatarUrl}
         score={q("s1", "0")}
         chips={[
-          q("p1chars") || me?.mains ? { text: chars("p1chars", [me?.mains?.point?.name, me?.mains?.assist?.name].filter(Boolean).join(",")) } : null,
+          p1charsTxt ? { text: p1charsTxt } : null,
           q("p1fuse") ? { text: q("p1fuse").toUpperCase(), tone: "fuse1" } : null,
           q("p1tw") ? { text: q("p1tw") } : null,
           q("p1pr") ? { text: q("p1pr") } : null,
@@ -331,7 +357,7 @@ function OverlayInner() {
         name={q("p2") || "PLAYER 2"}
         score={q("s2", "0")}
         chips={[
-          q("p2chars") ? { text: chars("p2chars") } : null,
+          chars("p2chars") ? { text: chars("p2chars") } : null,
           q("p2fuse") ? { text: q("p2fuse").toUpperCase(), tone: "fuse2" } : null,
           q("p2tw") ? { text: q("p2tw") } : null,
           q("p2pr") ? { text: q("p2pr") } : null,
@@ -359,19 +385,19 @@ function OverlayInner() {
         {p2}
 
         {/* Barra superior central: estado del matchmaking / ronda */}
-        <div className="tsh-top">
+        <div className={`tsh-top ${phaseTxt ? "tsh-top-2" : ""}`}>
           <div className="tsh-top-bg tsh-top-bg1" />
           <div className="tsh-top-bg tsh-top-bg2" />
-          <div className="tsh-match">{matchTxt}</div>
-          {phaseTxt && <div className="tsh-phase">{phaseTxt}</div>}
+          <FitText key={matchTxt} className="tsh-match" min={12}>{matchTxt}</FitText>
+          {phaseTxt && <FitText className="tsh-phase" min={11}>{phaseTxt}</FitText>}
         </div>
 
         {/* Banner inferior: evento / sala */}
         <div className="tsh-bottom">
           <div className="tsh-bottom-bg tsh-bottom-bg1" />
           <div className="tsh-bottom-bg tsh-bottom-bg2" />
-          <div className="tsh-tname">{bottomTxt}</div>
-          {bottomSub && <div className="tsh-phase">{bottomSub}</div>}
+          <FitText key={bottomTxt} className="tsh-tname" min={14}>{bottomTxt}</FitText>
+          {bottomSub && <FitText key={bottomSub} className="tsh-phase" min={10}>{bottomSub}</FitText>}
         </div>
 
         {obsUrl && (

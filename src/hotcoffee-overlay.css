@@ -51,8 +51,6 @@
   box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.16), var(--hc-shadow);
   backdrop-filter: blur(6px);
   white-space: nowrap;
-  max-width: 92vw;
-  overflow: hidden;
 }
 .ov-pill svg { width: 15px; height: 15px; color: var(--hc-crema); filter: drop-shadow(0 0 6px rgba(255, 190, 90, 0.55)); }
 
@@ -184,21 +182,17 @@
     linear-gradient(160deg, var(--hc-crema), var(--hc-caramel) 50%, var(--hc-ember)) border-box;
   text-shadow: 0 0 10px rgba(255, 190, 90, 0.6);
 }
-.ov-id { display: grid; gap: 4px; min-width: 0; }
+.ov-id { display: grid; gap: 4px; }
 .ov-id > strong {
   font: 700 24px "Barlow Condensed", sans-serif;
   letter-spacing: 0.04em;
   color: var(--hc-milk);
   line-height: 1;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 0 18px rgba(255, 180, 90, 0.25);
-  max-width: 340px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 .ov-flag { margin-left: 8px; font-size: 18px; }
 
-.ov-mains { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 340px; overflow: hidden; font: 600 12px "Inter", sans-serif; letter-spacing: 0.02em; color: var(--hc-latte); text-transform: uppercase; }
+.ov-mains { display: flex; align-items: center; gap: 8px; font: 600 12px "Inter", sans-serif; letter-spacing: 0.02em; color: var(--hc-latte); text-transform: uppercase; }
 .ov-mains span { display: inline-flex; align-items: center; gap: 4px; }
 .ov-mains i { opacity: 0.45; color: var(--hc-crema-2); font-style: normal; }
 .ov-mains img { width: 18px; height: 18px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
@@ -322,35 +316,58 @@
 }
 .ov-setup .ov-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
+/* ——— Que nada se salga ——— */
+.ov-id { min-width: 0; }
+.ov-id > strong {
+  display: block;
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.1;
+  padding-bottom: 1px;
+}
+.ov-opponent b { display: inline-block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.ov-mains { white-space: nowrap; }
+.ov-pills { max-width: 100%; }
+
+/* ——— Animaciones suaves ——— */
+:where(.ov-wrap, .ov-bar, .ov-hint) { --ov-out: cubic-bezier(0.22, 1, 0.36, 1); --ov-pop: cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Píldoras: entran deslizando, una tras otra */
+.ov-pill { animation: ov-slide 0.55s var(--ov-out) both; }
+.ov-pill + .ov-pill { animation-delay: 0.12s; }
+@keyframes ov-slide { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+
+/* Barra: sube y se asienta; sus bloques aparecen en cascada */
+.ov-bar { animation: ov-rise 0.65s var(--ov-out) 0.08s both; }
+.ov-bar > * { animation: ov-rise 0.55s var(--ov-out) both; }
+.ov-bar > .ov-player { animation-delay: 0.2s; }
+.ov-bar > .ov-rank { animation-delay: 0.3s; }
+.ov-bar > .ov-record { animation-delay: 0.4s; }
+@keyframes ov-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.ov-avatar { animation: ov-pop 0.55s var(--ov-pop) 0.3s both; }
+.ov-badge { animation: ov-badge-in 0.7s var(--ov-pop) 0.4s both; }
+@keyframes ov-pop { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: none; } }
+@keyframes ov-badge-in { from { opacity: 0; transform: rotate(-25deg) scale(0.5); } to { opacity: 1; transform: none; } }
+
+/* Cambios en vivo: puntos y récord suben con un fundido; cada set nuevo salta */
+.ov-rank-txt > small,
+.ov-record > b { animation: ov-tick 0.5s var(--ov-out) both; }
+@keyframes ov-tick { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.ov-sets em { animation: ov-pop 0.45s var(--ov-pop) both; animation-delay: 0.5s; }
+.ov-sets em:nth-child(2) { animation-delay: 0.56s; }
+.ov-sets em:nth-child(3) { animation-delay: 0.62s; }
+.ov-sets em:nth-child(4) { animation-delay: 0.68s; }
+.ov-sets em:nth-child(5) { animation-delay: 0.74s; }
+.ov-rank-txt > strong { transition: color 0.6s ease; }
+.ov-dot { transition: background-color 0.4s ease, box-shadow 0.4s ease; }
+
+.ov-hint { animation: ov-rise 0.6s var(--ov-out) both; }
+.ov-skeleton { animation: ov-fade 0.4s ease both; }
+@keyframes ov-fade { from { opacity: 0; } to { opacity: 1; } }
+
 @media (prefers-reduced-motion: reduce) {
-  .ov-wrap *, .ov-wrap *::before, .ov-wrap *::after, .ov-bar::after { animation: none !important; }
+  .ov-wrap *, .ov-wrap *::before, .ov-wrap *::after, .ov-bar::after, .ov-hint, .ov-bar { animation: none !important; transition: none !important; }
 }
-
-/* ---------- Animaciones suaves (entrada escalonada y micro-vida) ---------- */
-
-@keyframes ov-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes ov-pop {
-  from { opacity: 0; transform: scale(0.55); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-/* Entra primero la píldora, luego la barra y por último el contenido. */
-.ov-pill { animation: ov-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
-.ov-pills .ov-pill:nth-child(2) { animation-delay: 0.12s; }
-.ov-pills .ov-pill:nth-child(3) { animation-delay: 0.2s; }
-.ov-bar { animation: ov-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s backwards; }
-.ov-id > strong { animation: ov-in 0.5s ease 0.2s backwards; }
-.ov-avatar { animation: ov-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.28s backwards; }
-.ov-badge { animation: ov-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.34s backwards; }
-.ov-dot { animation: ov-pop 0.4s ease 0.4s backwards; }
-
-/* Cada "grano de café" del récord entra con su propio retardo. */
-.ov-sets em { animation: ov-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
-.ov-sets em:nth-child(1) { animation-delay: 0.38s; }
-.ov-sets em:nth-child(2) { animation-delay: 0.46s; }
-.ov-sets em:nth-child(3) { animation-delay: 0.54s; }
-.ov-sets em:nth-child(4) { animation-delay: 0.62s; }
-.ov-sets em:nth-child(5) { animation-delay: 0.7s; }

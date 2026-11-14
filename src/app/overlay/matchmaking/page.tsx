@@ -5,14 +5,15 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Coffee } from "lucide-react";
 import {
-  API_URL,
   fetchMe,
   fetchUserProfile,
   fuseIconUrl,
+  getToken,
   loginUrl,
   rankIconFallbackUrl,
   rankIconUrl,
 } from "@/lib/auth";
+import { FitText } from "@/components/overlay-fit";
 import "../../../hotcoffee-overlay.css";
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -155,12 +156,12 @@ function OverlayInner() {
       {/* Píldoras superiores: estado de clasificación / último rival */}
       <div className="ov-pills">
         {placing ? (
-          <span className="ov-pill ov-placing">EN CLASIFICACIÓN {played}/5 PARTIDAS</span>
+          <span key="placing" className="ov-pill ov-placing">EN CLASIFICACIÓN {played}/5 PARTIDAS</span>
         ) : (
-          <span className="ov-pill ov-brand"><Coffee /> HOT COFFEE · 2XKO</span>
+          <span key="brand" className="ov-pill ov-brand"><Coffee /> HOT COFFEE · 2XKO</span>
         )}
         {last && (
-          <span className="ov-pill ov-opponent" title={`Set a ${last.targetFT}`}>
+          <span key={last.id} className="ov-pill ov-opponent" title={`Set a ${last.targetFT}`}>
             ÚLTIMO RIVAL · <b>{last.opponentTag}</b> {last.scoreFor}–{last.scoreAgainst}
           </span>
         )}
@@ -176,7 +177,7 @@ function OverlayInner() {
             <span className="ov-avatar ov-avatar-fb">{name.charAt(0).toUpperCase()}</span>
           )}
           <div className="ov-id">
-            <strong>{name}{flag ? <span className="ov-flag">{flag}</span> : null}</strong>
+            <FitText as="strong" min={16} watch={name + flag}>{name}{flag ? <span className="ov-flag">{flag}</span> : null}</FitText>
             {p.mains && (
               <small className="ov-mains">
                 <span><img src={`/fighters/${encodeURIComponent(p.mains.point.id)}.png`} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />{p.mains.point.name}</span>
@@ -195,6 +196,7 @@ function OverlayInner() {
         <div className="ov-rank">
           {/* Sin rango (clasificando): insignia genérica, nunca una división. */}
           <img
+            key={p.rank.iconPath}
             className="ov-badge"
             src={p.rank.iconPath ? rankIconUrl(p.rank.iconPath) : "/assets/34087.png"}
             alt={p.rank.displayName}
@@ -206,12 +208,12 @@ function OverlayInner() {
           />
           <div className="ov-rank-txt">
             <strong style={{ color: p.rank.color || "#fff" }}>{p.rank.displayName}</strong>
-            <small>{placing ? "CLASIFICANDO" : `${fmt(points)} PTS`}</small>
+            <small key={placing ? "clasificando" : points}>{placing ? "CLASIFICANDO" : `${fmt(points)} PTS`}</small>
           </div>
         </div>
 
         <div className="ov-record">
-          <b>{p.stats.wins ?? 0}<i>V</i> — {p.stats.losses ?? 0}<i>D</i></b>
+          <b key={`${p.stats.wins}-${p.stats.losses}`}>{p.stats.wins ?? 0}<i>V</i> — {p.stats.losses ?? 0}<i>D</i></b>
           <div className="ov-sets">
             {fights.slice(0, 5).map((f) => (
               <em key={f.id} className={f.result === "WIN" ? "w" : "l"} title={`${f.scoreFor}-${f.scoreAgainst} vs ${f.opponentTag}`}>
