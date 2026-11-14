@@ -200,7 +200,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   <RankFx rank={rank} variant="badge" layer="front" />
                 </>
               ) : (
-                <img alt="" src="/assets/rank-generic.svg" />
+                <img alt="" src="/assets/aspirant_icon.png" />
               )}
               {rank.isRp && rank.divisionIndex !== undefined ? (
                 <span className="division-badge" aria-label={"División " + rank.divisionIndex}>
