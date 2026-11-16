@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Coffee } from "lucide-react";
+import { Check, Coffee, Copy } from "lucide-react";
 import {
   fetchMe,
   fetchUserProfile,
@@ -36,6 +36,52 @@ function OverlayInner() {
   // prerender/hidratación ni fallar si localStorage está bloqueado.
   const isOBS = typeof navigator !== "undefined" && /OBS/i.test(navigator.userAgent);
   const [setup, setSetup] = useState<{ cardUrl: string; partidaUrl: string; checked: boolean } | null>(null);
+  const [copiedUrl, setCopiedUrl] = useState<"card" | "partida" | null>(null);
+  const [copyError, setCopyError] = useState<"card" | "partida" | null>(null);
+
+  // Copia una sola URL por botón. Si Clipboard API no está disponible (o
+  // el navegador niega el permiso), usamos un fallback seleccionable.
+  const copyUrl = async (url: string, key: "card" | "partida") => {
+    setCopyError(null);
+    try {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch {
+          const field = document.createElement("textarea");
+          field.value = url;
+          field.setAttribute("readonly", "");
+          field.style.position = "fixed";
+          field.style.opacity = "0";
+          field.style.pointerEvents = "none";
+          document.body.appendChild(field);
+          field.focus();
+          field.select();
+          const ok = document.execCommand("copy");
+          field.remove();
+          if (!ok) throw new Error("No se pudo copiar la URL");
+        }
+      } else {
+        const field = document.createElement("textarea");
+        field.value = url;
+        field.setAttribute("readonly", "");
+        field.style.position = "fixed";
+        field.style.opacity = "0";
+        field.style.pointerEvents = "none";
+        document.body.appendChild(field);
+        field.focus();
+        field.select();
+        const ok = document.execCommand("copy");
+        field.remove();
+        if (!ok) throw new Error("No se pudo copiar la URL");
+      }
+      setCopiedUrl(key);
+      window.setTimeout(() => setCopiedUrl((current) => current === key ? null : current), 2200);
+    } catch {
+      setCopyError(key);
+      setCopiedUrl(null);
+    }
+  };
   // Verificación de sesión re-ejecutable (botón Reintentar / volver a la pestaña).
   const check = useCallback(() => {
     if (isOBS) return;
@@ -92,23 +138,52 @@ function OverlayInner() {
       <div className="ov-hint">
         <Coffee />
         {cardUrl ? (
-          <div className="ov-setup">
-            <b>TUS URL PARA OBS (fuente Navegador):</b>
-            <small>Tarjeta de jugador:</small>
-            <code>{cardUrl}</code>
-            {partidaUrl && (
-              <>
-                <small>Overlay de partida (1920×1080):</small>
-                <code>{partidaUrl}</code>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => navigator.clipboard?.writeText([cardUrl, partidaUrl].filter(Boolean).join("\n")).catch(() => {})}
-            >
-              Copiar
-            </button>
-            <small>La URL de partida lleva tu token de sesión: no la compartas ni la pegues en chats.</small>
+          <div className="ov-setup ov-setup-ready">
+            <b>TUS URL PARA OBS · FUENTE DE NAVEGADOR</b>
+            <p className="ov-setup-intro">Copia cada dirección por separado y pégala en el campo «URL» de una fuente Navegador en OBS.</p>
+
+            <section className="ov-url-card" aria-labelledby="ov-card-url-title">
+              <div className="ov-url-heading">
+                <div>
+                  <strong id="ov-card-url-title">1. Tarjeta de jugador</strong>
+                  <small>Muestra tu nombre, rango, equipo y estadísticas.</small>
+                </div>
+                <span className="ov-url-tag">PERFIL</span>
+              </div>
+              <div className="ov-url-row">
+                <code tabIndex={0} aria-label="URL completa de la tarjeta de jugador">{cardUrl}</code>
+                <button type="button" className="ov-btn ov-copy-btn" onClick={() => copyUrl(cardUrl, "card")}>
+                  {copiedUrl === "card" ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                  {copiedUrl === "card" ? "COPIADA" : "COPIAR URL"}
+                </button>
+              </div>
+              {copyError === "card" ? <small className="ov-copy-error" role="alert">No se pudo copiar automáticamente. Selecciona la dirección y cópiala.</small> : null}
+            </section>
+
+            {partidaUrl ? (
+              <section className="ov-url-card ov-url-card-sensitive" aria-labelledby="ov-match-url-title">
+                <div className="ov-url-heading">
+                  <div>
+                    <strong id="ov-match-url-title">2. Overlay de partida · 1920 × 1080</strong>
+                    <small>Sigue la búsqueda, la partida y el resultado en directo.</small>
+                  </div>
+                  <span className="ov-url-tag">PARTIDA</span>
+                </div>
+                <div className="ov-url-row">
+                  <code tabIndex={0} aria-label="URL completa del overlay de partida">{partidaUrl}</code>
+                  <button type="button" className="ov-btn ov-copy-btn" onClick={() => copyUrl(partidaUrl, "partida")}>
+                    {copiedUrl === "partida" ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                    {copiedUrl === "partida" ? "COPIADA" : "COPIAR URL"}
+                  </button>
+                </div>
+                {copyError === "partida" ? <small className="ov-copy-error" role="alert">No se pudo copiar automáticamente. Selecciona la dirección y cópiala.</small> : null}
+                <p className="ov-token-warning">Esta dirección contiene tu token de sesión. No la compartas, no la publiques y no la pegues en chats.</p>
+              </section>
+            ) : null}
+
+            <p className="ov-copy-status" role="status" aria-live="polite">
+              {copiedUrl === "card" ? "URL de la tarjeta copiada." : copiedUrl === "partida" ? "URL del overlay de partida copiada." : "Cada botón copia únicamente la dirección que tiene al lado."}
+            </p>
           </div>
         ) : (
           <div className="ov-setup">
