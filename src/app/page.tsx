@@ -9,15 +9,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
-  BarChart3,
-  CalendarCheck,
-  ChevronDown,
   Coffee,
-  Gamepad2,
   Globe,
   HeartHandshake,
   Languages,
-  ShieldCheck,
   Swords,
   Trophy,
   User,
@@ -67,29 +62,37 @@ async function fetchSetCount(): Promise<number | null> {
   }
 }
 
-type Step = { icon: LucideIcon; title: string; copy: string; link?: string };
+type Step = {
+  icon: LucideIcon;
+  title: string;
+  copy: string;
+  link: string;
+  linkText: string;
+  external?: boolean;
+};
 
 const STEPS: Step[] = [
   {
     icon: UserPlus,
-    title: "ÚNETE A LA COMUNIDAD",
-    copy: "Todo empieza con un café y un Discord. Únete al servidor, preséntate y cuéntanos qué mains traes: ahí se cuecen los torneos, los retos y las bromas. Sin pasar por el servidor no hay liga, así que este es tu primer sorbo.",
+    title: "ÚNETE AL DISCORD",
+    copy: "Forma parte del servidor Hot Coffee 2XKO. Es el punto de encuentro y un requisito para participar en la liga.",
     link: DISCORD_INVITE,
+    linkText: "Unirme al Discord",
+    external: true,
   },
   {
-    icon: CalendarCheck,
-    title: "JUEGA LOS TORNEOS",
-    copy: "Inscríbete en Start.gg, juega tu bracket y a disfrutar. Cuando el torneo termina, el bot lo procesa solito: no tienes que reclamar nada, tus puntos aparecen en la tabla. Tú solo juega.",
-  },
-  {
-    icon: Trophy,
-    title: "ENTRA AL RANKING (TOP 8)",
-    copy: "Cada torneo premia a los 8 mejores: el 1º paga 100 pts y desde ahí baja la escalera hasta el 8º (y en series como TNS y Paragon también suma el Top 16). Es acumulativo: la temporada es una maratón, no un sprint.",
+    icon: User,
+    title: "CONECTA TU CUENTA",
+    copy: "Pulsa «Iniciar sesión con Discord» en la parte superior. Así podrás usar tu perfil y entrar al matchmaking.",
+    link: "/perfil",
+    linkText: "Iniciar sesión",
   },
   {
     icon: Swords,
-    title: "RETA EN MATCHMAKING",
-    copy: "¿Ganas de competir un martes a media noche? No esperes al torneo: entra a la cola desde la web, te cruzamos con alguien de tu nivel y juegan un FT 3. El resultado se reporta aquí mismo y tu LP se mueve al instante.",
+    title: "ELIGE CÓMO JUGAR",
+    copy: "Busca un rival en sets FT 3 cuando quieras o participa en los torneos de la comunidad.",
+    link: "/matchmaking",
+    linkText: "Buscar partida",
   },
 ];
 
@@ -107,15 +110,19 @@ export default function HomePage() {
           <div className="hm-hero-copy">
             <SectionTitle
               eyebrow="COMUNIDAD 2XKO · TEMPORADA 2026"
-              title="BIENVENIDOS A"
+              title="COMPITE EN"
               accent="HOT COFFEE"
-              copy="La liga competitiva de 2XKO de nuestra comunidad: torneos procesados uno a uno, ranking por puntos y matchmaking directo desde la web. Sin humo: cada puesto suma."
+              copy="Torneos, partidas FT 3 y tu progreso competitivo de 2XKO, reunidos en un solo lugar."
             />
             <div className="hm-cta-row">
-              <Link href="/ranking" className="hm-btn primary"><Trophy /> Ver el ranking</Link>
-              <Link href="/matchmaking" className="hm-btn ghost"><Swords /> Buscar partida</Link>
-              <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="hm-btn link"><UserPlus /> Unirme al Discord</a>
+              <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="hm-btn primary"><UserPlus /> Unirme al Discord</a>
+              <Link href="/perfil" className="hm-btn ghost"><User /> Ya tengo cuenta</Link>
+              <Link href="#empezar" className="hm-btn link"><ArrowRight /> Cómo empezar</Link>
             </div>
+            <p className="hm-first-note">
+              <strong>¿Primera vez?</strong> Primero únete al Discord y después conecta tu cuenta desde «Ya tengo cuenta».
+              Necesitas pertenecer al servidor para competir en la liga.
+            </p>
             {/* Sobre la comunidad */}
             <div className="hm-details">
               <div>
@@ -158,6 +165,35 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ——— Primeros pasos ——— */}
+        <section className="hm-how" id="empezar">
+          <SectionTitle
+            eyebrow="PRIMERA VEZ EN HOT COFFEE"
+            title="EMPIEZA EN"
+            accent="3 PASOS"
+            copy="Sigue este orden y sabrás exactamente qué necesitas para competir."
+          />
+          <div className="hm-steps">
+            {STEPS.map((s, i) => (
+              <article className="panel hm-step" key={s.title}>
+                <b>{String(i + 1).padStart(2, "0")}</b>
+                <span className="hm-step-icon"><s.icon /></span>
+                <h4>{s.title}</h4>
+                <p>{s.copy}</p>
+                {s.external ? (
+                  <a className="hm-step-link" href={s.link} target="_blank" rel="noopener noreferrer">
+                    {s.linkText} <ArrowRight />
+                  </a>
+                ) : (
+                  <Link className="hm-step-link" href={s.link}>
+                    {s.linkText} <ArrowRight />
+                  </Link>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+
         {/* ——— Contadores en vivo ——— */}
         <section className="hm-stats">
           <div className="hm-stat">
@@ -183,64 +219,39 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ——— Qué es ——— */}
-        <section className="hm-about">
-          <article className="panel">
-            <div className="head"><h3>¿QUÉ ES HOT COFFEE?</h3><Coffee /></div>
-            <p className="lead">
-              Hot Coffee es el hub competitivo de 2XKO de la comunidad: un solo lugar donde vive todo lo que importa
-              de la temporada.
-            </p>
-            <ul>
-              <li><strong>Ranking de torneos.</strong> El acumulado de la temporada: solo el Top 8 de cada torneo suma puntos.</li>
-              <li><strong>Ranking de matchmaking.</strong> La escalera de sets /ft entre miembros, con rangos y divisiones propias.</li>
-              <li><strong>Perfiles.</strong> Tu ficha con mains, fuse, historial de sets y posición en ambas tablas.</li>
-              <li><strong>Matchmaking.</strong> Encuentra rival al instante y reporta el resultado desde la web.</li>
-            </ul>
-          </article>
-        </section>
-
         {/* ——— Rankings ——— */}
         <HomeRankings />
 
-        {/* ——— Arena ——— */}
+        {/* ——— Accesos principales ——— */}
         <section className="hm-arena" id="arena">
           <SectionTitle
-            eyebrow="CENTRAL DE ACCESO RÁPIDO"
-            title="ENTRA A LA"
-            accent="ARENA"
-            copy="Todo Hot Coffee a un clic: busca rival al instante, revisa tu ficha o consulta las tablas oficiales."
+            eyebrow="CUANDO YA ESTÉS DENTRO"
+            title="ELIGE TU"
+            accent="SIGUIENTE PASO"
+            copy="Puedes jugar una partida, consultar los resultados de la temporada o revisar tu progreso."
           />
           <div className="hm-arena-grid">
             <Link href="/matchmaking" className="hm-arena-main">
               <span className="hm-arena-ico"><Swords /></span>
               <span className="hm-arena-txt">
                 <strong>Buscar partida</strong>
-                <small>Ingresa a la cola de Online Matchmaking y juega tus sets /ft</small>
-              </span>
-              <ArrowRight className="hm-arena-arrow" />
-            </Link>
-            <Link href="/perfil" className="hm-arena-card">
-              <span className="hm-arena-ico"><User /></span>
-              <span className="hm-arena-txt">
-                <strong>Ver mi perfil</strong>
-                <small>Historial, mains y estadísticas</small>
+                <small>Entra a la cola y juega un set FT 3 contra alguien de tu nivel</small>
               </span>
               <ArrowRight className="hm-arena-arrow" />
             </Link>
             <Link href="/ranking" className="hm-arena-card">
               <span className="hm-arena-ico"><Trophy /></span>
               <span className="hm-arena-txt">
-                <strong>Rank de torneos</strong>
-                <small>Acumulado de la temporada, filtrable por serie</small>
+                <strong>Ranking de torneos</strong>
+                <small>Consulta tus puntos y posiciones en la temporada</small>
               </span>
               <ArrowRight className="hm-arena-arrow" />
             </Link>
-            <Link href="/ranking-matchmaking" className="hm-arena-card">
-              <span className="hm-arena-ico"><BarChart3 /></span>
+            <Link href="/perfil" className="hm-arena-card">
+              <span className="hm-arena-ico"><User /></span>
               <span className="hm-arena-txt">
-                <strong>Rank matchmaking</strong>
-                <small>Escalera de sets con rangos y divisiones</small>
+                <strong>Mi perfil</strong>
+                <small>Configura tu equipo y revisa tus estadísticas e historial</small>
               </span>
               <ArrowRight className="hm-arena-arrow" />
             </Link>
@@ -248,60 +259,17 @@ export default function HomePage() {
           <p className="hm-motto">SEGUIMOS JUGANDO, SEGUIMOS COMPITIENDO.</p>
         </section>
 
-        {/* ——— Cómo funciona ——— */}
-        <section className="hm-how" id="como-funciona">
-          <SectionTitle
-            eyebrow="PASO A PASO"
-            title="CÓMO"
-            accent="FUNCIONA"
-            copy="Entrar a la liga es más fácil de lo que parece: un Discord, unos torneos y muchas ganas de jugar. Toma un café, que te lo explicamos en cuatro pasos."
-          />
-          <div className="hm-steps">
-            {STEPS.map((s, i) => (
-              <article className="panel hm-step" key={s.title}>
-                <b>{String(i + 1).padStart(2, "0")}</b>
-                <span className="hm-step-icon"><s.icon /></span>
-                <h4>{s.title}</h4>
-                <p>{s.copy}</p>
-                {s.link ? (
-                  <a className="hm-step-link" href={s.link} target="_blank" rel="noopener noreferrer">
-                    Unirme al Discord <ArrowRight />
-                  </a>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* ——— Puntos ——— */}
+        {/* ——— Lo esencial sobre los puntos ——— */}
         <section className="hm-points">
           <article className="panel">
-            <div className="head"><h3>PUNTOS EN TORNEOS</h3><Trophy /></div>
-            <p className="lead">Cada torneo es una nueva oportunidad de sumar: cuanto más alto llegues en el bracket, más puntos caen en tu taza.</p>
-            <p>
-              El ranking acumula toda la temporada y se actualiza cuando el bot termina de procesar cada evento:
-              tú solo juega, del resto nos encargamos. ¿Sigues una serie en particular? Filtra por Hot Coffee, TNS,
-              Frame KO, Tacos Tuesday y más, y la tabla se recalcula solo con esos torneos.
-            </p>
+            <div className="head"><h3>RANKING DE TORNEOS</h3><Trophy /></div>
+            <p className="lead">Los torneos oficiales suman puntos a la clasificación de la temporada.</p>
+            <p>El bot procesa los resultados y actualiza la tabla automáticamente. Consulta el ranking para ver posiciones, puntos y resultados por serie.</p>
           </article>
           <article className="panel">
-            <div className="head"><h3>PUNTOS EN MATCHMAKING</h3><Swords /></div>
-            <p className="lead">
-              Aquí todos los sets son FT 3 y nacen en esta misma página: entras a la cola, te cruzas con alguien de
-              tu nivel y cada set mueve tu LP.
-            </p>
-            <p>
-              Nadie empieza con rango: tus primeros 5 sets son de clasificación y con ellos te asignamos tu primer
-              rango. Desde ahí, cada 100 LP es una división nueva, de Hierro a Challenger. Vencer a alguien de tu
-              nivel paga +15 LP; ganarle a uno superior suma +10 por nivel de diferencia; y perder contra uno
-              inferior, eso sí, se siente más en la cartera. Las rachas se celebran: con 3 victorias seguidas te
-              emparejan un nivel arriba y cada victoria en racha da +5 LP extra (tope +15), lo mismo que un 3-0
-              perfecto. ¿Perdiste por poco?{" "}
-              <span className="inline-flex items-center gap-1 align-middle whitespace-nowrap">
-                <ShieldCheck className="hm-inline" /> El escudo anti-descenso
-              </span>{" "}
-              te guarda el sitio en tu división y tienes 15 minutos para pedir la revancha.
-            </p>
+            <div className="head"><h3>RANKING DE MATCHMAKING</h3><Swords /></div>
+            <p className="lead">Los sets de matchmaking son partidas FT 3 entre miembros de la comunidad.</p>
+            <p>Los primeros 5 sets son de clasificación: al completarlos recibirás tu rango inicial. Después, tus resultados harán subir o bajar tus puntos de liga.</p>
           </article>
         </section>
 
