@@ -9,7 +9,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
-  BarChart3,
   Coffee,
   Globe,
   HeartHandshake,
