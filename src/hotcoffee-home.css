@@ -181,7 +181,7 @@
 
 /* ——— Cómo funciona ——— */
 .inicio-page .hm-how { scroll-margin-top: 16px; }
-.inicio-page .hm-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.inicio-page .hm-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .inicio-page .hm-step { position: relative; display: grid; gap: 8px; align-content: start; }
 .inicio-page .hm-step b {
   position: absolute;
@@ -374,3 +374,17 @@
   .inicio-page .hm-credits { padding: 18px 16px; }
   .inicio-page .hm-credits-list { grid-template-columns: 1fr; }
 }
+
+/* Orientación inicial: el requisito de acceso se explica antes de los pasos. */
+.inicio-page .hm-first-note {
+  max-width: 760px;
+  margin: -6px 0 0;
+  color: var(--hf-dim);
+  font-family: var(--hf-body);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.inicio-page .hm-first-note strong { color: var(--hf-yellow); }
+.inicio-page .hm-how { display: grid; gap: 18px; }
+.inicio-page .hm-step-link { justify-self: start; margin-top: 6px; }
+@media (max-width: 720px) { .inicio-page .hm-first-note { margin-top: 0; } }
