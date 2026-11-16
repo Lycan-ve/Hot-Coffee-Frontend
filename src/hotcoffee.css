@@ -2473,3 +2473,43 @@ button.flag-edit:hover {
 .rank-emblem.rfx-host {
   animation: trophy-foat 3.5s ease-in-out infinite;
 }
+
+/* ---------- Perfil: guía del siguiente paso ---------- */
+.profile-next-step {
+  margin: 10px 0 14px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  border-color: rgba(180, 77, 29, 0.42);
+  background: radial-gradient(circle at 8% 20%, rgba(180, 77, 29, 0.16), transparent 46%), var(--panel);
+}
+.profile-next-copy { min-width: 0; max-width: 760px; }
+.profile-next-kicker { color: var(--gold); font: 700 9px "Inter", sans-serif; letter-spacing: 1.5px; }
+.profile-next-copy h2 { margin-top: 5px; color: #fff; font: 700 clamp(24px, 3vw, 34px)/1.05 "Barlow Condensed", sans-serif; }
+.profile-next-copy p { margin-top: 7px; color: var(--hc-muted); font-size: 13px; line-height: 1.55; }
+.profile-next-copy > small { display: block; margin-top: 7px; color: var(--gold); font-size: 10px; letter-spacing: .6px; }
+.profile-placement-progress { height: 6px; max-width: 360px; margin-top: 12px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.12); }
+.profile-placement-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--orange), var(--gold)); transition: width .25s ease; }
+.profile-next-actions { display: grid; gap: 9px; width: min(100%, 230px); flex: 0 0 auto; }
+.profile-next-primary, .profile-next-secondary {
+  min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 9px 14px; font: 700 10px "Inter", sans-serif; letter-spacing: .8px; text-align: center;
+  text-decoration: none; transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+.profile-next-primary { color: #1c0d05; border: 1px solid #d15f2a; background: var(--orange); }
+.profile-next-primary:hover { transform: translateY(-1px); background: #d3642f; }
+.profile-next-secondary { color: var(--gold); border: 1px solid rgba(255,231,135,.28); background: rgba(255,255,255,.025); }
+.profile-next-secondary:hover { border-color: var(--gold); }
+.profile-next-primary:focus-visible, .profile-next-secondary:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.profile-public-label { color: var(--gold); font: 700 9px "Inter", sans-serif; letter-spacing: 1.2px; }
+.profile-empty-help { padding: 18px; color: var(--hc-muted); font-size: 12px; line-height: 1.55; }
+.profile-empty-help a { display: inline-block; margin-top: 8px; color: var(--gold); font-weight: 700; text-decoration: none; }
+.profile-empty-help a:hover { text-decoration: underline; }
+.team-card .team-helper { margin: 0; color: var(--hc-muted); font-size: 11px; line-height: 1.5; }
+@media (max-width: 760px) {
+  .profile-next-step { align-items: stretch; flex-direction: column; padding: 18px; }
+  .profile-next-actions { width: 100%; grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 470px) { .profile-next-actions { grid-template-columns: 1fr; } }
