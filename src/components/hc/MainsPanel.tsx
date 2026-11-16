@@ -95,19 +95,26 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
   }, [editing, saving]);
 
   return (
-    <article className={"panel team-card" + (editing ? " editing" : "")}>
+    <article id="equipo-principal" className={"panel team-card" + (editing ? " editing" : "")}>
       <div className="panel-heading">
         <div>
           <span className="eyebrow">EQUIPO PRINCIPAL</span>
         </div>
         {own ? (
           <button onClick={() => setEditing(true)} type="button">
-            EDITAR EQUIPO
+            {complete ? "EDITAR EQUIPO" : "CONFIGURAR EQUIPO"}
           </button>
         ) : null}
       </div>
 
       <div className="team-body">
+        <p className="team-helper">
+          {complete
+            ? "POINT es tu luchador principal, ASSIST es tu apoyo y FUSIÓN es la habilidad que combina al equipo."
+            : own
+              ? "Aún no has configurado tu equipo. Elige dos luchadores y una Fusión para mostrar cómo juegas."
+              : "Este jugador todavía no ha configurado su equipo principal."}
+        </p>
         <div className="fighter-stack">
           {[point, assist].map((fighter, index) => (
             <div className="fighter-card" key={(fighter?.id ?? "vacio") + "-" + index}>
@@ -154,7 +161,7 @@ export function MainsPanel({ me, own }: { me: MeResponse; own: boolean }) {
               </button>
             </div>
             <div className="team-modal-body">
-              <span>LUCHADORES · LA SIGUIENTE SELECCIÓN REEMPLAZA AL POINT</span>
+              <span>ELIGE DOS LUCHADORES Y UNA FUSIÓN. EL PRIMERO SERÁ POINT Y EL SEGUNDO ASSIST.</span>
               <div className="fighter-grid">
                 {(roster?.characters ?? []).map((fighter) => (
                   <button
