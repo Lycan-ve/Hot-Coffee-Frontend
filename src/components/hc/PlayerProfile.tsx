@@ -154,9 +154,9 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
         <div className="hero-copy">
           <SectionTitle
             eyebrow="IDENTIDAD COMPETITIVA / 2026"
-            title={own ? "BUENAS," : "PERFIL DE"}
-            accent={name.toUpperCase() + "."}
-            copy={own ? "Tu trayectoria, tu rango y cada pelea que te trajo hasta aquí." : `La trayectoria competitiva de ${name}.`}
+            title={own ? "TU PERFIL" : "PERFIL DE"}
+            accent={name.toUpperCase()}
+            copy={own ? "Consulta tu rango, configura tu equipo y revisa tus resultados." : `Rango, equipo e historial competitivo de ${name}.`}
           />
         </div>
         <div className="hero-motto">
@@ -165,20 +165,54 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
         </div>
       </section>
 
+      {own ? (
+        <section className={`profile-next-step panel ${unplaced ? "is-placing" : "is-ranked"}`} aria-labelledby="profile-next-title">
+          <div className="profile-next-copy">
+            <span className="profile-next-kicker">TU SIGUIENTE PASO</span>
+            <h2 id="profile-next-title">
+              {unplaced ? "Completa tus 5 sets de clasificación" : "Sigue avanzando en tu rango"}
+            </h2>
+            <p>
+              {unplaced
+                ? `Llevas ${Math.min(games, 5)} de 5 sets. Completa los que faltan para recibir tu primer rango.`
+                : `Tu rango actual es ${rank.displayName}. Busca un rival para seguir sumando puntos y avanzar en la clasificación.`}
+            </p>
+            {unplaced ? (
+              <>
+                <div className="profile-placement-progress" role="progressbar" aria-valuenow={Math.min(games, 5)} aria-valuemin={0} aria-valuemax={5} aria-label="Sets de clasificación completados">
+                  <span style={{ width: String(progress) + "%" }} />
+                </div>
+                <small>{Math.max(0, 5 - games)} sets para obtener tu rango</small>
+              </>
+            ) : (
+              <small>{rank.isRp ? `${rank.rp} RP acumulados` : `${rank.lp} LP en tu división actual`}</small>
+            )}
+          </div>
+          <div className="profile-next-actions">
+            <Link href="/matchmaking" className="profile-next-primary">BUSCAR PARTIDA <span aria-hidden="true">→</span></Link>
+            <a href="#equipo-principal" className="profile-next-secondary">
+              {me.mains ? "REVISAR MI EQUIPO" : "CONFIGURAR MI EQUIPO"}
+            </a>
+          </div>
+        </section>
+      ) : null}
+
       <section className="profile-grid">
         <article className="player-card cut-panel">
           <div className="player-backdrop" />
           <div className="player-card-top">
-            <span className="online">
-              <i /> {own ? "SESIÓN ACTIVA" : "PERFIL PÚBLICO"}
-            </span>
+            {own ? (
+              <span className="online"><i /> TU PERFIL</span>
+            ) : (
+              <span className="profile-public-label">PERFIL PÚBLICO</span>
+            )}
             <div className="card-top-right">
               {!own ? (
                 <Link href="/" className="icon-button">
                   ← RANKING
                 </Link>
               ) : null}
-              <span className="live-badge">LIVE</span>
+              <span className="live-badge">HOT COFFEE · 2XKO</span>
             </div>
           </div>
           <div className="player-identity" style={{ "--rank-accent": rank.color } as CSSProperties}>
@@ -337,7 +371,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                 <i className="zone-dot" />
                 TORNEOS
               </h3>
-              <span>{own ? "TU" : "SU"} CARRERA EN START.GG</span>
+              <span>{own ? "TUS RESULTADOS EN TORNEOS" : "RESULTADOS EN TORNEOS"}</span>
             </div>
             <span>{titles} TÍTULOS</span>
           </div>
@@ -371,7 +405,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           )}
           <div className="zone-subheading">HISTORIAL DE TORNEOS</div>
           {tournaments.length === 0 ? (
-            <p className="hc-empty">Sin torneos registrados.</p>
+            <p className="hc-empty">{own ? "Cuando participes en un torneo procesado, tus resultados aparecerán aquí." : "Este jugador todavía no tiene torneos registrados."}</p>
           ) : (
             <div className="hc-tournaments">
               {orderedTournaments.map((t) => (
@@ -389,7 +423,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                 <i className="zone-dot" />
                 MATCHMAKING
               </h3>
-              <span>RENDIMIENTO EN LA COLA /FT</span>
+              <span>SETS FT 3 JUGADOS DESDE LA WEB</span>
             </div>
             <span>{games} SETS</span>
           </div>
@@ -442,7 +476,10 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           <div className="zone-subheading">HISTORIAL DE COMBATES</div>
           <div className="match-list">
             {fights.length === 0 ? (
-              <p className="hc-empty">Aún no hay peleas de matchmaking registradas.</p>
+              <div className="profile-empty-help">
+                <p>{own ? "Todavía no tienes sets registrados. Busca tu primera partida para empezar con tus 5 sets de clasificación." : "Este jugador todavía no tiene sets de matchmaking registrados."}</p>
+                {own ? <Link href="/matchmaking">Buscar mi primera partida →</Link> : null}
+              </div>
             ) : (
               visible.map((f, i) => <FightRow key={f.id} fight={f} index={i} />)
             )}
