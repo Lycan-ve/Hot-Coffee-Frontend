@@ -21,14 +21,9 @@ const clock = (ms: number) => {
 };
 
 // Búsqueda con mínimo dramático: aunque la cola empareje al instante, se
-// muestran al menos MIN_SEARCH_MS de búsqueda con mensajes de progreso.
+// muestran al menos MIN_SEARCH_MS de transición antes de revelar al rival.
+// El mensaje de progreso llega del backend en cada actualización de estado.
 const MIN_SEARCH_MS = 3500;
-const SEARCH_FLAVORS = [
-  "ANALIZANDO TU RANGO…",
-  "MIDIENDO EL NIVEL DE LA COLA…",
-  "CONTACTANDO RIVALES CERCANOS…",
-  "PREPARANDO EL ESCENARIO…",
-];
 
 function VsCard({
   name,
@@ -129,8 +124,7 @@ export default function MatchmakingPage() {
   // Puerta de búsqueda mínima: el rival encontrado no se revela antes de tiempo.
   const revealFound = found && (!searchStart || now - searchStart >= MIN_SEARCH_MS);
   const searchingView = searching || (found && !revealFound);
-  const flavorBase = searchStart ?? (state?.queue ? new Date(state.queue.since).getTime() : now);
-  const flavor = SEARCH_FLAVORS[Math.floor(Math.max(0, now - flavorBase) / 1500) % SEARCH_FLAVORS.length];
+  const flavor = state?.search?.message ?? "ANALIZANDO TU RANGO…";
   const games = me ? me.stats.wins + me.stats.losses : 0;
 
   return (
