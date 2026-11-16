@@ -53,8 +53,8 @@ export default function PerfilPage() {
           {status === "loading" && <PageNotice title="CARGANDO TU FICHA…" message="Un momento, estamos consultando tu perfil." />}
           {status === "anon" && (
             <PageNotice
-              title="TU PRÓXIMA PARTIDA EMPIEZA AQUÍ."
-              message="Conecta tu cuenta de Discord para consultar tu rango, tu historial de peleas y tus resultados en torneos."
+              title="TU PERFIL COMPETITIVO, EN UN SOLO LUGAR."
+              message="Para consultar tu rango, equipo e historial, inicia sesión con Discord. También necesitas ser miembro del servidor Hot Coffee 2XKO para participar en la liga."
               action={<LoginLink />}
             />
           )}
