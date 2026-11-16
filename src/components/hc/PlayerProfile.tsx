@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
+import { MonitorPlay } from "lucide-react";
 import { createPortal } from "react-dom";
 import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, saveCountry, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
@@ -193,6 +194,18 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
             <a href="#equipo-principal" className="profile-next-secondary">
               {me.mains ? "REVISAR MI EQUIPO" : "CONFIGURAR MI EQUIPO"}
             </a>
+            <Link
+              href="/overlay/matchmaking"
+              className="profile-next-overlay"
+              title="Configura las fuentes de navegador para OBS"
+            >
+              <MonitorPlay aria-hidden="true" />
+              <span>
+                CONFIGURAR OVERLAYS
+                <small>Tarjeta de jugador y partida para OBS</small>
+              </span>
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </section>
       ) : null}

@@ -2513,3 +2513,48 @@ button.flag-edit:hover {
   .profile-next-actions { width: 100%; grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 470px) { .profile-next-actions { grid-template-columns: 1fr; } }
+
+/* Acceso a overlays desde el perfil propio: mismo lenguaje visual Hot Coffee. */
+.profile-next-overlay {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  color: var(--gold);
+  border: 1px solid rgba(180, 77, 29, 0.42);
+  background: rgba(180, 77, 29, 0.09);
+  font: 700 10px "Inter", sans-serif;
+  letter-spacing: .7px;
+  text-align: left;
+  text-decoration: none;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+.profile-next-overlay:hover {
+  transform: translateY(-1px);
+  border-color: var(--orange);
+  background: rgba(180, 77, 29, 0.16);
+}
+.profile-next-overlay > svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--orange);
+}
+.profile-next-overlay > span:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+.profile-next-overlay small {
+  display: block;
+  margin-top: 3px;
+  color: var(--hc-muted);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.profile-next-overlay:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
