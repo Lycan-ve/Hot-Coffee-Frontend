@@ -27,8 +27,17 @@ export interface QueueProposal {
   expiresAt: string;
 }
 
+export interface QueueSearchProgress {
+  phase: 'analyzing' | 'measuring' | 'contacting' | 'preparing';
+  message: string;
+  candidateCount: number;
+  elapsedSeconds: number;
+  updatedAt: string;
+}
+
 export interface QueueState {
   status: 'idle' | 'searching' | 'found' | 'confirmed' | 'matched' | 'failed';
+  search?: QueueSearchProgress;
   queue?: { ft: number; since: string; players: number; radius: number; wide?: boolean };
   proposal?: QueueProposal;
   match?: { id: number; threadId: string; threadUrl: string; web: boolean };
