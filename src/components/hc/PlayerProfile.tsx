@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -233,6 +234,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
         </section>
       ) : null}
 
+      <div className={`profile-brief-row${own ? "" : " brief-solo"}`}>
       {own ? (
         <section className={`profile-country panel ${countryConfirmed ? "is-confirmed" : "needs-confirmation"}`} aria-labelledby="profile-country-title">
           <div className="profile-country-copy">
@@ -303,6 +305,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           </p>
         ) : null}
       </section>
+      </div>
 
       <section className="profile-grid">
         <article className="player-card cut-panel">
@@ -323,7 +326,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
             </div>
           </div>
           <div className="player-identity" style={{ "--rank-accent": rank.color } as CSSProperties}>
-            <div className="rank-emblem rfx-host" aria-label={"Rango " + rank.displayName}>
+            <div className={`rank-emblem rfx-host${rank.iconPath ? "" : " is-unplaced"}`} aria-label={"Rango " + rank.displayName}>
               {/* Sin rango aún: insignia genérica, nunca la de una división. */}
               {rank.iconPath ? (
                 <>
@@ -369,12 +372,20 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   <PlayerFlag country={me.user.country} state={me.user.state} />
                 ) : null}
               </div>
-              <div className="rank-line">
-                <span>{unplaced ? "SIN RANGO" : rank.displayName.toUpperCase()}</span>
-                <i />
-                <strong>
-                  {unplaced ? `CLASIFICANDO ${Math.min(games, 5)}/5 · ${rank.rp} RP` : `${rank.rp} RP`}
-                </strong>
+              <div className={`rank-line${unplaced ? " is-placing" : ""}`}>
+                <span className={unplaced ? "placing-label" : ""}>
+                  {unplaced ? "SIN RANGO" : rank.displayName.toUpperCase()}
+                </span>
+                {unplaced ? (
+                  <strong className="placing-chip">
+                    Clasificando {Math.min(games, 5)}/5 · {fmtNumber(rank.rp)} RP
+                  </strong>
+                ) : (
+                  <>
+                    <i />
+                    <strong>{rank.rp} RP</strong>
+                  </>
+                )}
                 {stats.rankingPosition > 0 && (
                   <>
                     <i />
@@ -536,8 +547,8 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           </div>
           <div className="zone-stats zone-stats-mm">
             <div>
-              <small>PUNTOS DE LIGA</small>
-              <strong className="gold">{unplaced ? "—" : stats.points}</strong>
+              <small>RP DE LIGA</small>
+              <strong className="gold">{fmtNumber(rank.rp)}</strong>
             </div>
             <div>
               <small>POSICIÓN EN LA TABLA</small>

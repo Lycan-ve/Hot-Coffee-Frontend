@@ -1,3 +1,4 @@
+
 :root {
   color: #fff;
   background: #18100b;
@@ -2676,4 +2677,41 @@ button.flag-edit:hover {
 @media (max-width: 700px) {
   .profile-glicko { grid-template-columns: 1fr; }
   .profile-glicko-metrics { gap: 28px; }
+}
+
+
+/* ---------- Perfil: estado "clasificando" y paneles superiores ---------- */
+/* Nacionalidad + Glicko comparten fila: menos apilamiento repetitivo. */
+.profile-brief-row { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; align-items: stretch; margin: 0 0 14px; }
+.profile-brief-row.brief-solo { grid-template-columns: 1fr; }
+.profile-brief-row .profile-country,
+.profile-brief-row .profile-glicko { margin: 0; height: 100%; }
+@media (max-width: 1100px) { .profile-brief-row { grid-template-columns: 1fr; } }
+
+/* Chip "Clasificando n/5 · RP": legible, no un muro en negrita 24px. */
+.rank-line .placing-label { color: var(--gold); }
+.rank-line .placing-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  color: var(--hc-muted);
+  font: 700 10px "Inter", sans-serif;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+/* Emblema provisional: ranura apagada, sin flotar ni brillar como un rango. */
+.rank-emblem.is-unplaced { animation: none; filter: none; }
+.rank-emblem.is-unplaced::before {
+  content: "";
+  position: absolute;
+  inset: 6px 16px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.18);
+  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.045), transparent 62%);
+}
+.rank-emblem.is-unplaced img { filter: grayscale(0.9) brightness(0.6); }
+@media (max-width: 470px) {
+  .rank-line { white-space: normal; flex-wrap: wrap; row-gap: 6px; }
+  .rank-emblem.is-unplaced::before { inset: 4px 10px; }
 }

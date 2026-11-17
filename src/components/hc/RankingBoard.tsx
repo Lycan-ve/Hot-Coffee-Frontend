@@ -1,3 +1,4 @@
+
 'use client';
 
 import "../../hotcoffee-ranking.css";
@@ -713,7 +714,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                               {mm && (
                                 <small className="rk-sub">
                                   {!r.placed
-                                    ? `Clasificando · ${rowGames(r)}/5 sets`
+                                    ? `${fmt(Math.max(0, r.points))} RP en clasificación`
                                     : lastTeam ? `${lastTeam.point.name} / ${lastTeam.assist.name}` : `${r.wins ?? 0}V — ${r.losses ?? 0}D`}
                                 </small>
                               )}
@@ -852,11 +853,13 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
               )}
               <div className="info">
                 <small>{cur?.label ?? (mm ? "#1 DEL MATCHMAKING" : "CAMPEÓN DEL ÚLTIMO TORNEO")}</small>
-                <div className="row">
-                  <h2>{cur?.name?.toUpperCase() ?? "—"}</h2>
-                  {mm && curProf?.rank ? <RankBadge small rank={curProf.rank} /> : null}
-                  <strong>{cur ? fmt(cur.points) : "—"} <em>PTS</em></strong>
-                </div>
+                {cur ? (
+                  <div className="row">
+                    <h2>{cur.name.toUpperCase()}</h2>
+                    {mm && curProf?.rank ? <RankBadge small rank={curProf.rank} /> : null}
+                    <strong>{fmt(cur.points)} <em>PTS</em></strong>
+                  </div>
+                ) : null}
                 <p>
                   {cur?.sub ||
                     (mm ? "Gana sets /ft para aparecer aquí." : "Gana el próximo torneo para aparecer aquí.")}
