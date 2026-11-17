@@ -1,3 +1,4 @@
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hot-coffee-backend.onrender.com';
 
 const TOKEN_KEY = 'hc_token';
@@ -7,7 +8,6 @@ export interface RankInfo {
   tier: string;
   displayName: string;
   isRp: boolean;
-  rp: number;
   rp: number;
   points: number;
   rpToNext: number;

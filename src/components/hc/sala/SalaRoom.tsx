@@ -1,3 +1,4 @@
+
 'use client';
 
 /**
@@ -1713,7 +1714,7 @@ function LpProgress(props: { after: number; delta: number; won: boolean; rank?: 
       <p className="sx-lp-foot">
         {done
           ? rank && rank.next
-            ? 'Faltan ' + rank.lpToNext + (rank.nextIsRp ? ' pts' : ' LP') + ' para ' + rank.next + ' · total ' + after + ' pts'
+            ? 'Faltan ' + rank.rpToNext + (rank.nextIsRp ? ' pts' : ' LP') + ' para ' + rank.next + ' · total ' + after + ' pts'
             : 'Total ' + after + ' pts'
           : won
             ? 'Sumando LP…'
