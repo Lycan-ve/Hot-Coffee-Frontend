@@ -130,10 +130,9 @@ const DEFAULT_RANGE = 10;
 
 // El ranking de matchmaking parte de Gold I (1.000 pts): el total mostrado
 // incluye la base, igual que la escalera de rangos que calcula el backend.
-const MM_BASE_POINTS = 1000;
 
 // Partidas de clasificación: sin las 5 primeras no hay rango; el backend lo
-// decide con el LP neto de esos 5 sets y la web muestra "Clasificando n/5".
+// decide con el RP neto de esos 5 sets y la web muestra "Clasificando n/5".
 const PLACEMENT_GAMES = 5;
 const mmGames = (p: MmPlayer) => p.games ?? p.wins + p.losses;
 const mmPlaced = (p: MmPlayer) => p.placed ?? mmGames(p) >= PLACEMENT_GAMES;
@@ -278,7 +277,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         wins: p.wins,
         losses: p.losses,
         placed: mmPlaced(p),
-        points: MM_BASE_POINTS + p.points,
+        points: Math.max(0, p.points),
         glickoRating: p.glickoRating ?? 1500,
         glickoRD: p.glickoRD ?? 350,
         country: p.country,
@@ -365,7 +364,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
           avatar: p.avatarUrl,
           wins: p.wins,
           losses: p.losses,
-          points: MM_BASE_POINTS + p.points,
+          points: Math.max(0, p.points),
           profileId: p.discordId,
           sub: sub ?? `${p.wins}V — ${p.losses}D en sets /ft`,
         });
@@ -615,7 +614,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                   ? series
                     ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
                     : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
-                  : "GLICKO-2 · HABILIDAD ESTIMADA + LP · PROGRESIÓN"}
+                  : "GLICKO-2 · HABILIDAD ESTIMADA + RP · PROGRESIÓN"}
               </span>
             </div>
             <div className="rk-tools">
@@ -680,7 +679,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
               <table>
                 <thead>
                   <tr>
-                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}{mm && <th title="Rating de habilidad Glicko-2 y desviación RD">GLICKO-2 ↓</th>}<th className="accent">{mm ? "LP ↓" : "PUNTOS ↓"}</th><th className="r">PERFIL</th>
+                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}{mm && <th title="Rating de habilidad Glicko-2 y desviación RD">GLICKO-2 ↓</th>}<th className="accent">{mm ? "RP ↓" : "PUNTOS ↓"}</th><th className="r">PERFIL</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -782,7 +781,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                           </td>
                         )}
                         <td>
-                          <span className={`pts ${top ? "top" : ""}`}>{mm && !r.placed ? "—" : fmt(r.points)}</span>
+                          <span className={`pts ${top ? "top" : ""}`}>{fmt(Math.max(0, r.points))}</span>
                         </td>
                         <td className="r">
                           {r.profileId ? (
