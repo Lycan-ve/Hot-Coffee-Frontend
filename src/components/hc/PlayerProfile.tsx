@@ -10,7 +10,7 @@ import { A, PlayerFlag, SectionTitle, flagEmoji } from "./shared";
 import { MainsPanel } from "./MainsPanel";
 import { RankFx } from "./RankFx";
 
-const fmtNumber = (n: number) => String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ".");
+const fmtNumber = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 const fmtDate = (iso: string) => {
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
