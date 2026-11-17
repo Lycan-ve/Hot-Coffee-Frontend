@@ -10,6 +10,7 @@ import { A, PlayerFlag, SectionTitle, flagEmoji } from "./shared";
 import { MainsPanel } from "./MainsPanel";
 import { RankFx } from "./RankFx";
 
+const fmtNumber = (n: number) => String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ".");
 const fmtDate = (iso: string) => {
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
@@ -111,6 +112,11 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
     : "DESCONECTADO";
   const activity = presenceStatus === "offline" ? "" : (me.presence?.activity ?? "").trim();
   const { stats, rank } = me;
+  const glickoRating = me.glicko?.rating ?? 1500;
+  const glickoRD = me.glicko?.rd ?? 350;
+  const hasGlickoResults = Boolean(me.glicko?.ratedAt);
+  const glickoLow = Math.round(glickoRating - 2 * glickoRD);
+  const glickoHigh = Math.round(glickoRating + 2 * glickoRD);
   // Clasificación: nadie parte con rango; sin los 5 primeros sets el backend
   // manda el display "SIN RANGO" (sin iconPath).
   const unplaced = rank.placed === false;
@@ -209,6 +215,34 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           </div>
         </section>
       ) : null}
+
+      <section className="profile-glicko panel" aria-label="Habilidad estimada Glicko-2">
+        <div className="profile-glicko-copy">
+          <span className="profile-next-kicker">HABILIDAD COMPETITIVA · GLICKO-2</span>
+          <h2>{hasGlickoResults ? "Tu rating de habilidad" : "Rating en calibración"}</h2>
+          <p>
+            {hasGlickoResults
+              ? "Esta estimación ayuda a encontrar rivales de nivel parecido. Se actualiza cuando termina cada set."
+              : "Al completar sets confirmados, el sistema empezará a estimar tu habilidad. Tu rango y LP siguen mostrando tu progreso visible."}
+          </p>
+        </div>
+        <div className="profile-glicko-metrics">
+          <div>
+            <strong>{fmtNumber(Math.round(glickoRating))}</strong>
+            <small>RATING</small>
+          </div>
+          <div>
+            <strong>±{Math.round(glickoRD)}</strong>
+            <small>RD · INCERTIDUMBRE</small>
+          </div>
+        </div>
+        {hasGlickoResults ? (
+          <p className="profile-glicko-range">
+            Intervalo orientativo del 95%: <strong>{fmtNumber(glickoLow)}–{fmtNumber(glickoHigh)}</strong>.
+            Cuanto menor sea la RD, más precisa es la estimación.
+          </p>
+        ) : null}
+      </section>
 
       <section className="profile-grid">
         <article className="player-card cut-panel">
