@@ -330,7 +330,7 @@ export default function HomeRankings() {
                   <td className="hm-col-sub">
                     {r.sub ? <span className="hm-rank-sub">{r.sub}</span> : <span className="hm-rank-none">—</span>}
                   </td>
-                  <td className="hm-col-pts">{r.points == null ? "—" : `${fmt(r.points)} pts`}</td>
+                  <td className="hm-col-pts">{r.points == null ? "—" : `${fmt(r.points)} ${mode === "online" ? "RP" : "pts"}`}</td>
                 </tr>
               ))}
             </tbody>
