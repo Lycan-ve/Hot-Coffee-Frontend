@@ -332,7 +332,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   >
                     {me.user.country ? <PlayerFlag country={me.user.country} state={me.user.state} /> : "🌍+"}
                   </button>
-                ) : me.user.country ? (
+                ) : me.user.country && me.user.countryConfirmed ? (
                   <PlayerFlag country={me.user.country} state={me.user.state} />
                 ) : null}
               </div>
