@@ -199,8 +199,8 @@ export default function MatchmakingPage() {
                     <>
                       <div>
                         <span>◆</span>
-                        <strong>{me.rank.isRp ? `${me.rank.rp} RP` : `${me.rank.lp} LP`}</strong>
-                        <b>{me.rank.isRp ? "" : `FALTAN ${me.rank.lpToNext}`}</b>
+                        <strong>{me.rank.rp} RP</strong>
+                        <b>{me.rank.next ? `FALTAN ${me.rank.rpToNext} RP` : ""}</b>
                       </div>
                       <div>
                         <span>→</span>
