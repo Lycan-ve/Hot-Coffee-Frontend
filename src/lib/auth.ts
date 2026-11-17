@@ -7,10 +7,10 @@ export interface RankInfo {
   tier: string;
   displayName: string;
   isRp: boolean;
-  lp: number;
+  rp: number;
   rp: number;
   points: number;
-  lpToNext: number;
+  rpToNext: number;
   next: string;
   nextIsRp: boolean;
   divisionIndex: number;
@@ -85,7 +85,7 @@ export interface MeResponse {
     tournamentPosition?: number;
   };
   rank: RankInfo;
-  /** Habilidad estimada por Glicko-2; LP/rank siguen siendo la progresión visible. */
+  /** Habilidad estimada por Glicko-2; RP/rango siguen siendo la progresión visible. */
   glicko?: {
     rating: number;
     rd: number;
