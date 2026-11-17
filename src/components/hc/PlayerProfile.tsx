@@ -373,7 +373,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                 <span>{unplaced ? "SIN RANGO" : rank.displayName.toUpperCase()}</span>
                 <i />
                 <strong>
-                  {unplaced ? `CLASIFICANDO ${Math.min(games, 5)}/5` : `${rank.rp} RP`}
+                  {unplaced ? `CLASIFICANDO ${Math.min(games, 5)}/5 · ${rank.rp} RP` : `${rank.rp} RP`}
                 </strong>
                 {stats.rankingPosition > 0 && (
                   <>
