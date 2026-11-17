@@ -192,15 +192,15 @@ export default function MatchmakingPage() {
                   {me.rank.placed === false ? (
                     <div>
                       <span>◆</span>
-                      <strong>CLASIFICANDO</strong>
+                      <strong>CLASIFICANDO · {me.rank.rp} RP</strong>
                       <b>{Math.max(0, 5 - games)} SETS PARA RANGO</b>
                     </div>
                   ) : (
                     <>
                       <div>
                         <span>◆</span>
-                        <strong>{me.rank.isRp ? `${me.rank.rp} RP` : `${me.rank.lp} LP`}</strong>
-                        <b>{me.rank.isRp ? "" : `FALTAN ${me.rank.lpToNext}`}</b>
+                        <strong>{me.rank.rp} RP</strong>
+                        <b>{me.rank.next ? `FALTAN ${me.rank.rpToNext} RP` : ""}</b>
                       </div>
                       <div>
                         <span>→</span>

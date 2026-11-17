@@ -209,7 +209,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                 <small>{Math.max(0, 5 - games)} sets para obtener tu rango</small>
               </>
             ) : (
-              <small>{rank.isRp ? `${rank.rp} RP acumulados` : `${rank.lp} LP en tu división actual`}</small>
+              <small>{rank.rp} RP totales</small>
             )}
           </div>
           <div className="profile-next-actions">
@@ -283,7 +283,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           <p>
             {hasGlickoResults
               ? "Esta estimación ayuda a encontrar rivales de nivel parecido. Se actualiza cuando termina cada set."
-              : "El sistema usará tus sets confirmados para estimar tu habilidad. Tu rango y LP siguen mostrando tu progreso visible."}
+              : "El sistema usará tus sets confirmados para estimar tu habilidad. Tu rango y RP siguen mostrando tu progreso visible."}
           </p>
         </div>
         <div className="profile-glicko-metrics">
@@ -373,7 +373,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                 <span>{unplaced ? "SIN RANGO" : rank.displayName.toUpperCase()}</span>
                 <i />
                 <strong>
-                  {unplaced ? `CLASIFICANDO ${Math.min(games, 5)}/5` : `${rank.isRp ? rank.rp : rank.lp} ${rank.isRp ? "RP" : "LP"}`}
+                  {unplaced ? `CLASIFICANDO ${Math.min(games, 5)}/5 · ${rank.rp} RP` : `${rank.rp} RP`}
                 </strong>
                 {stats.rankingPosition > 0 && (
                   <>
@@ -398,7 +398,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   <>
                     FALTAN{" "}
                     <strong>
-                      {rank.lpToNext} {rank.isRp ? "RP" : "LP"}
+                      {rank.rpToNext} RP
                     </strong>{" "}
                     PARA {rank.next.toUpperCase()}
                   </>
