@@ -53,7 +53,6 @@ const TOP = 8;
 // Puntos base que el ladder de matchmaking suma a los puntos ganados
 // (mismo criterio que /ranking-matchmaking). Los jugadores en clasificación
 // (menos de 5 sets) no muestran puntos todavía.
-const MM_BASE_POINTS = 1000;
 const PLACEMENT_GAMES = 5;
 
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -208,8 +207,8 @@ export default function HomeRankings() {
   } else {
     loading = mmLoading;
     (mm ?? []).slice(0, TOP).forEach((p) => {
-      // Nadie parte con rango: con menos de 5 sets sigue en clasificación
-      // y todavía no muestra puntos en la tabla.
+      // Nadie parte con rango: durante clasificación se muestra el RP provisional
+      // (0 al comenzar); el emblema de rango aparece al completar 5 sets.
       const games = p.wins + p.losses;
       const placing = games < PLACEMENT_GAMES;
       rows.push({
@@ -219,7 +218,7 @@ export default function HomeRankings() {
         sub: placing
           ? `Clasificando ${games}/${PLACEMENT_GAMES} · Glicko ${Math.round(p.glickoRating ?? 1500)}`
           : `${p.wins}V · ${p.losses}D · Glicko ${Math.round(p.glickoRating ?? 1500)}`,
-        points: placing ? null : MM_BASE_POINTS + p.points,
+        points: Math.max(0, p.points),
         profileId: p.discordId,
       });
     });
@@ -291,7 +290,7 @@ export default function HomeRankings() {
                 <th>Top</th>
                 <th>Jugador</th>
                 <th className="hm-col-sub">{mode === "torneos" ? "Equipo" : "Récord"}</th>
-                <th className="hm-col-pts">{isSeason ? "Total temporada" : "Puntos"}</th>
+                <th className="hm-col-pts">{mode === "online" ? "RP" : isSeason ? "Total temporada" : "Puntos"}</th>
               </tr>
             </thead>
             <tbody>
