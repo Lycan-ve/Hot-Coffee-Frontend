@@ -614,7 +614,7 @@ function CountryPicker({ current, onClose }: { current: string; onClose: () => v
         <h3>TU NACIONALIDAD</h3>
         <p>Elige el país que quieres mostrar junto a tu nombre. Al guardarlo, tu elección quedará confirmada y las próximas sincronizaciones de Start.gg no la cambiarán automáticamente.</p>
         <select value={picked} onChange={(e) => setPicked(e.target.value)}>
-          <option value="">— Sin país —</option>
+          <option value="" disabled>— Selecciona tu país —</option>
           {COUNTRIES.map(([code, cname]) => (
             <option key={code} value={code}>
               {flagEmoji(code)} {cname}
@@ -623,8 +623,8 @@ function CountryPicker({ current, onClose }: { current: string; onClose: () => v
         </select>
         {err ? <span className="country-err">{err}</span> : null}
         <div className="row">
-          <button type="button" className="country-save" disabled={saving} onClick={save}>
-            {saving ? "GUARDANDO…" : "GUARDAR Y CONFIRMAR"}
+          <button type="button" className="country-save" disabled={saving || !picked} onClick={save}>
+            {saving ? "GUARDANDO…" : picked ? "GUARDAR Y CONFIRMAR" : "SELECCIONA UN PAÍS"}
           </button>
           <button type="button" className="country-cancel" disabled={saving} onClick={onClose}>
             CANCELAR
