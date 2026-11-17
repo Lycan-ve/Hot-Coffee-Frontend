@@ -2558,3 +2558,69 @@ button.flag-edit:hover {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
 }
+
+/* ---------- Perfil: confirmar nacionalidad de forma visible ---------- */
+.profile-country {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 0 14px;
+  padding: 18px 22px;
+  border-color: rgba(180, 77, 29, .42);
+  background: radial-gradient(circle at 6% 20%, rgba(180,77,29,.15), transparent 45%), var(--panel);
+}
+.profile-country.needs-confirmation { box-shadow: inset 3px 0 var(--orange); }
+.profile-country.is-confirmed { box-shadow: inset 3px 0 var(--success); }
+.profile-country-copy { min-width: 0; flex: 1; }
+.profile-country-copy h2 {
+  margin-top: 4px;
+  color: #fff;
+  font: 700 clamp(22px, 2.6vw, 29px)/1.05 "Barlow Condensed", sans-serif;
+}
+.profile-country-copy p {
+  margin-top: 6px;
+  color: var(--hc-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.profile-country-value {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  color: var(--gold);
+}
+.profile-country-value .player-flag { font-size: 20px; }
+.profile-country-value strong { color: #fff; font: 700 18px "Barlow Condensed", sans-serif; }
+.profile-country-value small { color: var(--hc-muted); font-size: 11px; }
+.profile-country-empty { display: block; margin-top: 9px; color: var(--gold); font-size: 11px; }
+.profile-country-actions { display: grid; gap: 8px; width: min(100%, 250px); flex: 0 0 auto; }
+.profile-country-confirm,
+.profile-country-edit {
+  min-height: 40px;
+  padding: 9px 13px;
+  font: 700 10px "Inter", sans-serif;
+  letter-spacing: .6px;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.profile-country-confirm {
+  color: #1c0d05;
+  background: var(--orange);
+  border: 1px solid #d15f2a;
+}
+.profile-country-confirm:hover:not(:disabled) { background: #d3642f; transform: translateY(-1px); }
+.profile-country-confirm:disabled { opacity: .6; cursor: wait; }
+.profile-country-edit {
+  color: var(--gold);
+  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255,231,135,.28);
+}
+.profile-country-edit:hover { border-color: var(--gold); }
+.profile-country-confirm:focus-visible,
+.profile-country-edit:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.profile-country-error { display: block; margin-top: 7px; color: var(--danger); font-size: 11px; }
+@media (max-width: 760px) {
+  .profile-country { align-items: stretch; flex-direction: column; padding: 17px; }
+  .profile-country-actions { width: 100%; }
+}
