@@ -251,7 +251,6 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
               <div className="profile-country-value">
                 <PlayerFlag country={countryCode} state={me.user.state} />
                 <strong>{countryName || countryCode}</strong>
-                {me.user.state ? <small>· Región {me.user.state}</small> : null}
               </div>
             ) : (
               <span className="profile-country-empty">Todavía no hay una nacionalidad seleccionada.</span>
