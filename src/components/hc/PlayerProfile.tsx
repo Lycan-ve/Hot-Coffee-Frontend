@@ -101,6 +101,8 @@ function TournamentLink({ t, featured }: { t: ProfileTournament; featured?: bool
 export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
   const [showAll, setShowAll] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [confirmingCountry, setConfirmingCountry] = useState(false);
+  const [countryError, setCountryError] = useState<string | null>(null);
   const name = displayName(me);
   // Estado de Discord en vivo: punto de color, etiqueta y JUGANDO X.
   const presenceStatus = me.presence?.status ?? "offline";
@@ -129,6 +131,21 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
       return b.eventId - a.eventId;
     });
   }, [tournaments]);
+  const countryCode = (me.user.country ?? "").toUpperCase();
+  const countryName = COUNTRIES.find(([code]) => code === countryCode)?.[1] ?? "";
+  const countryConfirmed = me.user.countryConfirmed === true;
+  const confirmCountry = async () => {
+    if (!countryCode || confirmingCountry) return;
+    setConfirmingCountry(true);
+    setCountryError(null);
+    const problem = await saveCountry(countryCode, true);
+    setConfirmingCountry(false);
+    if (problem) {
+      setCountryError(problem);
+      return;
+    }
+    window.location.reload();
+  };
   const games = stats.wins + stats.losses;
   const winRate = games ? Math.round((stats.wins / games) * 100) : 0;
   const titles = tournaments.filter((t) => t.isWinner).length;
@@ -210,6 +227,49 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
         </section>
       ) : null}
 
+      {own ? (
+        <section className={`profile-country panel ${countryConfirmed ? "is-confirmed" : "needs-confirmation"}`} aria-labelledby="profile-country-title">
+          <div className="profile-country-copy">
+            <span className="profile-next-kicker">NACIONALIDAD DEL PERFIL</span>
+            <h2 id="profile-country-title">
+              {countryConfirmed
+                ? "Tu nacionalidad está confirmada"
+                : countryCode
+                  ? "Confirma tu nacionalidad"
+                  : "Indica tu nacionalidad"}
+            </h2>
+            <p>
+              {countryConfirmed
+                ? "Esta es la bandera que se mostrará junto a tu nombre en los perfiles, rankings y matchmaking."
+                : countryCode
+                  ? me.user.countrySource === "startgg"
+                    ? "Start.gg encontró este país en tu perfil. Confirma que es correcto o elige otro."
+                    : "Revisa el país de tu perfil y confírmalo para que podamos mostrar tu bandera."
+                  : "Elige el país que quieres mostrar junto a tu nombre en los perfiles, rankings y matchmaking."}
+            </p>
+            {countryCode ? (
+              <div className="profile-country-value">
+                <PlayerFlag country={countryCode} state={me.user.state} />
+                <strong>{countryName || countryCode}</strong>
+              </div>
+            ) : (
+              <span className="profile-country-empty">Todavía no hay una nacionalidad seleccionada.</span>
+            )}
+            {countryError ? <span className="profile-country-error" role="alert">{countryError}</span> : null}
+          </div>
+          <div className="profile-country-actions">
+            {!countryConfirmed && countryCode ? (
+              <button type="button" className="profile-country-confirm" disabled={confirmingCountry} onClick={confirmCountry}>
+                {confirmingCountry ? "CONFIRMANDO…" : "CONFIRMAR MI NACIONALIDAD"}
+              </button>
+            ) : null}
+            <button type="button" className="profile-country-edit" onClick={() => setPickerOpen(true)}>
+              {countryCode ? "CAMBIAR PAÍS" : "SELECCIONAR PAÍS"}
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="profile-grid">
         <article className="player-card cut-panel">
           <div className="player-backdrop" />
@@ -266,12 +326,12 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   <button
                     type="button"
                     className="flag-edit"
-                    title={me.user.country ? "Cambiar tu nacionalidad" : "Elegir tu nacionalidad"}
+                    title={me.user.countryConfirmed ? "Cambiar tu nacionalidad" : "Confirmar o cambiar tu nacionalidad"}
                     onClick={() => setPickerOpen(true)}
                   >
                     {me.user.country ? <PlayerFlag country={me.user.country} state={me.user.state} /> : "🌍+"}
                   </button>
-                ) : me.user.country ? (
+                ) : me.user.country && me.user.countryConfirmed ? (
                   <PlayerFlag country={me.user.country} state={me.user.state} />
                 ) : null}
               </div>
@@ -552,9 +612,9 @@ function CountryPicker({ current, onClose }: { current: string; onClose: () => v
     <div className="country-backdrop" onClick={saving ? undefined : onClose}>
       <div className="country-modal" onClick={(e) => e.stopPropagation()}>
         <h3>TU NACIONALIDAD</h3>
-        <p>Elige tu país a mano: la bandera se muestra en tu perfil, en los rankings y en el matchmaking. Ojo: si tu perfil de Start.gg tiene ubicación, la sync la tomará de allí y sobrescribirá tu elección.</p>
+        <p>Elige el país que quieres mostrar junto a tu nombre. Al guardarlo, tu elección quedará confirmada y las próximas sincronizaciones de Start.gg no la cambiarán automáticamente.</p>
         <select value={picked} onChange={(e) => setPicked(e.target.value)}>
-          <option value="">— Sin país —</option>
+          <option value="" disabled>— Selecciona tu país —</option>
           {COUNTRIES.map(([code, cname]) => (
             <option key={code} value={code}>
               {flagEmoji(code)} {cname}
@@ -563,8 +623,8 @@ function CountryPicker({ current, onClose }: { current: string; onClose: () => v
         </select>
         {err ? <span className="country-err">{err}</span> : null}
         <div className="row">
-          <button type="button" className="country-save" disabled={saving} onClick={save}>
-            {saving ? "GUARDANDO…" : "GUARDAR"}
+          <button type="button" className="country-save" disabled={saving || !picked} onClick={save}>
+            {saving ? "GUARDANDO…" : picked ? "GUARDAR Y CONFIRMAR" : "SELECCIONA UN PAÍS"}
           </button>
           <button type="button" className="country-cancel" disabled={saving} onClick={onClose}>
             CANCELAR

@@ -71,6 +71,8 @@ export interface MeResponse {
     state?: string;
     /** "startgg" si la nacionalidad vino del perfil de Start.gg; "manual" si la eligió a mano. */
     countrySource?: string;
+    /** true cuando el jugador confirmó expresamente su nacionalidad. */
+    countryConfirmed?: boolean;
   };
   stats: {
     points: number;
@@ -189,17 +191,18 @@ export function fuseIconUrl(fuseId: string): string {
 }
 
 /**
- * Guarda la nacionalidad (código ISO 3166-1 alpha-2) del jugador autenticado.
- * POST /api/auth/country { country } → null si OK, mensaje de error si falla.
+ * Guarda o confirma la nacionalidad del jugador autenticado.
+ * POST /api/auth/country { country, confirm? } → null si OK, mensaje si falla.
+ * confirm=true valida el país sugerido por Start.gg sin perder el estado/región.
  */
-export async function saveCountry(country: string): Promise<string | null> {
+export async function saveCountry(country: string, confirm = false): Promise<string | null> {
   const token = getToken();
   if (!token) return 'Inicia sesión de nuevo para guardar tu país.';
   try {
     const res = await fetch(`${API_URL}/api/auth/country`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ country }),
+      body: JSON.stringify({ country, confirm }),
     });
     if (res.ok) return null;
     const data = await res.json().catch(() => null);
