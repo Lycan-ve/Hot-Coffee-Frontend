@@ -1,4 +1,5 @@
 
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hot-coffee-backend.onrender.com';
 
 const TOKEN_KEY = 'hc_token';
@@ -58,6 +59,16 @@ export interface ProfileTournament {
   isWinner: boolean;
 }
 
+/** Plataforma de juego del jugador (los códigos los valida el backend). */
+export type SocialPlatform = 'PC' | 'PS5' | 'XBOX';
+
+/** Red social pública del jugador; el backend arma la URL con dominio seguro. */
+export interface SocialLink {
+  kind: string;
+  handle: string;
+  url: string;
+}
+
 export interface MeResponse {
   user: {
     discordId: string;
@@ -73,6 +84,12 @@ export interface MeResponse {
     countrySource?: string;
     /** true cuando el jugador confirmó expresamente su nacionalidad. */
     countryConfirmed?: boolean;
+    /** Bio corta del perfil (opcional; el backend la recorta a 200). */
+    bio?: string;
+    /** Plataformas de juego del jugador (PC, PS5, XBOX). */
+    platforms?: SocialPlatform[];
+    /** Redes sociales con URL segura armada por el backend. */
+    socials?: SocialLink[];
   };
   stats: {
     points: number;
@@ -214,6 +231,27 @@ export async function saveCountry(country: string, confirm = false): Promise<str
     if (res.ok) return null;
     const data = await res.json().catch(() => null);
     return data?.message || 'No se pudo guardar tu país. Intenta de nuevo.';
+  } catch {
+    return 'No se pudo conectar con el servidor.';
+  }
+}
+
+/**
+ * Guarda las preferencias visibles del perfil: bio corta, plataformas de
+ * juego y redes sociales. POST /api/auth/profile → null si OK, mensaje si falla.
+ */
+export async function saveProfile(input: { bio?: string; platforms?: string[]; socials?: { kind: string; handle: string }[] }): Promise<string | null> {
+  const token = getToken();
+  if (!token) return 'Inicia sesión de nuevo para guardar tu perfil.';
+  try {
+    const res = await fetch(`${API_URL}/api/auth/profile`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (res.ok) return null;
+    const data = await res.json().catch(() => null);
+    return data?.message || 'No se pudo guardar tu perfil. Intenta de nuevo.';
   } catch {
     return 'No se pudo conectar con el servidor.';
   }

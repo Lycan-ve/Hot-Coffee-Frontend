@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
 import { MonitorPlay } from "lucide-react";
 import { createPortal } from "react-dom";
-import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, saveCountry, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament } from "@/lib/auth";
+import { fuseIconUrl, rankIconFallbackUrl, rankIconUrl, saveCountry, saveProfile, type MeResponse, type ProfileFight, type ProfileTeam, type ProfileTournament, type SocialLink, type SocialPlatform } from "@/lib/auth";
 import { displayName } from "./DiscordLogin";
 import { A, PlayerFlag, SectionTitle, flagEmoji } from "./shared";
 import { MainsPanel } from "./MainsPanel";
@@ -103,6 +104,7 @@ function TournamentLink({ t, featured }: { t: ProfileTournament; featured?: bool
 export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
   const [showAll, setShowAll] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [confirmingCountry, setConfirmingCountry] = useState(false);
   const [countryError, setCountryError] = useState<string | null>(null);
   const name = displayName(me);
@@ -138,6 +140,9 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
       return b.eventId - a.eventId;
     });
   }, [tournaments]);
+  // Preferencias visibles del perfil (bio, plataformas y redes).
+  const bio = (me.user.bio ?? "").trim();
+  const socials = me.user.socials ?? [];
   const countryCode = (me.user.country ?? "").toUpperCase();
   const countryName = COUNTRIES.find(([code]) => code === countryCode)?.[1] ?? "";
   const countryConfirmed = me.user.countryConfirmed === true;
@@ -322,6 +327,11 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                   ← RANKING
                 </Link>
               ) : null}
+              {own ? (
+                <button type="button" className="profile-edit-button" onClick={() => setEditOpen(true)}>
+                  EDITAR PERFIL
+                </button>
+              ) : null}
               <span className="live-badge">HOT COFFEE · 2XKO</span>
             </div>
           </div>
@@ -371,6 +381,11 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                 ) : me.user.country && me.user.countryConfirmed ? (
                   <PlayerFlag country={me.user.country} state={me.user.state} />
                 ) : null}
+                {(me.user.platforms ?? []).map((p) => (
+                  <span key={p} className={`platform-chip is-${p.toLowerCase()}`}>
+                    {PLATFORM_LABELS[p] ?? p}
+                  </span>
+                ))}
               </div>
               <div className={`rank-line${unplaced ? " is-placing" : ""}`}>
                 <span className={unplaced ? "placing-label" : ""}>
@@ -434,9 +449,29 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
               </div>
             </div>
           </div>
+          {bio || socials.length > 0 ? (
+            <div className="player-bio">
+              {bio ? <p className="bio-text">{bio}</p> : null}
+              {socials.length > 0 ? (
+                <div className="social-row">
+                  {socials.map((s: SocialLink) => (
+                    <a key={s.kind} href={s.url} target="_blank" rel="noopener noreferrer" className={`social-chip is-${s.kind}`}>
+                      {SOCIAL_LABELS[s.kind] ?? s.kind.toUpperCase()}
+                      <small>@{s.handle}</small>
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : own ? (
+            <div className="player-bio is-empty">
+              <p>Cuéntale a la comunidad cómo juegas: tu estilo, tus horarios y en qué plataforma. Usa el botón EDITAR PERFIL.</p>
+            </div>
+          ) : null}
         </article>
 
         {pickerOpen ? <CountryPicker current={me.user.country ?? ""} onClose={() => setPickerOpen(false)} /> : null}
+        {editOpen ? <ProfileEditor me={me} onClose={() => setEditOpen(false)} /> : null}
 
         <MainsPanel me={me} own={own} />
 
@@ -670,6 +705,107 @@ function CountryPicker({ current, onClose }: { current: string; onClose: () => v
         <div className="row">
           <button type="button" className="country-save" disabled={saving || !picked} onClick={save}>
             {saving ? "GUARDANDO…" : picked ? "GUARDAR Y CONFIRMAR" : "SELECCIONA UN PAÍS"}
+          </button>
+          <button type="button" className="country-cancel" disabled={saving} onClick={onClose}>
+            CANCELAR
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+// Etiquetas visibles de plataformas y redes (los códigos los valida el backend).
+const PLATFORM_LABELS: Record<string, string> = { PC: 'PC', PS5: 'PS5', XBOX: 'XBOX' };
+const SOCIAL_LABELS: Record<string, string> = {
+  twitter: 'X / TWITTER',
+  twitch: 'TWITCH',
+  youtube: 'YOUTUBE',
+  instagram: 'INSTAGRAM',
+  tiktok: 'TIKTOK',
+  startgg: 'START.GG',
+};
+const SOCIAL_KEYS = Object.keys(SOCIAL_LABELS);
+
+// ProfileEditor: modal para editar bio, plataformas de juego y redes
+// sociales. Todo se guarda junto con POST /api/auth/profile (el backend
+// valida dominios y límites).
+function ProfileEditor({ me, onClose }: { me: MeResponse; onClose: () => void }) {
+  const [bio, setBio] = useState(me.user.bio ?? '');
+  const [platforms, setPlatforms] = useState<SocialPlatform[]>(() =>
+    (['PC', 'PS5', 'XBOX'] as SocialPlatform[]).filter((p) => (me.user.platforms ?? []).includes(p)),
+  );
+  const [handles, setHandles] = useState<Record<string, string>>(() => {
+    const out: Record<string, string> = {};
+    for (const s of me.user.socials ?? []) out[s.kind] = s.handle;
+    return out;
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const togglePlatform = (p: SocialPlatform) => {
+    setPlatforms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p].slice(0, 3)));
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setErr(null);
+    const socials = SOCIAL_KEYS.filter((k) => (handles[k] ?? '').trim() !== '').map((k) => ({ kind: k, handle: handles[k].trim() }));
+    const problem = await saveProfile({ bio, platforms, socials });
+    setSaving(false);
+    if (problem) {
+      setErr(problem);
+      return;
+    }
+    window.location.reload();
+  };
+
+  return createPortal(
+    <div className="country-backdrop" onClick={saving ? undefined : onClose}>
+      <div className="country-modal profile-editor" onClick={(e) => e.stopPropagation()}>
+        <h3>EDITAR PERFIL</h3>
+        <p>Personaliza tu ficha: lo que guardes aquí lo verá toda la comunidad, incluidos rivales y organizadores.</p>
+
+        <div className="pe-group">
+          <span className="pe-label">BIO</span>
+          <textarea
+            value={bio}
+            maxLength={200}
+            rows={3}
+            placeholder="Ej.: Cafetero de PS5. Busco sets entre semana después de las 8 pm."
+            onChange={(e) => setBio(e.target.value)}
+          />
+          <span className="pe-counter">{bio.length}/200 CARACTERES</span>
+        </div>
+
+        <div className="pe-group">
+          <span className="pe-label">¿DÓNDE JUEGAS?</span>
+          <div className="pe-platforms">
+            {(['PC', 'PS5', 'XBOX'] as SocialPlatform[]).map((p) => (
+              <button key={p} type="button" className={`pe-platform${platforms.includes(p) ? ' on' : ''}`} aria-pressed={platforms.includes(p)} onClick={() => togglePlatform(p)}>
+                {PLATFORM_LABELS[p]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="pe-group">
+          <span className="pe-label">REDES SOCIALES · OPCIONAL · MÁX 4</span>
+          <div className="pe-tags">
+            {SOCIAL_KEYS.map((k) => (
+              <label key={k} className="pe-tag">
+                <span>{SOCIAL_LABELS[k]}</span>
+                <input value={handles[k] ?? ''} maxLength={40} placeholder="usuario" onChange={(e) => setHandles((h) => ({ ...h, [k]: e.target.value }))} />
+              </label>
+            ))}
+          </div>
+          <p className="pe-hint">Escribe solo tu usuario: el dominio lo ponemos nosotros. Vacío = no se muestra.</p>
+        </div>
+
+        {err ? <span className="country-err">{err}</span> : null}
+        <div className="row">
+          <button type="button" className="country-save" disabled={saving} onClick={save}>
+            {saving ? 'GUARDANDO…' : 'GUARDAR CAMBIOS'}
           </button>
           <button type="button" className="country-cancel" disabled={saving} onClick={onClose}>
             CANCELAR

@@ -1,4 +1,5 @@
 
+
 :root {
   color: #fff;
   background: #18100b;
@@ -2714,4 +2715,93 @@ button.flag-edit:hover {
 @media (max-width: 470px) {
   .rank-line { white-space: normal; flex-wrap: wrap; row-gap: 6px; }
   .rank-emblem.is-unplaced::before { inset: 4px 10px; }
+}
+
+
+/* ---------- Perfil editable: bio, plataformas y redes ---------- */
+.player-name-row { flex-wrap: wrap; row-gap: 4px; }
+.platform-chip {
+  padding: 3px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--hc-muted);
+  font: 700 9px/1 "Inter", sans-serif;
+  letter-spacing: 0.9px;
+  white-space: nowrap;
+}
+.platform-chip.is-pc { border-color: rgba(125, 180, 255, 0.4); color: #a8c8f2; }
+.platform-chip.is-ps5 { border-color: rgba(93, 141, 249, 0.45); color: #9db9f9; }
+.platform-chip.is-xbox { border-color: rgba(80, 212, 132, 0.4); color: #8fd8a8; }
+.profile-edit-button {
+  margin-right: 10px;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 231, 135, 0.35);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--gold);
+  font: 700 10px "Inter", sans-serif;
+  letter-spacing: 0.8px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.profile-edit-button:hover { border-color: var(--gold); background: rgba(255, 231, 135, 0.07); }
+.player-bio { padding: 14px 26px 18px; border-top: 1px solid var(--line); }
+.player-bio .bio-text { margin: 0; color: #fff; font: 400 13px/1.6 "Inter", sans-serif; opacity: 0.88; }
+.player-bio.is-empty p { margin: 0; color: var(--hc-muted); font: italic 400 12px/1.5 "Inter", sans-serif; }
+.social-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.social-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--gold);
+  font: 700 9px/1 "Inter", sans-serif;
+  letter-spacing: 0.9px;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+.social-chip small { color: var(--hc-muted); font: 600 10px/1 "Inter", sans-serif; }
+.social-chip:hover { border-color: var(--gold); }
+/* Modal de edición: comparte estilos con el selector de país. */
+.profile-editor textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line);
+  color: #fff;
+  font: 400 13px/1.5 "Inter", sans-serif;
+  resize: vertical;
+}
+.profile-editor textarea:focus { outline: none; border-color: var(--gold); }
+.pe-counter { display: block; margin-top: 4px; color: var(--dim); font-size: 10px; text-align: right; }
+.pe-group { margin-top: 16px; }
+.pe-label { display: block; margin-bottom: 8px; color: var(--cream); font: 700 10px/1 "Inter", sans-serif; letter-spacing: 1.2px; }
+.pe-platforms { display: flex; gap: 8px; flex-wrap: wrap; }
+.pe-platform {
+  padding: 9px 15px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--hc-muted);
+  font: 700 10px/1 "Inter", sans-serif;
+  letter-spacing: 0.7px;
+  transition: 0.15s ease;
+}
+.pe-platform.on { border-color: var(--gold); color: var(--gold); background: rgba(255, 231, 135, 0.08); }
+.pe-tags { display: grid; gap: 10px; }
+.pe-tag { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 10px; }
+.pe-tag > span { color: var(--hc-muted); font: 700 9px/1.2 "Inter", sans-serif; letter-spacing: 0.8px; }
+.pe-tag input {
+  width: 100%;
+  padding: 9px 11px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line);
+  color: #fff;
+  font: 500 13px "Inter", sans-serif;
+}
+.pe-tag input:focus { outline: none; border-color: var(--gold); }
+.pe-hint { margin-top: 10px; color: var(--dim); font-size: 10px; }
+@media (max-width: 470px) {
+  .pe-tag { grid-template-columns: 1fr; }
+  .player-bio { padding: 12px 18px 16px; }
 }
