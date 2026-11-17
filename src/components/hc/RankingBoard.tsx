@@ -33,6 +33,10 @@ type MmPlayer = {
   wins: number;
   losses: number;
   ranking: number;
+  /** Rating de habilidad y desviación RD de Glicko-2. */
+  glickoRating?: number;
+  glickoRD?: number;
+  glickoVolatility?: number;
   /** Sets terminados y si ya obtuvo rango (lo llena el backend). */
   games?: number;
   placed?: boolean;
@@ -167,6 +171,8 @@ type Row = {
   /** Solo matchmaking: false = sigue en clasificación (sin rango). */
   placed?: boolean | undefined;
   points: number;
+  glickoRating?: number | undefined;
+  glickoRD?: number | undefined;
   profileId?: string | undefined;
   country?: string | undefined;
   state?: string | undefined;
@@ -273,6 +279,8 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         losses: p.losses,
         placed: mmPlaced(p),
         points: MM_BASE_POINTS + p.points,
+        glickoRating: p.glickoRating ?? 1500,
+        glickoRD: p.glickoRD ?? 350,
         country: p.country,
         state: p.state,
         profileId: p.discordId,
@@ -310,7 +318,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
   const profiles: Record<string, MeResponse | null | undefined> = {};
   if (mode === "matchmaking") shown.forEach((r, i) => (profiles[r.key] = profileQs[i]?.data));
   const mm = mode === "matchmaking";
-  const cols = mm ? 7 : 5;
+  const cols = mm ? 8 : 5;
   const leader = rows[0];
   const mmSets = useMemo(() => mmPlayers.reduce((n, p) => n + p.wins, 0), [mmPlayers]);
 
@@ -545,7 +553,10 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
             <Crown />
             <div>
               <small>LÍDER ACTUAL</small>
-              <p><strong>{leader?.name ?? "—"}</strong> {leader ? `${fmt(leader.points)} puntos` : ""}</p>
+              <p>
+                <strong>{leader?.name ?? "—"}</strong>{" "}
+                {leader ? (mm ? `${fmt(Math.round(leader.glickoRating ?? 1500))} rating Glicko-2` : `${fmt(leader.points)} puntos`) : ""}
+              </p>
             </div>
             <b>#1</b>
           </div>
@@ -604,7 +615,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                   ? series
                     ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
                     : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
-                  : "SETS /FT · LIGA 2XKO"}
+                  : "GLICKO-2 · HABILIDAD ESTIMADA + LP · PROGRESIÓN"}
               </span>
             </div>
             <div className="rk-tools">
@@ -669,7 +680,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
               <table>
                 <thead>
                   <tr>
-                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}<th className="accent">PUNTOS ↓</th><th className="r">PERFIL</th>
+                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}{mm && <th title="Rating de habilidad Glicko-2 y desviación RD">GLICKO-2 ↓</th>}<th className="accent">{mm ? "LP ↓" : "PUNTOS ↓"}</th><th className="r">PERFIL</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -757,6 +768,17 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                                 ))}
                               </div>
                             ) : <span className="dim">—</span>}
+                          </td>
+                        )}
+                        {mm && (
+                          <td>
+                            <div
+                              className="rk-glicko"
+                              title={`RD ±${Math.round(r.glickoRD ?? 350)}: cuanto menor es la RD, mayor es la certeza de la estimación.`}
+                            >
+                              <strong>{fmt(Math.round(r.glickoRating ?? 1500))}</strong>
+                              <small>RD ±{Math.round(r.glickoRD ?? 350)}</small>
+                            </div>
                           </td>
                         )}
                         <td>
