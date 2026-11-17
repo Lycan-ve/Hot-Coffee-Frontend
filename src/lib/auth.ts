@@ -83,6 +83,13 @@ export interface MeResponse {
     tournamentPosition?: number;
   };
   rank: RankInfo;
+  /** Habilidad estimada por Glicko-2; LP/rank siguen siendo la progresión visible. */
+  glicko?: {
+    rating: number;
+    rd: number;
+    volatility: number;
+    ratedAt?: string | null;
+  };
   fights?: ProfileFight[];
   tournaments?: ProfileTournament[];
   /** Equipo principal (mains) del jugador, si lo configuró en la web. */
