@@ -29,6 +29,8 @@ type MmPlayer = {
   wins: number;
   losses: number;
   ranking: number;
+  glickoRating?: number;
+  glickoRD?: number;
 };
 
 type TournamentInfo = {
@@ -214,7 +216,9 @@ export default function HomeRankings() {
         key: p.discordId,
         pos: p.ranking,
         name: p.username,
-        sub: placing ? `Clasificando ${games}/${PLACEMENT_GAMES}` : `${p.wins}V · ${p.losses}D`,
+        sub: placing
+          ? `Clasificando ${games}/${PLACEMENT_GAMES} · Glicko ${Math.round(p.glickoRating ?? 1500)}`
+          : `${p.wins}V · ${p.losses}D · Glicko ${Math.round(p.glickoRating ?? 1500)}`,
         points: placing ? null : MM_BASE_POINTS + p.points,
         profileId: p.discordId,
       });
