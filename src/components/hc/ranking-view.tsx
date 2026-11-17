@@ -117,10 +117,6 @@ async function fetchMatchmaking(): Promise<MmPlayer[]> {
 const PER_PAGE = 10;
 const DEFAULT_RANGE = 10;
 
-// El ranking de matchmaking parte de Gold I (1.000 pts): el total mostrado
-// incluye la base, igual que la escalera de rangos que calcula el backend.
-const MM_BASE_POINTS = 1000;
-
 // Cuántos jugadores muestra el carrusel de destacados.
 const FEATURED_COUNT = 5;
 
@@ -239,7 +235,7 @@ export default function RankingView({ mode }: { mode: "torneos" | "matchmaking" 
         avatar: p.avatarUrl,
         wins: p.wins,
         losses: p.losses,
-        points: MM_BASE_POINTS + p.points,
+        points: Math.max(0, p.points),
         profileId: p.discordId,
       }));
     }
@@ -529,7 +525,7 @@ export default function RankingView({ mode }: { mode: "torneos" | "matchmaking" 
               <table>
                 <thead>
                   <tr>
-                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}<th className="accent">PUNTOS ↓</th><th className="r">PERFIL</th>
+                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}<th className="accent">{mm ? "RP ↓" : "PUNTOS ↓"}</th><th className="r">PERFIL</th>
                   </tr>
                 </thead>
                 <tbody>
