@@ -2,6 +2,7 @@
 
 
 
+
 'use client';
 
 import Link from "next/link";
@@ -107,8 +108,6 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
   const [showAll, setShowAll] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [confirmingCountry, setConfirmingCountry] = useState(false);
-  const [countryError, setCountryError] = useState<string | null>(null);
   const name = displayName(me);
   // Estado de Discord en vivo: punto de color, etiqueta y JUGANDO X.
   const presenceStatus = me.presence?.status ?? "offline";
@@ -119,11 +118,6 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
     : "DESCONECTADO";
   const activity = presenceStatus === "offline" ? "" : (me.presence?.activity ?? "").trim();
   const { stats, rank } = me;
-  const glickoRating = me.glicko?.rating ?? 1500;
-  const glickoRD = me.glicko?.rd ?? 350;
-  const hasGlickoResults = Boolean(me.glicko?.ratedAt);
-  const glickoLow = Math.round(glickoRating - 2 * glickoRD);
-  const glickoHigh = Math.round(glickoRating + 2 * glickoRD);
   // Clasificación: nadie parte con rango; sin los 5 primeros sets el backend
   // manda el display "SIN RANGO" (sin iconPath).
   const unplaced = rank.placed === false;
@@ -145,21 +139,6 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
   // Preferencias visibles del perfil (bio, plataformas y redes).
   const bio = (me.user.bio ?? "").trim();
   const socials = me.user.socials ?? [];
-  const countryCode = (me.user.country ?? "").toUpperCase();
-  const countryName = COUNTRIES.find(([code]) => code === countryCode)?.[1] ?? "";
-  const countryConfirmed = me.user.countryConfirmed === true;
-  const confirmCountry = async () => {
-    if (!countryCode || confirmingCountry) return;
-    setConfirmingCountry(true);
-    setCountryError(null);
-    const problem = await saveCountry(countryCode, true);
-    setConfirmingCountry(false);
-    if (problem) {
-      setCountryError(problem);
-      return;
-    }
-    window.location.reload();
-  };
   const games = stats.wins + stats.losses;
   const winRate = games ? Math.round((stats.wins / games) * 100) : 0;
   const titles = tournaments.filter((t) => t.isWinner).length;
@@ -225,79 +204,6 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
           </div>
         </section>
       ) : null}
-
-      <div className={`profile-brief-row${own ? "" : " brief-solo"}`}>
-      {own ? (
-        <section className={`profile-country panel ${countryConfirmed ? "is-confirmed" : "needs-confirmation"}`} aria-labelledby="profile-country-title">
-          <div className="profile-country-copy">
-            <span className="profile-next-kicker">NACIONALIDAD DEL PERFIL</span>
-            <h2 id="profile-country-title">
-              {countryConfirmed
-                ? "Tu nacionalidad está confirmada"
-                : countryCode
-                  ? "Confirma tu nacionalidad"
-                  : "Indica tu nacionalidad"}
-            </h2>
-            <p>
-              {countryConfirmed
-                ? "Esta es la bandera que se mostrará junto a tu nombre en los perfiles, rankings y matchmaking."
-                : countryCode
-                  ? me.user.countrySource === "startgg"
-                    ? "Start.gg encontró este país en tu perfil. Confirma que es correcto o elige otro."
-                    : "Revisa el país de tu perfil y confírmalo para que podamos mostrar tu bandera."
-                  : "Elige el país que quieres mostrar junto a tu nombre en los perfiles, rankings y matchmaking."}
-            </p>
-            {countryCode ? (
-              <div className="profile-country-value">
-                <PlayerFlag country={countryCode} state={me.user.state} />
-                <strong>{countryName || countryCode}</strong>
-              </div>
-            ) : (
-              <span className="profile-country-empty">Todavía no hay una nacionalidad seleccionada.</span>
-            )}
-            {countryError ? <span className="profile-country-error" role="alert">{countryError}</span> : null}
-          </div>
-          <div className="profile-country-actions">
-            {!countryConfirmed && countryCode ? (
-              <button type="button" className="profile-country-confirm" disabled={confirmingCountry} onClick={confirmCountry}>
-                {confirmingCountry ? "CONFIRMANDO…" : "CONFIRMAR MI NACIONALIDAD"}
-              </button>
-            ) : null}
-            <button type="button" className="profile-country-edit" onClick={() => setPickerOpen(true)}>
-              {countryCode ? "CAMBIAR PAÍS" : "SELECCIONAR PAÍS"}
-            </button>
-          </div>
-        </section>
-      ) : null}
-
-      <section className="profile-glicko panel" aria-label="Habilidad estimada Glicko-2">
-        <div className="profile-glicko-copy">
-          <span className="profile-next-kicker">HABILIDAD COMPETITIVA · GLICKO-2</span>
-          <h2>{hasGlickoResults ? "Tu rating de habilidad" : "Rating en calibración"}</h2>
-          <p>
-            {hasGlickoResults
-              ? "Esta estimación ayuda a encontrar rivales de nivel parecido. Se actualiza cuando termina cada set."
-              : "El sistema usará tus sets confirmados para estimar tu habilidad. Tu rango y RP siguen mostrando tu progreso visible."}
-          </p>
-        </div>
-        <div className="profile-glicko-metrics">
-          <div>
-            <strong>{fmtNumber(Math.round(glickoRating))}</strong>
-            <small>RATING</small>
-          </div>
-          <div>
-            <strong>±{Math.round(glickoRD)}</strong>
-            <small>RD · INCERTIDUMBRE</small>
-          </div>
-        </div>
-        {hasGlickoResults ? (
-          <p className="profile-glicko-range">
-            Intervalo orientativo del 95%: <strong>{fmtNumber(glickoLow)}–{fmtNumber(glickoHigh)}</strong>.
-            Cuanto menor sea la RD, más precisa es la estimación.
-          </p>
-        ) : null}
-      </section>
-      </div>
 
       <section className="profile-grid">
         <article className="player-card cut-panel">
