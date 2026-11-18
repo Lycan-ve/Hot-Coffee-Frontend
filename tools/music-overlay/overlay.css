@@ -99,7 +99,7 @@ body {
 
 .track-info {
   display: grid;
-  grid-template-rows: 13px 22px 17px 3px;
+  grid-template-rows: 13px 22px 17px 11px;
   gap: 3px;
   min-width: 0;
   align-self: stretch;
@@ -171,7 +171,7 @@ body {
   align-items: center;
   gap: 8px;
   min-width: 0;
-  height: 3px;
+  height: 11px;
 }
 
 .progress-track {
@@ -193,7 +193,7 @@ body {
 }
 
 .time-label {
-  display: none;
+  display: block;
   color: #a99a8b;
   font-size: 9px;
   font-variant-numeric: tabular-nums;
@@ -239,3 +239,5 @@ body {
     transition-duration: .01ms !important;
   }
 }
+
+.cover-fallback[hidden], .equalizer[hidden] { display: none; }
