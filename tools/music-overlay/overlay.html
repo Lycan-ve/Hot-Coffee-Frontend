@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hot Coffee · Music Overlay</title>
+    <link rel="stylesheet" href="/overlay.css">
+    <script src="/overlay.js" defer></script>
+  </head>
+  <body>
+    <main id="music-overlay" class="music-overlay" aria-live="polite" aria-hidden="true">
+      <div class="music-card">
+        <div class="cover-frame">
+          <img id="cover" class="cover" alt="" referrerpolicy="no-referrer">
+          <div id="cover-fallback" class="cover-fallback" aria-hidden="true">♫</div>
+        </div>
+        <div class="track-info">
+          <div class="topline">
+            <span id="source-label" class="source-label">YOUTUBE</span>
+            <span id="playback-label" class="playback-label">
+              <span class="status-dot"></span>
+              <span id="playback-text">REPRODUCIENDO</span>
+            </span>
+          </div>
+          <div id="track-title" class="track-title">Esperando música…</div>
+          <div id="track-artist" class="track-artist"></div>
+          <div class="progress-row">
+            <div class="progress-track"><span id="progress-fill" class="progress-fill"></span></div>
+            <span id="time-label" class="time-label"></span>
+          </div>
+        </div>
+        <div id="equalizer" class="equalizer" aria-hidden="true">
+          <i></i><i></i><i></i><i></i>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
