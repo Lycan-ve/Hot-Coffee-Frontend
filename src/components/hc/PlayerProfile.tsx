@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import Link from "next/link";
@@ -731,6 +732,7 @@ const SOCIAL_KEYS = Object.keys(SOCIAL_LABELS);
 // sociales. Todo se guarda junto con POST /api/auth/profile (el backend
 // valida dominios y límites).
 function ProfileEditor({ me, onClose }: { me: MeResponse; onClose: () => void }) {
+  const [country, setCountry] = useState((me.user.country ?? '').toUpperCase());
   const [bio, setBio] = useState(me.user.bio ?? '');
   const [platforms, setPlatforms] = useState<SocialPlatform[]>(() =>
     (['PC', 'PS5', 'XBOX'] as SocialPlatform[]).filter((p) => (me.user.platforms ?? []).includes(p)),
@@ -752,11 +754,22 @@ function ProfileEditor({ me, onClose }: { me: MeResponse; onClose: () => void })
     setErr(null);
     const socials = SOCIAL_KEYS.filter((k) => (handles[k] ?? '').trim() !== '').map((k) => ({ kind: k, handle: handles[k].trim() }));
     const problem = await saveProfile({ bio, platforms, socials });
-    setSaving(false);
     if (problem) {
+      setSaving(false);
       setErr(problem);
       return;
     }
+    // Nacionalidad editada en este mismo modal: queda confirmada.
+    const nextCountry = country.trim().toUpperCase();
+    if (nextCountry && nextCountry !== (me.user.country ?? '').toUpperCase()) {
+      const countryProblem = await saveCountry(nextCountry, true);
+      if (countryProblem) {
+        setSaving(false);
+        setErr(countryProblem);
+        return;
+      }
+    }
+    setSaving(false);
     window.location.reload();
   };
 
@@ -765,6 +778,21 @@ function ProfileEditor({ me, onClose }: { me: MeResponse; onClose: () => void })
       <div className="country-modal profile-editor" onClick={(e) => e.stopPropagation()}>
         <h3>EDITAR PERFIL</h3>
         <p>Personaliza tu ficha: lo que guardes aquí lo verá toda la comunidad, incluidos rivales y organizadores.</p>
+
+        <div className="pe-cols">
+        <div className="pe-main">
+        <div className="pe-group">
+          <span className="pe-label">NACIONALIDAD</span>
+          <select className="pe-country" value={country} onChange={(e) => setCountry(e.target.value)}>
+            <option value="">Sin nacionalidad</option>
+            {COUNTRIES.map(([code, cname]) => (
+              <option key={code} value={code}>
+                {flagEmoji(code)} {cname}
+              </option>
+            ))}
+          </select>
+          <p className="pe-hint">La bandera acompaña tu nombre en perfiles, rankings y matchmaking. Al guardar queda confirmada.</p>
+        </div>
 
         <div className="pe-group">
           <span className="pe-label">BIO</span>
@@ -788,7 +816,9 @@ function ProfileEditor({ me, onClose }: { me: MeResponse; onClose: () => void })
             ))}
           </div>
         </div>
+        </div>
 
+        <div className="pe-side">
         <div className="pe-group">
           <span className="pe-label">REDES SOCIALES · OPCIONAL · MÁX 4</span>
           <div className="pe-tags">
@@ -800,6 +830,7 @@ function ProfileEditor({ me, onClose }: { me: MeResponse; onClose: () => void })
             ))}
           </div>
           <p className="pe-hint">Escribe solo tu usuario: el dominio lo ponemos nosotros. Vacío = no se muestra.</p>
+        </div>
         </div>
 
         {err ? <span className="country-err">{err}</span> : null}
