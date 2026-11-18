@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Hot Coffee · YouTube Music Bridge",
+  "version": "0.1.0",
+  "description": "Envía a tu overlay local de OBS los metadatos del vídeo o canción reproducidos en YouTube y YouTube Music.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://music.youtube.com/*",
+    "http://127.0.0.1:4317/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://music.youtube.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html"
+}
