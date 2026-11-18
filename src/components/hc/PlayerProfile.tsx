@@ -832,6 +832,7 @@ function ProfileEditor({ me, onClose }: { me: MeResponse; onClose: () => void })
           <p className="pe-hint">Escribe solo tu usuario: el dominio lo ponemos nosotros. Vacío = no se muestra.</p>
         </div>
         </div>
+        </div>
 
         {err ? <span className="country-err">{err}</span> : null}
         <div className="row">
