@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local-only credentials for the OBS music bridge
+/tools/music-overlay/.music-bridge-token
