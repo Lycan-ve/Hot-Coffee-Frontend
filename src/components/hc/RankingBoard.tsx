@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import "../../hotcoffee-ranking.css";
@@ -43,6 +44,8 @@ type MmPlayer = {
   placed?: boolean;
   country?: string;
   state?: string;
+  /** Plataformas de juego (lo llena el backend desde users). */
+  platforms?: string[];
 };
 
 const fallback: RankPlayer[] = [
@@ -176,6 +179,7 @@ type Row = {
   profileId?: string | undefined;
   country?: string | undefined;
   state?: string | undefined;
+  platforms?: string[] | undefined;
   fuse?: string | undefined;
   fuseName?: string | undefined;
 };
@@ -283,6 +287,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         glickoRD: p.glickoRD ?? 350,
         country: p.country,
         state: p.state,
+        platforms: p.platforms,
         profileId: p.discordId,
       }));
     }
@@ -709,6 +714,11 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                               <strong>
                                 {r.name}
                                 <PlayerFlag country={r.country} state={r.state} className="rk-flag" />
+                                {(r.platforms ?? []).map((p) => (
+                                  <span key={p} className={`platform-chip is-${p.toLowerCase()}`}>
+                                    {p}
+                                  </span>
+                                ))}
                                 {r.sponsor ? <em> #{r.sponsor}</em> : null}
                               </strong>
                               {mm && (
