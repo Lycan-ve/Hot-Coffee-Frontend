@@ -2,6 +2,7 @@
 
 
 
+
 :root {
   color: #fff;
   background: #18100b;
@@ -2822,3 +2823,17 @@ button.flag-edit:hover {
 @media (max-width: 899px) {
   .pe-cols { grid-template-columns: 1fr; }
 }
+
+
+/* ---------- Siguiente paso como notificación compacta ---------- */
+.profile-next-step { padding: 12px 18px; gap: 16px; }
+.profile-next-dot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px rgba(255, 231, 135, 0.5); }
+.profile-next-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 6px; }
+.profile-next-msg { margin: 0; color: var(--hc-muted); font: 400 13px/1.5 "Inter", sans-serif; }
+.profile-next-msg b { color: var(--gold); letter-spacing: 0.4px; }
+.profile-next-copy .profile-placement-progress { margin-top: 0; max-width: 340px; }
+.profile-next-actions { display: flex; align-items: center; gap: 8px; width: auto; }
+.profile-next-actions .profile-next-primary,
+.profile-next-actions .profile-next-secondary { min-height: 34px; padding: 7px 12px; }
+.profile-next-actions .profile-next-secondary > svg { width: 13px; height: 13px; color: var(--orange); }
+@media (max-width: 900px) { .profile-next-actions { flex-wrap: wrap; } }

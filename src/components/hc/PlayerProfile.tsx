@@ -1,6 +1,7 @@
 
 
 
+
 'use client';
 
 import Link from "next/link";
@@ -198,43 +199,28 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
 
       {own ? (
         <section className={`profile-next-step panel ${unplaced ? "is-placing" : "is-ranked"}`} aria-labelledby="profile-next-title">
+          <span className="profile-next-dot" aria-hidden="true" />
           <div className="profile-next-copy">
-            <span className="profile-next-kicker">TU SIGUIENTE PASO</span>
-            <h2 id="profile-next-title">
-              {unplaced ? "Completa tus 5 sets de clasificación" : "Sigue avanzando en tu rango"}
-            </h2>
-            <p>
+            <p id="profile-next-title" className="profile-next-msg">
+              <b>TU SIGUIENTE PASO:</b>{" "}
               {unplaced
-                ? `Llevas ${Math.min(games, 5)} de 5 sets. Completa los que faltan para recibir tu primer rango.`
-                : `Tu rango actual es ${rank.displayName}. Busca un rival para seguir sumando puntos y avanzar en la clasificación.`}
+                ? `Completa tus 5 sets de clasificación, llevas ${Math.min(games, 5)} de 5: te faltan ${Math.max(0, 5 - games)} sets para obtener tu primer rango.`
+                : `Tu rango es ${rank.displayName} con ${rank.rp} RP: busca un rival para seguir sumando y avanzar.`}
             </p>
             {unplaced ? (
-              <>
-                <div className="profile-placement-progress" role="progressbar" aria-valuenow={Math.min(games, 5)} aria-valuemin={0} aria-valuemax={5} aria-label="Sets de clasificación completados">
-                  <span style={{ width: String(progress) + "%" }} />
-                </div>
-                <small>{Math.max(0, 5 - games)} sets para obtener tu rango</small>
-              </>
-            ) : (
-              <small>{rank.rp} RP totales</small>
-            )}
+              <div className="profile-placement-progress" role="progressbar" aria-valuenow={Math.min(games, 5)} aria-valuemin={0} aria-valuemax={5} aria-label="Sets de clasificación completados">
+                <span style={{ width: String(progress) + "%" }} />
+              </div>
+            ) : null}
           </div>
           <div className="profile-next-actions">
             <Link href="/matchmaking" className="profile-next-primary">BUSCAR PARTIDA <span aria-hidden="true">→</span></Link>
             <a href="#equipo-principal" className="profile-next-secondary">
-              {me.mains ? "REVISAR MI EQUIPO" : "CONFIGURAR MI EQUIPO"}
+              {me.mains ? "MI EQUIPO" : "CONFIGURAR MI EQUIPO"}
             </a>
-            <Link
-              href="/overlay/matchmaking"
-              className="profile-next-overlay"
-              title="Configura las fuentes de navegador para OBS"
-            >
+            <Link href="/overlay/matchmaking" className="profile-next-secondary" title="Configura las fuentes de navegador para OBS">
               <MonitorPlay aria-hidden="true" />
-              <span>
-                CONFIGURAR OVERLAYS
-                <small>Tarjeta de jugador y partida para OBS</small>
-              </span>
-              <span aria-hidden="true">→</span>
+              OVERLAYS OBS
             </Link>
           </div>
         </section>
@@ -402,7 +388,7 @@ export function PlayerProfile({ me, own }: { me: MeResponse; own: boolean }) {
                     <strong>{rank.rp} RP</strong>
                   </>
                 )}
-                {stats.rankingPosition > 0 && (
+                {!unplaced && stats.rankingPosition > 0 && (
                   <>
                     <i />
                     <b>#{String(stats.rankingPosition).padStart(2, "0")}</b>
