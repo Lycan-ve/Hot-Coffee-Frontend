@@ -57,17 +57,21 @@ function readJson(request) {
   return new Promise((resolve, reject) => {
     let raw = "";
     let size = 0;
+    let tooLarge = false;
     request.setEncoding("utf8");
     request.on("data", (chunk) => {
       size += Buffer.byteLength(chunk, "utf8");
       if (size > MAX_BODY_BYTES) {
-        reject(new Error("body_too_large"));
-        request.destroy();
+        tooLarge = true;
         return;
       }
-      raw += chunk;
+      if (!tooLarge) raw += chunk;
     });
     request.on("end", () => {
+      if (tooLarge) {
+        reject(new Error("body_too_large"));
+        return;
+      }
       try {
         resolve(JSON.parse(raw || "{}"));
       } catch {
@@ -135,7 +139,13 @@ async function main() {
     const url = new URL(request.url || "/", "http://" + HOST);
 
     if (request.method === "OPTIONS") {
-      sendJson(response, 204, {});
+      response.writeHead(204, {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Authorization, Content-Type",
+        "Cache-Control": "no-store",
+      });
+      response.end();
       return;
     }
 
