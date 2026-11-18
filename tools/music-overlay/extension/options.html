@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hot Coffee Music Bridge · Configuración</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { width: 360px; margin: 0; padding: 22px; color: #f6eadc; background: #17110e; font: 14px/1.5 "Segoe UI", Arial, sans-serif; }
+    h1 { margin: 0 0 8px; color: #f1b777; font-size: 19px; }
+    p { color: #c8b8a7; }
+    label { display: block; margin: 18px 0 6px; font-weight: 700; }
+    input { width: 100%; padding: 10px; border: 1px solid #61442f; border-radius: 7px; color: #fff; background: #251a13; }
+    button { margin-top: 12px; padding: 10px 14px; border: 0; border-radius: 7px; color: #21140d; background: #e5a464; font-weight: 800; cursor: pointer; }
+    #status { min-height: 21px; color: #9cdb9e; }
+    small { color: #a99886; }
+  </style>
+</head>
+<body>
+  <h1>Hot Coffee · Music Bridge</h1>
+  <p>Vincula esta extensión con el servidor local que ejecuta la overlay de OBS.</p>
+  <form id="settings-form">
+    <label for="bridge-token">Token local</label>
+    <input id="bridge-token" type="password" autocomplete="off" spellcheck="false" required>
+    <small>El token aparece en la consola al iniciar server.mjs. Se guarda solo en este perfil del navegador.</small>
+    <button type="submit">Guardar conexión</button>
+  </form>
+  <p id="status" role="status" aria-live="polite"></p>
+  <script src="options.js"></script>
+</body>
+</html>
