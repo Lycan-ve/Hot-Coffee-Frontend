@@ -4,7 +4,8 @@ import Link from "next/link";
 import "../hotcoffee-home.css";
 import "../hotcoffee-home-steps.css";
 import "../hotcoffee-home-credits.css";
-import { useState } from "react";
+import "../hotcoffee-home-hero.css";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -19,8 +20,8 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { API_URL } from "@/lib/auth";
-import { A, AppShell, SectionTitle } from "@/components/hc/shared";
+import { API_URL, fetchMe, type MeResponse } from "@/lib/auth";
+import { A, AppShell, RankBadge, SectionTitle } from "@/components/hc/shared";
 import HomeRankings from "@/components/hc/HomeRankings";
 
 // Invitación a la comunidad Hot Coffee (regla del admin: para entrar a la liga hay que ser miembro).
@@ -75,22 +76,22 @@ const STEPS: Step[] = [
   {
     icon: UserPlus,
     title: "ÚNETE AL DISCORD",
-    copy: "Forma parte del servidor Hot Coffee 2XKO. Es el punto de encuentro y un requisito para participar en la liga.",
+    copy: "El punto de encuentro de la liga y un requisito para competir.",
     link: DISCORD_INVITE,
-    linkText: "Unirme al Discord",
+    linkText: "Unirme",
     external: true,
   },
   {
     icon: User,
     title: "CONECTA TU CUENTA",
-    copy: "Pulsa «Iniciar sesión con Discord» en la parte superior. Así podrás usar tu perfil y entrar al matchmaking.",
+    copy: "Inicia sesión con Discord para usar tu perfil y el matchmaking.",
     link: "/perfil",
     linkText: "Iniciar sesión",
   },
   {
     icon: Swords,
     title: "ELIGE CÓMO JUGAR",
-    copy: "Busca un rival en sets FT 3 cuando quieras o participa en los torneos de la comunidad.",
+    copy: "Sets FT 3 cuando quieras o los torneos de la comunidad.",
     link: "/matchmaking",
     linkText: "Buscar partida",
   },
@@ -101,6 +102,21 @@ export default function HomePage() {
   const { data: playerCount } = useQuery({ queryKey: ["home-player-count"], queryFn: fetchPlayerCount, staleTime: 300_000 });
   const { data: setCount } = useQuery({ queryKey: ["home-set-count"], queryFn: fetchSetCount, staleTime: 300_000 });
   const [artOk, setArtOk] = useState(true);
+  const [me, setMe] = useState<MeResponse | null>(null);
+
+  // Con sesión, el hero cambia: tu estado y un solo botón naranja (Buscar partida).
+  useEffect(() => {
+    let alive = true;
+    fetchMe().then((m) => {
+      if (alive) setMe(m);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const meGames = me ? me.stats.wins + me.stats.losses : 0;
+  const mePlaced = me ? me.rank.placed !== false : false;
 
   return (
     <AppShell>
@@ -114,39 +130,77 @@ export default function HomePage() {
               accent="HOT COFFEE"
               copy="Torneos, partidas FT 3 y tu progreso competitivo de 2XKO, reunidos en un solo lugar."
             />
-            <div className="hm-cta-row">
-              <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="hm-btn primary"><UserPlus /> Unirme al Discord</a>
-              <Link href="/perfil" className="hm-btn ghost"><User /> Ya tengo cuenta</Link>
-              <Link href="#empezar" className="hm-btn link"><ArrowRight /> Cómo empezar</Link>
-            </div>
+
+            {me ? (
+              /* Con sesión: el estado del jugador es el protagonista. */
+              <div className="hm-status panel">
+                <div className="hm-status-rank">
+                  <RankBadge small rank={me.rank} />
+                </div>
+                <div className="hm-status-who">
+                  {me.user.avatarUrl ? (
+                    <img className="hm-status-av" src={me.user.avatarUrl} alt="" />
+                  ) : (
+                    <span className="hm-status-av">{(me.user.guildNickname || me.user.globalName || me.user.username)[0]}</span>
+                  )}
+                  <div>
+                    <strong>{me.user.guildNickname || me.user.globalName || me.user.username}</strong>
+                    <span>
+                      {mePlaced
+                        ? `${me.rank.displayName} · ${me.stats.points} RP${me.stats.rankingPosition > 0 ? ` · #${me.stats.rankingPosition}` : ""}`
+                        : `Clasificando ${Math.min(meGames, 5)}/5 · ${me.rank.rp} RP`}
+                    </span>
+                  </div>
+                </div>
+                <Link href="/matchmaking" className="hm-btn primary">
+                  <Swords /> Buscar partida
+                </Link>
+              </div>
+            ) : (
+              /* Invitado: un solo titular grande y un solo botón naranja. */
+              <div className="hm-cta-row">
+                <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer" className="hm-btn primary big">
+                  <UserPlus /> Unirme al Discord
+                </a>
+              </div>
+            )}
+
             <p className="hm-first-note">
-              <strong>¿Primera vez?</strong> Primero únete al Discord y después conecta tu cuenta desde «Ya tengo cuenta».
-              Necesitas pertenecer al servidor para competir en la liga.
+              <strong>¿Primera vez?</strong> Primero únete al Discord y después conecta tu cuenta desde{" "}
+              <Link className="link" href="/perfil">«Ya tengo cuenta»</Link>. Necesitas pertenecer al servidor para
+              competir en la liga.{" "}
+              <Link className="link" href="#empezar">Cómo empezar ↓</Link>
             </p>
-            {/* Sobre la comunidad */}
-            <div className="hm-details">
-              <div>
-                <Globe />
+
+            {/* Las cifras y explicaciones bajan de volumen: un desplegable. */}
+            <details className="hm-more">
+              <summary>
+                <Globe /> Sobre la comunidad
+              </summary>
+              <div className="hm-more-grid">
                 <div>
-                  <strong>ALCANCE</strong>
-                  <span>Abierta a jugadores de todo el continente americano.</span>
+                  <Globe />
+                  <div>
+                    <strong>ALCANCE</strong>
+                    <span>Abierta a jugadores de todo el continente americano.</span>
+                  </div>
+                </div>
+                <div>
+                  <Languages />
+                  <div>
+                    <strong>IDIOMAS</strong>
+                    <span>Español como base, con espacio para inglés y portugués.</span>
+                  </div>
+                </div>
+                <div>
+                  <HeartHandshake />
+                  <div>
+                    <strong>FILOSOFÍA</strong>
+                    <span>No somos un equipo: mantenemos viva la escena jugando.</span>
+                  </div>
                 </div>
               </div>
-              <div>
-                <Languages />
-                <div>
-                  <strong>IDIOMAS</strong>
-                  <span>Español como base, con espacio para inglés y portugués.</span>
-                </div>
-              </div>
-              <div>
-                <HeartHandshake />
-                <div>
-                  <strong>FILOSOFÍA</strong>
-                  <span>No somos un equipo: mantenemos viva la escena jugando.</span>
-                </div>
-              </div>
-            </div>
+            </details>
           </div>
           <div className="hm-art panel">
             {artOk ? (
@@ -165,7 +219,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ——— Primeros pasos ——— */}
+        {/* ——— Primeros pasos: una franja con iconos ——— */}
         <section className="hm-how" id="empezar">
           <SectionTitle
             eyebrow="PRIMERA VEZ EN HOT COFFEE"
@@ -173,13 +227,17 @@ export default function HomePage() {
             accent="3 PASOS"
             copy="Sigue este orden y sabrás exactamente qué necesitas para competir."
           />
-          <div className="hm-steps">
+          <ol className="panel hm-steps-strip">
             {STEPS.map((s, i) => (
-              <article className="panel hm-step" key={s.title}>
-                <b>{String(i + 1).padStart(2, "0")}</b>
-                <span className="hm-step-icon"><s.icon /></span>
-                <h4>{s.title}</h4>
-                <p>{s.copy}</p>
+              <li className="hm-step" key={s.title}>
+                <span className="hm-step-icon">
+                  <s.icon />
+                  <b>{i + 1}</b>
+                </span>
+                <div className="hm-step-txt">
+                  <strong>{s.title}</strong>
+                  <span>{s.copy}</span>
+                </div>
                 {s.external ? (
                   <a className="hm-step-link" href={s.link} target="_blank" rel="noopener noreferrer">
                     {s.linkText} <ArrowRight />
@@ -189,35 +247,19 @@ export default function HomePage() {
                     {s.linkText} <ArrowRight />
                   </Link>
                 )}
-              </article>
+              </li>
             ))}
-          </div>
+          </ol>
         </section>
 
-        {/* ——— Contadores en vivo ——— */}
-        <section className="hm-stats">
-          <div className="hm-stat">
-            <Trophy />
-            <div>
-              <small>TORNEOS PROCESADOS</small>
-              <strong>{tourneyCount ? fmt(tourneyCount) : "—"}</strong>
-            </div>
-          </div>
-          <div className="hm-stat">
-            <Users />
-            <div>
-              <small>JUGADORES EN LA LIGA</small>
-              <strong>{playerCount ? fmt(playerCount) : "—"}</strong>
-            </div>
-          </div>
-          <div className="hm-stat">
-            <Swords />
-            <div>
-              <small>SETS /FT JUGADOS</small>
-              <strong>{setCount ? fmt(setCount) : "—"}</strong>
-            </div>
-          </div>
-        </section>
+        {/* ——— Contadores en vivo: una línea, sin tarjetas ——— */}
+        <p className="hm-stats-line">
+          <b>{tourneyCount ? fmt(tourneyCount) : "—"}</b> torneos procesados
+          <i>·</i>
+          <b>{playerCount ? fmt(playerCount) : "—"}</b> jugadores en la liga
+          <i>·</i>
+          <b>{setCount ? fmt(setCount) : "—"}</b> sets FT 3 jugados
+        </p>
 
         {/* ——— Rankings ——— */}
         <HomeRankings />
@@ -258,32 +300,6 @@ export default function HomePage() {
           </div>
           <p className="hm-motto">SEGUIMOS JUGANDO, SEGUIMOS COMPITIENDO.</p>
         </section>
-
-        {/* ——— Lo esencial sobre los puntos ——— */}
-        <section className="hm-points">
-          <article className="panel">
-            <div className="head"><h3>RANKING DE TORNEOS</h3><Trophy /></div>
-            <p className="lead">Los torneos oficiales suman puntos a la clasificación de la temporada.</p>
-            <p>El bot procesa los resultados y actualiza la tabla automáticamente. Consulta el ranking para ver posiciones, puntos y resultados por serie.</p>
-          </article>
-          <article className="panel">
-            <div className="head"><h3>RANKING DE MATCHMAKING</h3><Swords /></div>
-            <p className="lead">Los sets de matchmaking son partidas FT 3 entre miembros de la comunidad.</p>
-            <p>Los primeros 5 sets son de clasificación: al completarlos recibirás tu rango inicial. Después, tus resultados harán subir o bajar tus puntos de liga.</p>
-          </article>
-        </section>
-
-        {/* ——— CTA final ——— */}
-        {/* <section className="hm-final panel">
-          <div>
-            <h3><Gamepad2 /> TU PRÓXIMO RIVAL ESTÁ AQUÍ.</h3>
-            <p>Entra al Discord, lanza tu reto y sube de rango. El café ya se está sirviendo.</p>
-          </div>
-          <div className="hm-cta-row">
-            <Link href="/matchmaking" className="hm-btn primary"><Swords /> Buscar partida</Link>
-            <Link href="/ranking" className="hm-btn ghost"><Trophy /> Ver el ranking</Link>
-          </div>
-        </section> */}
 
         {/* ——— Créditos ——— */}
         <section className="hm-credits panel">
