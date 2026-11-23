@@ -41,11 +41,10 @@ function Header() {
         <Link href="/perfil" className={`nav-item${pathname.startsWith("/perfil") ? " active" : ""}`}>
           <small>03</small> Mi perfil
         </Link>
-        <Link href="/ranking" className={`nav-item${pathname === "/ranking" ? " active" : ""}`}>
+        {/* Ranking y Ranking MM son dos pestañas de la misma página (maqueta):
+            una sola entrada que queda activa en ambas rutas. */}
+        <Link href="/ranking" className={`nav-item${pathname.startsWith("/ranking") ? " active" : ""}`}>
           <small>04</small> Ranking
-        </Link>
-        <Link href="/ranking-matchmaking" className={`nav-item${pathname.startsWith("/ranking-matchmaking") ? " active" : ""}`}>
-          <small>05</small> Ranking MM
         </Link>
       </nav>
       <div className="top-actions">

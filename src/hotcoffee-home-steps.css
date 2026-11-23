@@ -1,28 +1,135 @@
-/* ——— Paso a paso: ajustes de "Cómo funciona" (reglas del admin) ——— */
+/* ——— Paso a paso: los 3 pasos son UNA franja con iconos ——— */
+/* (no tres tarjetas con texto y enlace cada una). */
 
-/* Espacio entre el título/subtítulo de la sección y las tarjetas. */
 .inicio-page .hm-how {
   display: grid;
   gap: 22px;
 }
 
+/* La franja: un solo panel, tres celdas divididas por líneas. */
+.inicio-page .hm-steps-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--hf-panel);
+  border: 1px solid var(--hf-line);
+  border-radius: var(--hf-radius);
+  overflow: hidden;
+}
+
+.inicio-page .hm-steps-strip .hm-step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+}
+
+.inicio-page .hm-steps-strip .hm-step + .hm-step {
+  border-left: 1px solid var(--hf-line);
+}
+
+/* Icono en recuadro con el número del paso en la esquina. */
+.inicio-page .hm-steps-strip .hm-step-icon {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 107, 26, 0.5);
+  background: rgba(255, 107, 26, 0.1);
+  border-radius: 10px;
+  color: var(--hf-orange);
+}
+
+.inicio-page .hm-steps-strip .hm-step-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.inicio-page .hm-steps-strip .hm-step-icon b {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  background: var(--hf-orange);
+  color: var(--hf-ink);
+  font-family: var(--hf-display);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 5px;
+}
+
+.inicio-page .hm-step-txt {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.inicio-page .hm-step-txt strong {
+  color: #fff;
+  font-family: var(--hf-display);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.inicio-page .hm-step-txt span {
+  color: var(--hf-dim);
+  font-family: var(--hf-body);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* El enlace de cada paso pasa a ser discreto, alineado a la derecha. */
 .inicio-page .hm-step-link {
+  margin: 0 0 0 auto;
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-top: 10px;
   color: var(--hf-yellow);
   font-family: var(--hf-body);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .inicio-page .hm-step-link svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 .inicio-page .hm-step-link:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .inicio-page .hm-steps-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .inicio-page .hm-steps-strip .hm-step + .hm-step {
+    border-left: 0;
+    border-top: 1px solid var(--hf-line);
+  }
+}
+
+@media (max-width: 470px) {
+  .inicio-page .hm-steps-strip .hm-step {
+    flex-wrap: wrap;
+  }
+
+  .inicio-page .hm-step-link {
+    margin-left: 0;
+    width: 100%;
+  }
 }

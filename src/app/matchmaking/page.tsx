@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCheck, Crosshair, Swords, UserPlus } from "lucide-react";
 import { A, AppShell, PlayerFlag, RankBadge, SectionTitle } from "@/components/hc/shared";
 import { displayName, LoginLink } from "@/components/hc/DiscordLogin";
 import { RankFx } from "@/components/hc/RankFx";
-import { fetchMe, getToken, type MeResponse, type RankInfo } from "@/lib/auth";
+import { fetchMe, fetchUserProfile, getToken, type MeResponse, type RankInfo } from "@/lib/auth";
 import {
   acceptProposal,
   declineProposal,
@@ -14,6 +16,7 @@ import {
   leaveQueue,
   type QueueState,
 } from "@/lib/matchmaking";
+import "../../hotcoffee-matchmaking.css";
 
 const clock = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -24,6 +27,28 @@ const clock = (ms: number) => {
 // muestran al menos MIN_SEARCH_MS de transición antes de revelar al rival.
 // El mensaje de progreso llega del backend en cada actualización de estado.
 const MIN_SEARCH_MS = 3500;
+
+// Rombitos de clasificación (estilo maqueta): sin texto, solo 5 rombos.
+function MmPips({ done, total = 5 }: { done: number; total?: number }) {
+  return (
+    <span className="mm-pips" title={`Clasificación: ${Math.min(done, total)} de ${total} sets`}>
+      {Array.from({ length: total }, (_, i) => (
+        <i key={i} className={i < Math.min(done, total) ? "f" : ""} />
+      ))}
+    </span>
+  );
+}
+
+// Arte del VS: cadena personaje principal → asistencia → (nada). Si la imagen
+// falla, se pasa a la siguiente candidata; el degradado del CSS queda de base.
+function VsArt({ srcs }: { srcs: string[] }) {
+  const [idx, setIdx] = useState(0);
+  // Si cambia la propuesta (otro rival), la cadena de arte vuelve a empezar.
+  useEffect(() => setIdx(0), [srcs.length]);
+  const src = srcs[Math.min(idx, srcs.length - 1)];
+  if (!src) return null;
+  return <img src={src} alt="" loading="lazy" onError={() => setIdx((i) => Math.min(i + 1, srcs.length - 1))} />;
+}
 
 function VsCard({
   name,
@@ -36,6 +61,7 @@ function VsCard({
   streak,
   country,
   state,
+  artSrcs,
 }: {
   name: string;
   avatar?: string;
@@ -47,23 +73,33 @@ function VsCard({
   streak?: number;
   country?: string;
   state?: string;
+  artSrcs?: string[];
 }) {
   const unplaced = rank.placed === false;
   return (
     <div className={`hc-vs-card rfx-card-host ${ok ? "ok" : ""}`}>
       <RankFx rank={rank} variant="card" />
-      {avatar ? <img className="av" src={avatar} alt="" /> : <span className="av">{name[0]}</span>}
-      <strong>
-        <PlayerFlag country={country} state={state} />
-        {name}
-      </strong>
-      <RankBadge small fx rank={rank} />
-      <span>{unplaced ? "SIN RANGO · CLASIFICANDO" : `${rank.displayName} · ${points} pts`}</span>
-      <small>
-        <span className="success">{wins ?? 0}W</span> <span className="danger">{losses ?? 0}L</span>
-        {(streak ?? 0) >= 3 ? ` · 🔥 racha de ${streak}` : ""}
-      </small>
-      <small>{ok ? "✓ ACEPTÓ" : "ESPERANDO"}</small>
+      <span className="hc-vs-art">
+        <VsArt srcs={artSrcs ?? []} />
+      </span>
+      <span className="hc-vs-inner">
+        {avatar ? <img className="av" src={avatar} alt="" /> : <span className="av">{name[0]}</span>}
+        <strong>
+          <PlayerFlag country={country} state={state} />
+          {name}
+        </strong>
+        <RankBadge small fx rank={rank} />
+        {unplaced ? (
+          <MmPips done={(wins ?? 0) + (losses ?? 0)} />
+        ) : (
+          <span>{`${rank.displayName} · ${points} pts`}</span>
+        )}
+        <small>
+          <span className="success">{wins ?? 0}W</span> <span className="danger">{losses ?? 0}L</span>
+          {(streak ?? 0) >= 3 ? ` · 🔥 racha de ${streak}` : ""}
+        </small>
+        <small>{ok ? "✓ ACEPTÓ" : "ESPERANDO"}</small>
+      </span>
     </div>
   );
 }
@@ -126,6 +162,19 @@ export default function MatchmakingPage() {
   const searchingView = searching || (found && !revealFound);
   const flavor = state?.search?.message ?? "ANALIZANDO TU RANGO…";
   const games = me ? me.stats.wins + me.stats.losses : 0;
+
+  // Arte del VS: el mío sale de mi equipo principal; el del rival, de su perfil.
+  const fighterArt = (m?: MeResponse["mains"]) =>
+    m ? [m.point?.id, m.assist?.id].filter((id): id is string => !!id).map((id) => `/fighters/${encodeURIComponent(id)}.png`) : [];
+  const myArt = fighterArt(me?.mains);
+  const oppId = revealFound ? state?.proposal?.opponent.discordId : undefined;
+  const { data: oppProfile } = useQuery({
+    queryKey: ["profile", oppId],
+    queryFn: () => fetchUserProfile(String(oppId)),
+    staleTime: 120_000,
+    enabled: !!oppId,
+  });
+  const oppArt = fighterArt(oppProfile?.mains ?? undefined);
 
   return (
     <AppShell>
@@ -231,12 +280,12 @@ export default function MatchmakingPage() {
             {found && revealFound && state?.proposal ? (
               <>
                 <div className="hc-vs">
-                  <VsCard name={state.proposal.me.tag} avatar={state.proposal.me.avatarUrl} points={state.proposal.me.points} rank={state.proposal.me.rank} ok={state.proposal.acceptedByMe} wins={state.proposal.me.wins} losses={state.proposal.me.losses} streak={state.proposal.me.streak} country={state.proposal.me.country} state={state.proposal.me.state} />
+                  <VsCard name={state.proposal.me.tag} avatar={state.proposal.me.avatarUrl} points={state.proposal.me.points} rank={state.proposal.me.rank} ok={state.proposal.acceptedByMe} wins={state.proposal.me.wins} losses={state.proposal.me.losses} streak={state.proposal.me.streak} country={state.proposal.me.country} state={state.proposal.me.state} artSrcs={myArt} />
                   <div className="mid">
                     <b>VS</b>
                     <span>{clock(remaining)}</span>
                   </div>
-                  <VsCard name={state.proposal.opponent.tag} avatar={state.proposal.opponent.avatarUrl} points={state.proposal.opponent.points} rank={state.proposal.opponent.rank} ok={state.proposal.acceptedByOpponent} wins={state.proposal.opponent.wins} losses={state.proposal.opponent.losses} streak={state.proposal.opponent.streak} country={state.proposal.opponent.country} state={state.proposal.opponent.state} />
+                  <VsCard name={state.proposal.opponent.tag} avatar={state.proposal.opponent.avatarUrl} points={state.proposal.opponent.points} rank={state.proposal.opponent.rank} ok={state.proposal.acceptedByOpponent} wins={state.proposal.opponent.wins} losses={state.proposal.opponent.losses} streak={state.proposal.opponent.streak} country={state.proposal.opponent.country} state={state.proposal.opponent.state} artSrcs={oppArt} />
                 </div>
                 <p>
                   FT {state.proposal.ft} · <strong className="gold">{state.proposal.pointsAtStake} pts</strong> en juego
@@ -246,25 +295,34 @@ export default function MatchmakingPage() {
                     <button className="search-button" disabled={busy} onClick={() => act(acceptProposal)} type="button">
                       ACEPTAR
                     </button>
-                    <button className="search-button cancel" disabled={busy} onClick={() => act(declineProposal)} type="button">
-                      RECHAZAR
+                    <button className="search-button cancel quiet" disabled={busy} onClick={() => act(declineProposal)} type="button">
+                      Rechazar
                     </button>
                   </div>
                 ) : status === "confirmed" ? (
                   <span className="queue-note success">Ambos aceptaron — creando el set…</span>
                 ) : (
-                  <button className="secondary-button" disabled={busy} onClick={() => act(declineProposal)} type="button">
+                  <button className="secondary-button quiet" disabled={busy} onClick={() => act(declineProposal)} type="button">
                     ACEPTASTE · CANCELAR
                   </button>
                 )}
               </>
             ) : (
               <>
+                {/* Emblema propio centrado con resplandor naranja (maqueta):
+                    los anillos solo giran mientras se busca. */}
                 <div className="versus-mark">
                   <span className="orbit one" />
                   <span className="orbit two" />
-                  <img src={`${A}/1985f.svg`} alt="" />
+                  {me ? <RankBadge small fx rank={me.rank} /> : <img src={`${A}/1985f.svg`} alt="" />}
                 </div>
+                {me ? (
+                  <span className="queue-mine">
+                    {me.user.avatarUrl ? <img src={me.user.avatarUrl} alt="" /> : <i>{displayName(me)[0]}</i>}
+                    <b>{displayName(me)}</b>
+                    {me.rank.placed === false ? <MmPips done={Math.min(games, 5)} /> : <small>{me.rank.displayName.toUpperCase()}</small>}
+                  </span>
+                ) : null}
                 <h2>
                   {status === "matched" ? "¡A PELEAR!" : status === "failed" ? "NO SE PUDO CREAR EL SET" : searchingView ? "BUSCANDO RIVAL" : "LISTO PARA PELEAR"}
                 </h2>
@@ -304,7 +362,7 @@ export default function MatchmakingPage() {
                 )}
                 {searching && (
                   <button
-                    className="search-button cancel"
+                    className="search-button cancel quiet"
                     disabled={busy}
                     onClick={() => {
                       setSearchStart(null);
@@ -312,7 +370,7 @@ export default function MatchmakingPage() {
                     }}
                     type="button"
                   >
-                    CANCELAR BÚSQUEDA
+                    Cancelar búsqueda
                   </button>
                 )}
                 {status === "matched" &&
@@ -333,37 +391,51 @@ export default function MatchmakingPage() {
             </span>
           </article>
 
+          {/* Cómo funciona: 4 pasos en una línea de iconos; las reglas largas,
+              en un desplegable legible (maqueta). */}
           <aside className="match-rules panel">
             <div className="panel-heading">
               <h3>CÓMO FUNCIONA</h3>
               <span>AUTOMÁTICO</span>
             </div>
-            <div className="rule">
-              <span>1</span>
-              <div>
-                <small>ENTRAS A LA COLA</small>
-                <strong>RIVAL DE TU RANGO</strong>
-              </div>
-            </div>
-            <div className="rule">
-              <span>2</span>
-              <div>
-                <small>AMBOS ACEPTAN</small>
-                <strong>SE CREA EL SET FT 3</strong>
-              </div>
-            </div>
-            <div className="rule">
-              <span>3</span>
-              <div>
-                <small>JUEGAN Y REPORTAN</small>
-                <strong>PUNTOS AL RANKING</strong>
-              </div>
-            </div>
-            <p className="rule-note">
-              Nadie parte con rango: juegas 5 sets de clasificación y tu desempeño en ellos define tu rango inicial.
-              El emparejamiento es por rango (Gold I, II y III son el mismo nivel), con racha de 3 victorias se te sube
-              un rival de rango superior y vencer a un rango más alto paga más puntos. Si esperas demasiado, la búsqueda se amplía.
-            </p>
+            <ol className="rules-line">
+              <li>
+                <i><UserPlus /></i>
+                <div>
+                  <small>ENTRAS A LA COLA</small>
+                  <strong>UN CLIC</strong>
+                </div>
+              </li>
+              <li>
+                <i><Crosshair /></i>
+                <div>
+                  <small>EMPAREJAMIENTO</small>
+                  <strong>DE TU RANGO</strong>
+                </div>
+              </li>
+              <li>
+                <i><CheckCheck /></i>
+                <div>
+                  <small>AMBOS ACEPTAN</small>
+                  <strong>SET FT 3</strong>
+                </div>
+              </li>
+              <li>
+                <i><Swords /></i>
+                <div>
+                  <small>JUEGAN Y REPORTAN</small>
+                  <strong>PUNTOS AL RANKING</strong>
+                </div>
+              </li>
+            </ol>
+            <details className="rules-more">
+              <summary>Reglas completas</summary>
+              <p>
+                Nadie parte con rango: juegas 5 sets de clasificación y tu desempeño en ellos define tu rango inicial.
+                El emparejamiento es por rango (Gold I, II y III son el mismo nivel), con racha de 3 victorias se te sube
+                un rival de rango superior y vencer a un rango más alto paga más puntos. Si esperas demasiado, la búsqueda se amplía.
+              </p>
+            </details>
           </aside>
         </section>
       </main>

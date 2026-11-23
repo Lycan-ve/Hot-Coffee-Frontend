@@ -1,15 +1,20 @@
-
-
 'use client';
+
+// Ranking unificado (torneos + matchmaking en pestañas, según la maqueta):
+// · Podio con el arte de los personajes para el top 3, filas compactas del 4 en adelante.
+// · Las series son una fila de logos: las 4 más jugadas con nombre, el resto solo logo.
+// · Sincronizar y descargar son iconos; la fila entera abre el perfil.
+// · Nada se mueve solo mientras lees (sin carrusel automático).
 
 import "../../hotcoffee-ranking.css";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronRight, Crown, Download, Info, RefreshCw, Search, SlidersHorizontal, Swords, Trophy, Users, X } from "lucide-react";
+import { Download, RefreshCw, Search, SlidersHorizontal, Swords, Trophy, X } from "lucide-react";
 import { API_URL, fetchUserProfile, fuseIconUrl, getToken, type MeResponse } from "@/lib/auth";
-import { A, AppShell, PlayerFlag, RankBadge, SectionTitle } from "@/components/hc/shared";
+import { AppShell, PlayerFlag, RankBadge } from "@/components/hc/shared";
 
 type RankPlayer = {
   id?: number | string;
@@ -80,7 +85,7 @@ async function fetchRanking(from: number, to: number, series = ""): Promise<{ pl
 }
 
 // Torneos procesados con su SERIE (Hot Coffee, TNS, Tacos Tuesday...):
-// alimenta el banner de la portada y el filtro por serie.
+// alimenta el filtro por serie de la fila de logos.
 type TournamentInfo = {
   number: number;
   eventId: number;
@@ -132,11 +137,8 @@ async function fetchMatchmaking(): Promise<MmPlayer[]> {
 const PER_PAGE = 10;
 const DEFAULT_RANGE = 10;
 
-// El ranking de matchmaking parte de Gold I (1.000 pts): el total mostrado
-// incluye la base, igual que la escalera de rangos que calcula el backend.
-
 // Partidas de clasificación: sin las 5 primeras no hay rango; el backend lo
-// decide con el RP neto de esos 5 sets y la web muestra "Clasificando n/5".
+// decide con el RP neto de esos 5 sets y la web muestra los rombos n/5.
 const PLACEMENT_GAMES = 5;
 const mmGames = (p: MmPlayer) => p.games ?? p.wins + p.losses;
 const mmPlaced = (p: MmPlayer) => p.placed ?? mmGames(p) >= PLACEMENT_GAMES;
@@ -150,16 +152,6 @@ const normFighter = (raw?: string): string | undefined => {
   if (!n) return n;
   return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
 };
-
-// Arte del jugador destacado: splash art de public/jugadores_destacados
-// (las extensiones están mezcladas: png/jpg/jpeg, se prueban en cadena),
-// luego el sprite del personaje y al final el artwork genérico.
-const featuredArtCandidates = (name: string) => [
-  `/jugadores_destacados/${encodeURIComponent(name)}.png`,
-  `/jugadores_destacados/${encodeURIComponent(name)}.jpg`,
-  `/jugadores_destacados/${encodeURIComponent(name)}.jpeg`,
-  `/fighters/${encodeURIComponent(name)}.png`,
-];
 
 // Fila unificada: sirve tanto para el ranking de torneos como el de matchmaking.
 type Row = {
@@ -184,55 +176,73 @@ type Row = {
   fuseName?: string | undefined;
 };
 
-// Diapositiva del carrusel de destacados: el sistema elige a los jugadores
-// según el modo (campeón vigente, líder de la temporada, más victorias...).
-type FeaturedSlide = {
-  key: string;
-  label: string;
-  name: string;
-  sponsor?: string | undefined;
-  avatar?: string | undefined;
-  character?: string | undefined;
-  wins?: number | undefined;
-  losses?: number | undefined;
-  points: number;
-  profileId?: string | undefined;
-  fuse?: string | undefined;
-  fuseName?: string | undefined;
-  sub: string;
-};
+// Cadena de arte del podio: personaje principal → avatar. Si ninguna carga,
+// el fondo queda en degradado (el ::after del CSS pone la base oscura).
+function PodiumArt({ srcs }: { srcs: string[] }) {
+  const [idx, setIdx] = useState(0);
+  // Si llegan más candidatos (p. ej. carga el perfil y aparecen los mains),
+  // se reintenta desde el primero; el error avanza por la cadena.
+  useEffect(() => setIdx(0), [srcs.length]);
+  const src = srcs[Math.min(idx, srcs.length - 1)];
+  if (!src) return null;
+  return <img src={src} alt="" loading="lazy" onError={() => setIdx((i) => Math.min(i + 1, srcs.length - 1))} />;
+}
+
+// Rombitos de clasificación (estilo maqueta): 5 rombos dorados.
+function PlacementPips({ done, total = PLACEMENT_GAMES }: { done: number; total?: number }) {
+  return (
+    <span className="rk-pips" title={`Clasificación: ${Math.min(done, total)} de ${total} sets`}>
+      {Array.from({ length: total }, (_, i) => (
+        <i key={i} className={i < Math.min(done, total) ? "f" : ""} />
+      ))}
+    </span>
+  );
+}
 
 export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking" }) {
+  const router = useRouter();
+  const [activeMode, setActiveMode] = useState(mode);
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState(DEFAULT_RANGE);
   const [series, setSeries] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
-  const boardRef = useRef<HTMLElement>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const mm = activeMode === "matchmaking";
+
+  // Las pestañas viven dentro del Ranking: cambiar de modo actualiza la URL
+  // canónica (compartible) sin recargar la página.
+  const switchMode = (m: "torneos" | "matchmaking") => {
+    if (m === activeMode) return;
+    setActiveMode(m);
+    setPage(1);
+    window.history.replaceState(null, "", m === "torneos" ? "/ranking" : "/ranking-matchmaking");
+  };
+
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["ranking", from, to, series],
     queryFn: () => fetchRanking(from, to, series),
     staleTime: 60_000,
-    enabled: mode === "torneos",
+    enabled: activeMode === "torneos",
   });
   const { data: fetchedCount } = useQuery({
     queryKey: ["tournament-count"],
     queryFn: fetchTournamentCount,
     staleTime: 300_000,
-    enabled: mode === "torneos",
+    enabled: activeMode === "torneos",
   });
   const { data: mmData, isLoading: mmLoading } = useQuery({
     queryKey: ["ranking-matchmaking"],
     queryFn: fetchMatchmaking,
     staleTime: 60_000,
-    enabled: mode === "matchmaking",
+    enabled: mm,
   });
   const { data: tournaments } = useQuery({
     queryKey: ["tournaments"],
     queryFn: fetchTournaments,
     staleTime: 300_000,
-    enabled: mode === "torneos",
+    enabled: activeMode === "torneos",
   });
   const tournamentsList = useMemo(() => tournaments ?? [], [tournaments]);
   // Series únicas: la foto es la del último torneo procesado de la serie.
@@ -247,7 +257,7 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
         map.set(t.seriesKey, { key: t.seriesKey, name: t.series, image: t.image || undefined, count: 1 });
       }
     }
-    return [...map.values()];
+    return [...map.values()].sort((a, b) => b.count - a.count);
   }, [tournamentsList]);
   const currentSeries = seriesList.find((s) => s.key === series);
   const tournamentCount = fetchedCount ?? DEFAULT_RANGE;
@@ -270,10 +280,10 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
 
   const players = data?.players ?? [];
   const mmPlayers = useMemo(() => mmData ?? [], [mmData]);
-  const loading = mode === "torneos" ? isLoading : mmLoading;
+  const loading = activeMode === "torneos" ? isLoading : mmLoading;
 
   const rows: Row[] = useMemo(() => {
-    if (mode === "matchmaking") {
+    if (mm) {
       return mmPlayers.map((p) => ({
         key: p.discordId,
         ranking: p.ranking,
@@ -305,171 +315,33 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
       state: p.state,
       profileId: p.discordId || (p.id != null ? String(p.id) : ""),
     }));
-  }, [mode, players, mmPlayers]);
+  }, [mm, players, mmPlayers]);
 
   const filtered = rows.filter((r) =>
     `${r.name} ${r.sponsor ?? ""}`.toLowerCase().includes(query.toLowerCase()),
   );
-  const pages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  // Podio: top 3 global (del filtro actual); la tabla empieza en el 4.
+  const podium = filtered.slice(0, 3);
+  const rest = filtered.slice(3);
+  const pages = Math.max(1, Math.ceil(rest.length / PER_PAGE));
   const current = Math.min(page, pages);
-  const shown = filtered.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  const shown = rest.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+
+  // Perfiles de las filas visibles (modo matchmaking): rango real, equipo y
+  // últimos sets. En el podio dan el arte (mains) de cada jugador.
   const profileQs = useQueries({
-    queries: (mode === "matchmaking" ? shown : []).map((r) => ({
+    queries: (mm ? [...podium, ...shown] : []).map((r) => ({
       queryKey: ["profile", r.profileId],
       queryFn: () => fetchUserProfile(String(r.profileId)),
       staleTime: 120_000,
     })),
   });
   const profiles: Record<string, MeResponse | null | undefined> = {};
-  if (mode === "matchmaking") shown.forEach((r, i) => (profiles[r.key] = profileQs[i]?.data));
-  const mm = mode === "matchmaking";
-  const cols = mm ? 8 : 5;
-  const leader = rows[0];
+  if (mm) {
+    [...podium, ...shown].forEach((r, i) => (profiles[r.key] = profileQs[i]?.data));
+  }
+  const cols = mm ? 6 : 4;
   const mmSets = useMemo(() => mmPlayers.reduce((n, p) => n + p.wins, 0), [mmPlayers]);
-
-  // ---------- Campeones recientes (alimentan el carrusel en modo torneos) ----------
-  // El ranking torneo por torneo da el campeón de cada evento: pedimos los
-  // últimos 3 para tener un carrusel con historia, no solo al vigente.
-  const champTotal = mode === "torneos" ? fetchedCount ?? 0 : 0;
-  const champNs = useMemo(
-    () => [0, 1, 2].map((off) => champTotal - off).filter((n) => n >= 1),
-    [champTotal],
-  );
-  const champQs = useQueries({
-    queries: champNs.map((n) => ({
-      queryKey: ["tourney-champ", n],
-      queryFn: () => fetchRanking(n, n),
-      staleTime: 300_000,
-    })),
-  });
-  // champQs cambia de identidad en cada render: la identidad estable es la
-  // lista de dataUpdatedAt, por eso se usa como dependencia del memo.
-  const champions = useMemo(
-    () =>
-      champQs
-        .map((q, i) => ({ n: champNs[i], data: q.data }))
-        .filter((c) => c.data?.live && (c.data?.players.length ?? 0) > 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [champQs.map((q) => q.dataUpdatedAt).join(","), champNs.join(",")],
-  );
-
-  // ---------- Carrusel de destacados ----------
-  // El sistema elige a los jugadores destacados según el modo:
-  //  · TORNEOS: campeones de los últimos 3 torneos + podio de la temporada.
-  //  · MATCHMAKING: podio de la liga, más victorias, mejor winrate y más activo.
-  const slides: FeaturedSlide[] = useMemo(() => {
-    const out: FeaturedSlide[] = [];
-    if (mm) {
-      const push = (label: string, p: MmPlayer | undefined, sub?: string) => {
-        if (!p) return;
-        if (out.some((s) => s.profileId === p.discordId)) return;
-        out.push({
-          key: `${label}-${p.discordId}`,
-          label,
-          name: p.username,
-          avatar: p.avatarUrl,
-          wins: p.wins,
-          losses: p.losses,
-          points: Math.max(0, p.points),
-          profileId: p.discordId,
-          sub: sub ?? `${p.wins}V — ${p.losses}D en sets /ft`,
-        });
-      };
-      // Solo jugadores ya clasificados: el rango de quien sigue en
-      // clasificación aún no está decidido (5 sets obligatorios).
-      const ranked = mmPlayers.filter(mmPlaced);
-      push("LÍDER DE LA LIGA", ranked[0]);
-      push("N°2 DE LA LIGA", ranked[1]);
-      push("N°3 DE LA LIGA", ranked[2]);
-      const byWins = [...ranked].sort((a, b) => b.wins - a.wins)[0];
-      push("MÁS VICTORIAS", byWins, byWins ? `${byWins.wins} sets /ft ganados` : undefined);
-      const rated = ranked.filter((p) => p.wins + p.losses >= 5);
-      const byWr = [...rated].sort((a, b) => b.wins / (b.wins + b.losses) - a.wins / (a.wins + a.losses))[0];
-      push(
-        "MEJOR WINRATE",
-        byWr,
-        byWr ? `${byWr.wins}V — ${byWr.losses}D · ${Math.round((100 * byWr.wins) / (byWr.wins + byWr.losses))}% de victorias` : undefined,
-      );
-      const bySets = [...ranked].sort((a, b) => b.wins + b.losses - (a.wins + a.losses))[0];
-      push("MÁS ACTIVO", bySets, bySets ? `${bySets.wins + bySets.losses} sets jugados en la liga` : undefined);
-      return out;
-    }
-    const push = (label: string, p: RankPlayer | undefined, sub?: string) => {
-      if (!p) return;
-      if (out.some((s) => s.name === p.gamerTag)) return;
-      out.push({
-        key: `${label}-${p.gamerTag}`,
-        label,
-        name: p.gamerTag,
-        sponsor: p.sponsor,
-        avatar: p.avatarUrl,
-        character: p.character,
-        fuse: p.fuse,
-        fuseName: p.fuseName,
-        points: p.points,
-        profileId: p.discordId || (p.id != null ? String(p.id) : ""),
-        // Paréntesis obligatorios: no se puede mezclar ?? y || sin ellos.
-        sub: sub ?? ([p.character, p.sponsor ? `#${p.sponsor}` : ""].filter(Boolean).join(" · ") || "Top de la temporada de torneos"),
-      });
-    };
-    // Campeones de los últimos 3 torneos, del más reciente al más antiguo.
-    for (const c of champions) {
-      const champ = c.data?.players[0];
-      if (!champ) continue;
-      push(
-        `CAMPEÓN DEL TORNEO #${String(c.n).padStart(2, "0")}`,
-        champ,
-        `Ganó el torneo #${c.n} con ${fmt(champ.points)} pts`,
-      );
-    }
-    push("LÍDER DE LA TEMPORADA", players[0]);
-    push("N°2 DE LA TEMPORADA", players[1]);
-    push("N°3 DE LA TEMPORADA", players[2]);
-    return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mm, mmPlayers, players, champions, tournamentCount]);
-
-  const [slideIdx, setSlideIdx] = useState(0);
-  // Pausa el giro automático mientras el cursor está sobre la tarjeta.
-  const [featPaused, setFeatPaused] = useState(false);
-  const nSlides = slides.length;
-  useEffect(() => {
-    if (slideIdx >= nSlides) setSlideIdx(0);
-  }, [nSlides, slideIdx]);
-  // Giro automático del carrusel: 6 s por jugador (se pausa al hover).
-  useEffect(() => {
-    if (nSlides < 2 || featPaused) return;
-    const t = window.setInterval(() => setSlideIdx((i) => (i + 1) % nSlides), 6000);
-    return () => window.clearInterval(t);
-  }, [nSlides, featPaused]);
-  const cur = nSlides ? slides[Math.min(slideIdx, nSlides - 1)] : undefined;
-
-  // Perfiles de los destacados (modo matchmaking): dan el personaje para el arte y el rango.
-  const slideProfQs = useQueries({
-    queries: (mm ? slides : []).map((s) => ({
-      queryKey: ["profile", s.profileId],
-      queryFn: () => fetchUserProfile(String(s.profileId)),
-      staleTime: 120_000,
-    })),
-  });
-  const curProf = mm && cur ? slideProfQs[slides.indexOf(cur)]?.data : undefined;
-  const curChar = mm
-    ? normFighter(curProf?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam?.point?.id)
-    : normFighter(cur?.character);
-
-  // Arte del destacado en cadena: splash dedicado → sprite → avatar → artwork genérico.
-  const artList = useMemo(() => {
-    const cands: string[] = [];
-    if (curChar) cands.push(...featuredArtCandidates(curChar), `${A}/b5469.png`);
-    if (cur?.avatar) cands.push(cur.avatar);
-    cands.push(`${A}/b5469.png`);
-    return cands;
-  }, [curChar, cur?.avatar]);
-  const [artIdx, setArtIdx] = useState(0);
-  useEffect(() => {
-    setArtIdx(0);
-  }, [slideIdx, artList.length]);
-  const artSrc = artList[Math.min(artIdx, artList.length - 1)];
 
   const sync = async () => {
     try {
@@ -506,186 +378,234 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
     }
   };
 
-  // Con series cargadas en modo torneos, la portada pasa a 3 columnas:
-  // torneos procesados | tabla de ranking | sidebar.
-  const showTourneys = mode === "torneos" && seriesList.length > 0;
+  const openProfile = (r: Row) => {
+    if (r.profileId) router.push(`/perfil/${String(r.profileId)}`);
+  };
+
+  const podiumArt = (r: Row): string[] => {
+    const out: string[] = [];
+    if (mm) {
+      const mains = profiles[r.key]?.mains;
+      if (mains?.point?.id) out.push(`/fighters/${encodeURIComponent(mains.point.id)}.png`);
+      if (mains?.assist?.id) out.push(`/fighters/${encodeURIComponent(mains.assist.id)}.png`);
+    } else {
+      const fighter = normFighter(r.character);
+      if (fighter) out.push(`/fighters/${encodeURIComponent(fighter)}.png`);
+    }
+    if (r.avatar) out.push(r.avatar);
+    return out;
+  };
 
   return (
     <AppShell>
       <main className="page ranking-page">
-        <section className="hero">
-          <div className="hero-copy">
-            <SectionTitle
-              eyebrow={mm ? "LIGA DE MATCHMAKING / 2026" : "TEMPORADA DE TORNEOS / 2026"}
-              note={data && !data.live && mode === "torneos" ? "Datos de respaldo" : undefined}
-              title={mm ? "RANKING DE MATCHMAKING" : "RANKING DE TORNEOS"}
-              copy="El progreso competitivo de la comunidad, en un solo lugar."
-            />
+        {/* ——— Cabecera: un título, una línea y las dos pestañas ——— */}
+        <section className="rk-head">
+          <div className="rk-head-copy">
+            <h1 className="rk-h1">{mm ? "Ranking de matchmaking" : "Ranking de torneos"}</h1>
+            <p className="rk-cap">
+              {mm
+                ? `Sets FT 3 de la liga, ordenados por RP · ${rows.length} jugadores · ${mmSets} sets jugados`
+                : series
+                  ? `Serie ${currentSeries?.name ?? series} · ${rows.length} jugadores`
+                  : `Temporada 2026 · ${tournamentCount} torneos · ${rows.length} jugadores`}
+            </p>
           </div>
-          <div className="hero-motto">
-            <span>EL GRIND NUNCA PARA.</span>
-            <strong>BUEN CAFÉ. BUENAS PELEAS.</strong>
-          </div>
-        </section>
-
-        <section className="rk-stats">
-          <div className="rk-stat">
-            <Users />
-            <div>
-              <small>PARTICIPANTES</small>
-              {/* Con un torneo elegido se aclara de dónde salen los jugadores. */}
-              <p>
-                <strong>{loading ? "—" : String(rows.length).padStart(2, "0")}</strong>{" "}
-                {series ? `jugadores de la liga (${currentSeries?.name ?? series})` : "jugadores en la liga"}
-              </p>
-            </div>
-          </div>
-          <div className="rk-stat">
-            <Swords />
-            <div>
-              <small>{mode === "torneos" ? "TORNEOS CONTADOS" : "SETS JUGADOS"}</small>
-              {mode === "torneos" ? (
-                <p>
-                  <strong>{String(series ? currentSeries?.count ?? 0 : to - from + 1).padStart(2, "0")}</strong>{" "}
-                  torneos {series ? `de ${currentSeries?.name ?? series}` : `${from}—${to}`}
-                </p>
-              ) : (
-                <p><strong>{String(mmSets).padStart(2, "0")}</strong> sets /ft confirmados</p>
-              )}
-            </div>
-          </div>
-          <div className="rk-stat leader">
-            <Crown />
-            <div>
-              <small>LÍDER ACTUAL</small>
-              <p>
-                <strong>{leader?.name ?? "—"}</strong>{" "}
-                {leader ? (mm ? `${fmt(Math.round(leader.glickoRating ?? 1500))} rating Glicko-2` : `${fmt(leader.points)} puntos`) : ""}
-              </p>
-            </div>
-            <b>#1</b>
+          <div className="rk-mode-tabs" role="tablist" aria-label="Tipo de ranking">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!mm}
+              className={`rk-mode-tab${!mm ? " on" : ""}`}
+              onClick={() => switchMode("torneos")}
+            >
+              <Trophy /> Torneos
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mm}
+              className={`rk-mode-tab${mm ? " on" : ""}`}
+              onClick={() => switchMode("matchmaking")}
+            >
+              <Swords /> Matchmaking
+            </button>
           </div>
         </section>
 
-        <section className={`rk-layout ${showTourneys ? "with-tourneys" : ""}`}>
-          {/* Torneos procesados: columna izquierda fija, con el botón TODOS
-              para quitar el filtro de un toque y no confundir a nadie. */}
-          {showTourneys && (
-            <article className="panel rk-tourneys">
-              <div className="head">
-                <h3>TORNEOS PROCESADOS</h3>
-                <Trophy />
-              </div>
-              <div className="rk-tourneys-grid">
-                <button
-                  type="button"
-                  className={`chip chip-all ${series === "" ? "on" : ""}`}
-                  onClick={() => { setSeries(""); setPage(1); }}
-                  title="Ver todos los torneos procesados (quita el filtro)"
-                >
-                  <span className="badge-ini">☕</span>
-                  <span className="nm">TODOS</span>
-                  <small>{tournamentsList.length} {tournamentsList.length === 1 ? "TORNEO" : "TORNEOS"}</small>
-                </button>
-                {seriesList.map((s) => (
-                  <button
-                    type="button"
-                    key={s.key}
-                    className={`chip ${series === s.key ? "on" : ""}`}
-                    onClick={() => { setSeries(series === s.key ? "" : s.key); setPage(1); }}
-                    title={`Ver solo los resultados de ${s.name}`}
-                  >
-                    {s.image ? (
-                      <img src={s.image} alt={s.name} onError={(e) => (e.currentTarget.style.display = "none")} />
-                    ) : (
-                      <span className="badge-ini">{s.name.charAt(0).toUpperCase()}</span>
-                    )}
-                    <span className="nm">{s.name.toUpperCase()}</span>
-                    <small>{s.count} {s.count === 1 ? "EVENTO" : "EVENTOS"}</small>
-                  </button>
-                ))}
-              </div>
-            </article>
+        {/* ——— Filtro de series: una fila de logos ——— */}
+        {activeMode === "torneos" && seriesList.length > 0 && (
+          <div className="rk-series-row" role="tablist" aria-label="Filtrar por serie de torneos">
+            <button
+              type="button"
+              className={`rks rks-all ${series === "" ? "on" : ""}`}
+              onClick={() => { setSeries(""); setPage(1); }}
+              title="Ver todos los torneos procesados (quita el filtro)"
+            >
+              <span className="rks-ini">☕</span>
+              <span className="rks-nm">Todos</span>
+              <small>{tournamentsList.length}</small>
+            </button>
+            {seriesList.slice(0, 4).map((s) => (
+              <button
+                type="button"
+                key={s.key}
+                className={`rks ${series === s.key ? "on" : ""}`}
+                onClick={() => { setSeries(series === s.key ? "" : s.key); setPage(1); }}
+                title={`${s.name} (${s.count} eventos)`}
+              >
+                {s.image ? (
+                  <img src={s.image} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
+                ) : (
+                  <span className="rks-ini">{s.name.charAt(0).toUpperCase()}</span>
+                )}
+                <span className="rks-nm">{s.name}</span>
+                <small>{s.count}</small>
+              </button>
+            ))}
+            {seriesList.slice(4).map((s) => (
+              <button
+                type="button"
+                key={s.key}
+                className={`rks rks-ico ${series === s.key ? "on" : ""}`}
+                onClick={() => { setSeries(series === s.key ? "" : s.key); setPage(1); }}
+                title={`${s.name} (${s.count} eventos)`}
+                aria-label={`Filtrar por ${s.name}`}
+              >
+                {s.image ? (
+                  <img src={s.image} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
+                ) : (
+                  <span className="rks-ini">{s.name.charAt(0).toUpperCase()}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div ref={boardRef}>
+          {/* ——— Herramientas: buscar + iconos ——— */}
+          <div className="rk-tools">
+            <label className="rk-search">
+              <Search />
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Buscar jugador o personaje"
+              />
+            </label>
+            <button
+              type="button"
+              className="rk-icon-btn"
+              onClick={sync}
+              disabled={isFetching}
+              title="Sincronizar resultados"
+              aria-label="Sincronizar resultados"
+            >
+              <RefreshCw className={isFetching ? "spin" : ""} />
+            </button>
+            <button
+              type="button"
+              className="rk-icon-btn"
+              onClick={exportPng}
+              title="Descargar como imagen"
+              aria-label="Descargar ranking como imagen"
+            >
+              <Download />
+            </button>
+            {activeMode === "torneos" && (
+              <button
+                type="button"
+                className={`rk-icon-btn${showFilters ? " on" : ""}`}
+                aria-pressed={showFilters}
+                aria-expanded={showFilters}
+                onClick={() => setShowFilters((v) => !v)}
+                title={showFilters ? "Ocultar filtros" : "Filtrar por rango de torneos"}
+                aria-label={showFilters ? "Ocultar filtros" : "Filtrar por rango de torneos"}
+              >
+                {showFilters ? <X /> : <SlidersHorizontal />}
+              </button>
+            )}
+          </div>
+
+          {showFilters && activeMode === "torneos" && (
+            <div className="rk-filters">
+              <span>TORNEOS</span>
+              <label title={series ? "Se ignora al elegir una serie" : undefined}>
+                Desde
+                <select value={from} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setFrom(v); if (v > to) setTo(v); setPage(1); }}>
+                  {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </label>
+              <label title={series ? "Se ignora al elegir una serie" : undefined}>
+                Hasta
+                <select value={to} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setTo(v); if (v < from) setFrom(v); setPage(1); }}>
+                  {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </label>
+            </div>
           )}
 
-          <article className="panel rk-table" ref={boardRef}>
-            {/* Título H1 del ranking activo: cada página lleva el suyo
-                (RANKING DE TORNEOS / RANKING DE MATCHMAKING); el cambio entre
-                rankings vive en la Topbar y aquí solo queda el alcance actual. */}
-            <div className="rk-scope">
-              <h1 className="rk-title">{mm ? "RANKING DE MATCHMAKING" : "RANKING DE TORNEOS"}</h1>
-              <em>·</em>
-              <span>
-                {mode === "torneos"
-                  ? series
-                    ? `SERIE · ${currentSeries?.name?.toUpperCase() ?? series}`
-                    : `ACUMULADO · TORNEOS ${String(from).padStart(2, "0")}—${String(to).padStart(2, "0")}`
-                  : "GLICKO-2 · HABILIDAD ESTIMADA + RP · PROGRESIÓN"}
-              </span>
-            </div>
-            <div className="rk-tools">
-              <label className="rk-search">
-                <Search />
-                <input
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Buscar jugador o equipo"
-                />
-              </label>
-              {mode === "torneos" && (
-                <button
-                  type="button"
-                  className={showFilters ? "on" : ""}
-                  aria-pressed={showFilters}
-                  aria-expanded={showFilters}
-                  onClick={() => setShowFilters((v) => !v)}
+          {/* ——— Podio: el top 3 se ve, no se lee ——— */}
+          {!loading && podium.length > 0 && (
+            <div className="rk-podium">
+              {podium.map((r, i) => (
+                <Link
+                  key={r.key}
+                  href={r.profileId ? `/perfil/${String(r.profileId)}` : "#"}
+                  className={`rk-pod p${i + 1}`}
+                  aria-label={`#${i + 1} ${r.name}`}
                 >
-                  {showFilters ? <X /> : <SlidersHorizontal />} {showFilters ? "Ocultar filtros" : "Filtrar torneos"}
-                </button>
-              )}
-              <button type="button" onClick={sync} disabled={isFetching}>
-                <RefreshCw className={isFetching ? "spin" : ""} /> {isFetching ? "Sincronizando" : "Sincronizar"}
-              </button>
-              <button type="button" onClick={exportPng}><Download /> PNG</button>
+                  <span className="rk-pod-art">
+                    <PodiumArt srcs={podiumArt(r)} />
+                  </span>
+                  <span className="rk-pod-rk">{i + 1}</span>
+                  <span className="rk-pod-who">
+                    {r.avatar ? (
+                      <img className="rk-pod-av" src={r.avatar} alt="" loading="lazy" />
+                    ) : (
+                      <span className="rk-pod-av">{r.name[0]}</span>
+                    )}
+                    <span className="rk-pod-name">
+                      <b>{r.name}</b>
+                      <small>
+                        {mm ? (
+                          !r.placed ? (
+                            <PlacementPips done={rowGames(r)} />
+                          ) : profiles[r.key]?.rank ? (
+                            profiles[r.key]!.rank!.displayName
+                          ) : (
+                            `${r.wins ?? 0}V · ${r.losses ?? 0}D`
+                          )
+                        ) : (
+                          r.sponsor ? `#${r.sponsor}` : (normFighter(r.character) ?? "—")
+                        )}
+                      </small>
+                    </span>
+                    <span className="rk-pod-pts">
+                      {fmt(Math.max(0, r.points))}
+                      <small>{mm ? "RP" : "PTS"}</small>
+                    </span>
+                  </span>
+                </Link>
+              ))}
             </div>
-            {showFilters && mode === "torneos" && (
-              <div className="rk-filters">
-                <span>TORNEOS</span>
-                <label>
-                  Serie
-                  <select
-                    value={series}
-                    onChange={(e) => { setSeries(e.target.value); setPage(1); }}
-                    title="Filtra por una serie de torneos (p. ej. TNS muestra solo los resultados de TNS)"
-                  >
-                    <option value="">TODAS</option>
-                    {seriesList.map((s) => (
-                      <option key={s.key} value={s.key}>{`${s.name} (${s.count})`}</option>
-                    ))}
-                  </select>
-                </label>
-                <label title={series ? "Se ignora al elegir una serie" : undefined}>
-                  Desde
-                  <select value={from} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setFrom(v); if (v > to) setTo(v); setPage(1); }}>
-                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </label>
-                <label title={series ? "Se ignora al elegir una serie" : undefined}>
-                  Hasta
-                  <select value={to} disabled={!!series} onChange={(e) => { const v = Number(e.target.value); setTo(v); if (v < from) setFrom(v); setPage(1); }}>
-                    {ranges.map((n) => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                </label>
-              </div>
-            )}
+          )}
+
+          {/* ——— Tabla: del 4 en adelante, toda la fila abre el perfil ——— */}
+          <section className="panel rk-table">
             <div className="rk-scroll">
               <table>
                 <thead>
                   <tr>
-                    <th>POS.</th><th>JUGADOR</th>{mm && <th>RANGO</th>}<th>EQUIPO</th>{mm && <th>ÚLTIMOS SETS</th>}{mm && <th title="Rating de habilidad Glicko-2 y desviación RD">GLICKO-2 ↓</th>}<th className="accent">{mm ? "RP ↓" : "PUNTOS ↓"}</th><th className="r">PERFIL</th>
+                    <th>POS.</th>
+                    <th>JUGADOR</th>
+                    {mm && <th>RANGO</th>}
+                    <th>EQUIPO</th>
+                    {mm && <th>ÚLTIMOS SETS</th>}
+                    <th className="accent">{mm ? "RP ↓" : "PUNTOS ↓"}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -694,19 +614,27 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                       <tr key={i}><td colSpan={cols}><div className="rk-skeleton" /></td></tr>
                     ))}
                   {!loading && shown.length === 0 && (
-                    <tr><td colSpan={cols} className="c">No hay jugadores con ese nombre.</td></tr>
+                    <tr><td colSpan={cols} className="c">{podium.length ? "Sin más jugadores en esta vista." : "No hay jugadores con ese nombre."}</td></tr>
                   )}
                   {shown.map((r) => {
                     const top = r.ranking <= 3;
                     const prof = profiles[r.key];
                     const lastTeam = prof?.fights?.find((f) => f.playerTeam?.point?.id)?.playerTeam;
                     return (
-                      <tr key={r.key} className={r.ranking === 1 ? "first" : ""}>
+                      <tr
+                        key={r.key}
+                        className={`rk-click${top ? " first" : ""}`}
+                        onClick={() => openProfile(r)}
+                        tabIndex={r.profileId ? 0 : undefined}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") openProfile(r);
+                        }}
+                      >
                         <td className={`pos ${top ? "top" : ""}`}>{String(r.ranking).padStart(2, "0")}</td>
                         <td>
                           <div className="who">
                             {r.avatar ? (
-                              <img className="ini" src={r.avatar} alt="" />
+                              <img className="ini" src={r.avatar} alt="" loading="lazy" />
                             ) : (
                               <span className={`ini ${top ? "top" : ""}`}>{r.name[0]}</span>
                             )}
@@ -734,8 +662,11 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                         {mm && (
                           <td>
                             {!r.placed ? (
-                              <span className="rk-placing" title="El rango se obtiene al terminar las 5 partidas de clasificación">
-                                CLASIFICANDO {rowGames(r)}/5
+                              <span className="rk-placing-wrap">
+                                <PlacementPips done={rowGames(r)} />
+                                <span className="rk-placing" title="El rango se obtiene al terminar las 5 partidas de clasificación">
+                                  {rowGames(r)}/5
+                                </span>
                               </span>
                             ) : prof?.rank ? (
                               <div className="rk-rank">
@@ -748,23 +679,21 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                         <td>
                           {mm ? (
                             lastTeam ? (
-                              <div className="rk-team">
+                              <div className="rk-team rk-team-icons">
                                 {[lastTeam.point, lastTeam.assist].map((c) => (
                                   <span key={c.id} title={c.name}>
-                                    <img src={`/fighters/${encodeURIComponent(c.id)}.png`} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
-                                    {c.name}
+                                    <img src={`/fighters/${encodeURIComponent(c.id)}.png`} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.display = "none")} />
                                   </span>
                                 ))}
                                 {lastTeam.fuse?.id && (
                                   <span className="fuse" title={`Fuse: ${lastTeam.fuse.name}`}>
-                                    <img src={fuseIconUrl(lastTeam.fuse.id)} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
-                                    {lastTeam.fuse.name}
+                                    <img src={fuseIconUrl(lastTeam.fuse.id)} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.display = "none")} />
                                   </span>
                                 )}
                               </div>
                             ) : <span className="dim">—</span>
                           ) : (
-                            <Team value={r.character} fuse={r.fuse} fuseName={r.fuseName} />
+                            <TeamIcons value={r.character} fuse={r.fuse} fuseName={r.fuseName} />
                           )}
                         </td>
                         {mm && (
@@ -780,26 +709,9 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
                             ) : <span className="dim">—</span>}
                           </td>
                         )}
-                        {mm && (
-                          <td>
-                            <div
-                              className="rk-glicko"
-                              title={`RD ±${Math.round(r.glickoRD ?? 350)}: cuanto menor es la RD, mayor es la certeza de la estimación.`}
-                            >
-                              <strong>{fmt(Math.round(r.glickoRating ?? 1500))}</strong>
-                              <small>RD ±{Math.round(r.glickoRD ?? 350)}</small>
-                            </div>
-                          </td>
-                        )}
                         <td>
                           <span className={`pts ${top ? "top" : ""}`}>{fmt(Math.max(0, r.points))}</span>
-                        </td>
-                        <td className="r">
-                          {r.profileId ? (
-                            <Link href={`/perfil/${String(r.profileId)}`} className="rk-link" aria-label={`Ver perfil de ${r.name}`}>
-                              <ChevronRight />
-                            </Link>
-                          ) : null}
+                          {mm && <small className="rk-rp-sub">Glicko {fmt(Math.round(r.glickoRating ?? 1500))}</small>}
                         </td>
                       </tr>
                     );
@@ -809,143 +721,30 @@ export default function RankingBoard({ mode }: { mode: "torneos" | "matchmaking"
             </div>
             <div className="rk-foot">
               <span>
-                Mostrando {filtered.length ? (current - 1) * PER_PAGE + 1 : 0}–{Math.min(current * PER_PAGE, filtered.length)} de {filtered.length} jugadores
+                {filtered.length > 3
+                  ? `Mostrando ${(current - 1) * PER_PAGE + 4}–${Math.min(current * PER_PAGE + 3, filtered.length)} de ${filtered.length} jugadores`
+                  : `${filtered.length} jugadores`}
               </span>
-              <div className="pager">
-                <small>{PER_PAGE} por página</small>
-                <button type="button" onClick={() => setPage(Math.max(1, current - 1))} aria-label="Página anterior">‹</button>
-                {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
-                  <button type="button" key={n} className={n === current ? "on" : ""} onClick={() => setPage(n)}>{n}</button>
-                ))}
-                <button type="button" onClick={() => setPage(Math.min(pages, current + 1))} aria-label="Página siguiente">›</button>
-              </div>
-            </div>
-          </article>
-
-          <aside className="rk-side">
-            <article
-              className="rk-featured"
-              onMouseEnter={() => setFeatPaused(true)}
-              onMouseLeave={() => setFeatPaused(false)}
-            >
-              <img
-                key={artSrc}
-                src={artSrc}
-                alt={curChar ? `Arte de ${curChar}` : ""}
-                onError={() => setArtIdx((i) => Math.min(i + 1, artList.length - 1))}
-              />
-              <span className="tag"><Crown /> JUGADOR DESTACADO</span>
-              {nSlides > 1 && (
-                <div className="rk-feat-nav">
-                  <button
-                    type="button"
-                    onClick={() => setSlideIdx((i) => (i - 1 + nSlides) % nSlides)}
-                    aria-label="Jugador destacado anterior"
-                  >‹</button>
-                  <div className="dots">
-                    {slides.map((s, i) => (
-                      <button
-                        type="button"
-                        key={s.key}
-                        className={i === Math.min(slideIdx, nSlides - 1) ? "on" : ""}
-                        onClick={() => setSlideIdx(i)}
-                        aria-label={s.label}
-                        title={s.label}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSlideIdx((i) => (i + 1) % nSlides)}
-                    aria-label="Jugador destacado siguiente"
-                  >›</button>
+              {pages > 1 && (
+                <div className="pager">
+                  <small>{PER_PAGE} por página</small>
+                  <button type="button" onClick={() => setPage(Math.max(1, current - 1))} aria-label="Página anterior">‹</button>
+                  {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
+                    <button type="button" key={n} className={n === current ? "on" : ""} onClick={() => setPage(n)}>{n}</button>
+                  ))}
+                  <button type="button" onClick={() => setPage(Math.min(pages, current + 1))} aria-label="Página siguiente">›</button>
                 </div>
               )}
-              <div className="info">
-                <small>{cur?.label ?? (mm ? "#1 DEL MATCHMAKING" : "CAMPEÓN DEL ÚLTIMO TORNEO")}</small>
-                {cur ? (
-                  <div className="row">
-                    <h2>{cur.name.toUpperCase()}</h2>
-                    {mm && curProf?.rank ? <RankBadge small rank={curProf.rank} /> : null}
-                    <strong>{fmt(cur.points)} <em>PTS</em></strong>
-                  </div>
-                ) : null}
-                <p>
-                  {cur?.sub ||
-                    (mm ? "Gana sets /ft para aparecer aquí." : "Gana el próximo torneo para aparecer aquí.")}
-                </p>
-                {/* Más datos del destacado: récord, winrate y últimos sets en
-                    matchmaking; equipo de personajes en torneos. */}
-                {mm && cur && (
-                  <div className="rk-feat-stats">
-                    <span>
-                      <b>{cur.wins ?? 0}V</b> — <b>{cur.losses ?? 0}D</b>
-                    </span>
-                    {(cur.wins ?? 0) + (cur.losses ?? 0) > 0 && (
-                      <span>
-                        {Math.round((100 * (cur.wins ?? 0)) / ((cur.wins ?? 0) + (cur.losses ?? 0)))}% WINRATE
-                      </span>
-                    )}
-                    {curProf?.fights?.length ? (
-                      <span className="rk-sets">
-                        {curProf.fights.slice(0, 5).map((f) => (
-                          <b key={f.id} className={f.result === "WIN" ? "w" : "l"} title={`${f.scoreFor}-${f.scoreAgainst} vs ${f.opponentTag}`}>
-                            {f.result === "WIN" ? "V" : "D"}
-                          </b>
-                        ))}
-                      </span>
-                    ) : null}
-                  </div>
-                )}
-                {!mm && (cur?.character || cur?.fuse) ? <Team value={cur?.character} fuse={cur?.fuse} fuseName={cur?.fuseName} /> : null}
-                {cur?.profileId ? (
-                  <div className="meta">
-                    <Link href={`/perfil/${String(cur.profileId)}`}>Ver ficha completa →</Link>
-                  </div>
-                ) : null}
-              </div>
-            </article>
-
-            {/* Miniaturas del carrusel: todos los jugadores que el sistema
-                considera destacados en esta página; clic para saltar a
-                cualquiera sin esperar el giro automático. */}
-            {nSlides > 1 && (
-              <div className="panel rk-feat-strip" role="tablist" aria-label="Jugadores destacados">
-                {slides.map((s, i) => (
-                  <button
-                    type="button"
-                    key={s.key}
-                    className={i === Math.min(slideIdx, nSlides - 1) ? "on" : ""}
-                    onClick={() => setSlideIdx(i)}
-                    title={`${s.label} — ${s.name}`}
-                    aria-label={`Ver a ${s.name} (${s.label})`}
-                  >
-                    {s.avatar ? (
-                      <img src={s.avatar} alt="" />
-                    ) : (
-                      <span>{s.name.charAt(0).toUpperCase()}</span>
-                    )}
-                    <b>{i + 1}</b>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <article className="panel rk-cta">
-              <h3><img src={`${A}/5fb79.svg`} alt="" /> TU PRÓXIMO RIVAL ESTÁ AQUÍ.</h3>
-              <p>Ranked, torneos y café. Encuentra partidas y sube de nivel.</p>
-              <Link href="/matchmaking" className="discord">
-                <img src={`${A}/3508d.svg`} alt="" /> Buscar partida
-              </Link>
-            </article>
-          </aside>
-        </section>
+            </div>
+          </section>
+        </div>
       </main>
     </AppShell>
   );
 }
 
-function Team({ value, fuse, fuseName }: { value?: string | undefined; fuse?: string | undefined; fuseName?: string | undefined }) {
+// Equipo como SOLO iconos: el nombre del personaje sale al pasar el cursor.
+function TeamIcons({ value, fuse, fuseName }: { value?: string | undefined; fuse?: string | undefined; fuseName?: string | undefined }) {
   // "2XKO_FIGHTER" es el placeholder que la sync guarda sin datos: se ignora.
   const names = (value ?? "")
     .split(/[,+]/)
@@ -953,20 +752,18 @@ function Team({ value, fuse, fuseName }: { value?: string | undefined; fuse?: st
     .filter((n) => n && n.toUpperCase() !== "2XKO_FIGHTER");
   if (names.length === 0 && !fuse) return <span className="dim">—</span>;
   return (
-    <div className="rk-team">
+    <div className="rk-team rk-team-icons">
       {names.map((n) => {
         const id = n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
         return (
           <span key={n} title={id}>
-            <img src={`/fighters/${encodeURIComponent(id)}.png`} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
-            {id}
+            <img src={`/fighters/${encodeURIComponent(id)}.png`} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.display = "none")} />
           </span>
         );
       })}
       {fuse ? (
         <span className="fuse" title={`Fuse: ${fuseName ?? fuse}`}>
-          <img src={fuseIconUrl(fuse)} alt="" onError={(e) => (e.currentTarget.style.display = "none")} />
-          {fuseName ?? fuse}
+          <img src={fuseIconUrl(fuse)} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.display = "none")} />
         </span>
       ) : null}
     </div>
